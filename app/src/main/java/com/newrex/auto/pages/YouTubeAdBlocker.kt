@@ -16,7 +16,6 @@ internal object YouTubeAdBlocker {
         "doubleclick.net",
         "googleadservices.com",
         "googlesyndication.com",
-        "googleadservices.com",
         "adservice.google.com",
         "pagead2.googlesyndication.com",
     )
