@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -97,6 +98,7 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
     private val hideFit = Runnable { fitButton.animate().alpha(0f).setDuration(300).withEndAction { fitButton.visibility = View.GONE }.start() }
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
+    private var youtubeDocumentActive = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun build(): View = with(ctx) {
@@ -143,12 +145,26 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
                     return scheme != "http" && scheme != "https"
                 }
 
+                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                    // Filtre yalnızca YouTube sayfasındayken etkin; TV+, Netflix ve genel web değişmez.
+                    if (mode == Mode.YOUTUBE && youtubeDocumentActive &&
+                        YouTubeAdBlocker.shouldBlock(request.url.toString())) {
+                        return YouTubeAdBlocker.emptyResponse()
+                    }
+                    return super.shouldInterceptRequest(view, request)
+                }
+
                 override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                    youtubeDocumentActive = mode == Mode.YOUTUBE && isYouTubeUrl(url)
                     progressBar.visibility = View.VISIBLE
                 }
 
                 override fun onPageFinished(view: WebView, url: String?) {
                     progressBar.visibility = View.GONE
+                    if (mode == Mode.YOUTUBE && isYouTubeUrl(url)) {
+                        // Reklam katmanlarını gizle ve atlanabilir video reklamlarını geçmeyi dene.
+                        view.evaluateJavascript(YouTubeAdBlocker.pageScript, null)
+                    }
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -275,6 +291,13 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
         ctx.circleButton(R.drawable.ic_home) { web.loadUrl(startUrl()) },
         ctx.circleButton(R.drawable.ic_refresh) { web.reload() },
     )
+
+    private fun isYouTubeUrl(url: String?): Boolean {
+        val host = runCatching { android.net.Uri.parse(url).host?.lowercase(java.util.Locale.ROOT) }.getOrNull()
+            ?: return false
+        return host == "youtube.com" || host.endsWith(".youtube.com") ||
+            host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com")
+    }
 
     // YouTube her açılışta kendi ana sayfasıyla gelir (kategoriler YouTube'un kendi satırında)
     private fun startUrl() = mode.home
