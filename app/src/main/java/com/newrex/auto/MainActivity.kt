@@ -326,8 +326,8 @@ class MainActivity : Activity() {
     // ---- Tema ----
 
     private fun paintLogo() {
-        logo.text = SpannableStringBuilder("NewREX").apply {
-            setSpan(ForegroundColorSpan(Palette.accent), 3, 6, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        logo.text = SpannableStringBuilder("OmniDrive").apply {
+            setSpan(ForegroundColorSpan(Palette.accent), 4, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         logo.neonText(12)
     }

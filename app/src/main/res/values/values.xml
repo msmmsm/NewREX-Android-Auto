@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NewREX Android Auto</string>
+    <string name="app_name">OmniDrive</string>
 
     <color name="icon_bg_start">#7C5CFF</color>
     <color name="icon_bg_end">#2F80ED</color>

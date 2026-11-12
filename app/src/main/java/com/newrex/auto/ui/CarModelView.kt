@@ -123,6 +123,12 @@ class CarModelView(
             addView(driveLockBadge, lp(WRAP, WRAP))
         }
         addView(bottomBar, flp(MATCH, WRAP, Gravity.BOTTOM))
+
+        // Gerçek 1:1 Toyota C-HR 2024 3D Modelini Yükle
+        scope.launch {
+            Car3dModel.loadIfNeeded(context)
+            chassisCanvas.postInvalidate()
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -294,21 +300,10 @@ class CarModelView(
             set(v) { field = v; invalidate() }
 
         private val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-        private val biToneRoofPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = 0xEE111218.toInt() // Siyah tavan kaplama (Bi-Tone)
-        }
         private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = context.dpf(1.8f)
-        }
-        private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = context.dpf(4.5f)
-        }
-        private val wheelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = 0xFF0D0E14.toInt()
+            strokeWidth = context.dpf(0.8f)
+            color = 0x24FFFFFF
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -318,94 +313,20 @@ class CarModelView(
             if (w <= 0 || h <= 0) return
 
             val cx = w / 2f
-            val cy = h / 2f + context.dpf(4f)
+            val cy = h / 2f + context.dpf(6f)
+            val scale = (w * 0.95f).coerceAtMost(h * 2.2f)
 
-            val rad = Math.toRadians(rotationAngle.toDouble())
-            val scaleX = cos(rad).toFloat()
-            val carWidth = (w * 0.62f) * (0.85f + (0.15f * Math.abs(scaleX)))
-            val carHeight = h * 0.44f
-
-            val carColor = Palette.accent
-            bodyPaint.color = Palette.withAlpha(carColor, 0x40)
-            strokePaint.color = carColor
-            glowPaint.color = Palette.withAlpha(carColor, 0x22)
-
-            canvas.save()
-            canvas.translate(cx, cy)
-
-            // 1. Geniş Spor Tekerlekler (Jant Derinliği)
-            val wheelW = carWidth * 0.17f
-            val wheelH = carHeight * 0.32f
-            canvas.drawRoundRect(RectF(-carWidth * 0.43f, carHeight * 0.16f, -carWidth * 0.43f + wheelW, carHeight * 0.16f + wheelH), 8f, 8f, wheelPaint)
-            canvas.drawRoundRect(RectF(carWidth * 0.27f, carHeight * 0.16f, carWidth * 0.27f + wheelW, carHeight * 0.16f + wheelH), 8f, 8f, wheelPaint)
-
-            // 2. Toyota C-HR 2025 Gövde Hattı (Coupe-SUV, Keskin Burun, Arka Tavan Spoyleri)
-            val bodyPath = Path().apply {
-                moveTo(-carWidth * 0.47f, carHeight * 0.18f)
-                // Keskin Hammerhead Ön Tampon
-                lineTo(-carWidth * 0.45f, carHeight * 0.02f)
-                // Alçak Eğimli Kaput
-                lineTo(-carWidth * 0.26f, -carHeight * 0.05f)
-                // Ön Cam Eğimi
-                lineTo(-carWidth * 0.14f, -carHeight * 0.32f)
-                // Bi-Tone Tavan Hattı & Arka Entegre Spoyler
-                lineTo(carWidth * 0.16f, -carHeight * 0.32f)
-                lineTo(carWidth * 0.22f, -carHeight * 0.35f) // Arka spoyler çıkıntısı
-                // Keskin Coupe Arka Cam
-                lineTo(carWidth * 0.32f, -carHeight * 0.08f)
-                // Arka Işıklı Bagaj Çıkıntısı
-                lineTo(carWidth * 0.46f, carHeight * 0.06f)
-                lineTo(carWidth * 0.47f, carHeight * 0.18f)
-                close()
-            }
-
-            // Bi-Tone Siyah Tavan Alanı
-            val roofPath = Path().apply {
-                moveTo(-carWidth * 0.15f, -carHeight * 0.18f)
-                lineTo(-carWidth * 0.14f, -carHeight * 0.32f)
-                lineTo(carWidth * 0.22f, -carHeight * 0.35f)
-                lineTo(carWidth * 0.32f, -carHeight * 0.08f)
-                lineTo(carWidth * 0.20f, -carHeight * 0.12f)
-                close()
-            }
-
-            // Gövde Çizimi
-            canvas.drawPath(bodyPath, glowPaint)
-            canvas.drawPath(bodyPath, bodyPaint)
-            canvas.drawPath(roofPath, biToneRoofPaint)
-            canvas.drawPath(bodyPath, strokePaint)
-
-            // 3. Toyota C-HR 2025 "Hammerhead" C-Shape Ön LED Farları
-            val ledPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = context.dpf(2.4f)
-                color = if (scaleX < 0) 0xFFFF1744.toInt() else 0xFF00E5FF.toInt()
-            }
-            if (scaleX >= 0) {
-                // Ön C-şekilli Çekiç Başlı LED
-                val cLed = Path().apply {
-                    moveTo(-carWidth * 0.40f, carHeight * 0.00f)
-                    lineTo(-carWidth * 0.45f, carHeight * 0.03f)
-                    lineTo(-carWidth * 0.38f, carHeight * 0.08f)
-                }
-                canvas.drawPath(cLed, ledPaint)
-            } else {
-                // Arka Kesintisiz LED Işık Çubuğu ("TOYOTA C-HR" LED İmzası)
-                ledPaint.color = 0xFFFF1744.toInt()
-                canvas.drawLine(carWidth * 0.30f, carHeight * 0.06f, carWidth * 0.46f, carHeight * 0.06f, ledPaint)
-            }
-
-            // 4. Arka Tampon Üzerinde Minyatür Plaka Çizimi
-            val plateW = carWidth * 0.14f
-            val plateH = carHeight * 0.07f
-            val plateX = if (scaleX >= 0) -carWidth * 0.42f else carWidth * 0.32f
-            val plateY = carHeight * 0.11f
-            val plateBg = Paint().apply { color = Color.WHITE }
-            val plateTr = Paint().apply { color = 0xFF003399.toInt() }
-            canvas.drawRoundRect(RectF(plateX, plateY, plateX + plateW, plateY + plateH), 3f, 3f, plateBg)
-            canvas.drawRoundRect(RectF(plateX, plateY, plateX + (plateW * 0.25f), plateY + plateH), 2f, 2f, plateTr)
-
-            canvas.restore()
+            Car3dModel.draw(
+                canvas = canvas,
+                centerX = cx,
+                centerY = cy,
+                scale = scale,
+                yawAngleDeg = rotationAngle,
+                pitchAngleDeg = 18f,
+                bodyColor = Palette.accent,
+                paint = bodyPaint,
+                strokePaint = strokePaint
+            )
         }
     }
 }

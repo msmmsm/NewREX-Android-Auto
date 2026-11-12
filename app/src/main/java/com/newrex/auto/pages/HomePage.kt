@@ -189,7 +189,7 @@ class HomePage(ui: CarUi) : Page(ui) {
         container.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(label("NewREX Kokpit hakkında", 13f, Palette.TEXT_FAINT), lp(WRAP, WRAP))
+            addView(label("OmniDrive Kokpit hakkında", 13f, Palette.TEXT_FAINT), lp(WRAP, WRAP))
             addView(icon(R.drawable.ic_down, 22, Palette.TEXT_FAINT), lp(dp(22), dp(22)))
         }, lp(MATCH, WRAP).margins(t = dp(18)))
     }
@@ -214,7 +214,7 @@ class HomePage(ui: CarUi) : Page(ui) {
 
                 val heading = LinearLayout(this@with).apply {
                     orientation = LinearLayout.VERTICAL
-                    addView(label("NewREX", 17f, bold = true))
+                    addView(label("OmniDrive", 17f, bold = true))
                     val subText = when {
                         snap.isObdConnected -> "OBD-II CAN-Bus Aktif"
                         snap.speedSource == TelemetrySource.CAR_HARDWARE -> "Android Auto Donanım Bağlı"
