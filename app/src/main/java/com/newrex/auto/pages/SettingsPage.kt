@@ -160,9 +160,9 @@ class SettingsPage(ui: CarUi) : Page(ui) {
                 val devices = ObdManager.refreshPairedDevices(this@with)
                 if (devices.isEmpty()) {
                     addView(label("Eşleşmiş Bluetooth cihazı bulunamadı. Telefon Bluetooth ayarlarından ELM327 veya OBD2 adaptörünüzü eşleştirin.",
-                        12f, Palette.TEXT_FAINT, lines = 3).apply { margins(t = dp(6)) })
+                        12f, Palette.TEXT_FAINT, lines = 3), lp(MATCH, WRAP).margins(t = dp(6)))
                 } else {
-                    addView(label("Cihaz seçin ve bağlanın:", 12f, Palette.TEXT_DIM).apply { margins(t = dp(8)) })
+                    addView(label("Cihaz seçin ve bağlanın:", 12f, Palette.TEXT_DIM), lp(MATCH, WRAP).margins(t = dp(8)))
                     val devRow = LinearLayout(this@with).apply { orientation = LinearLayout.HORIZONTAL }
                     devices.forEach { dev ->
                         @android.annotation.SuppressLint("MissingPermission")
@@ -223,7 +223,7 @@ class SettingsPage(ui: CarUi) : Page(ui) {
                     "Otomobil hızlandıkça (yol ve rüzgar sesi arttıkça) radyo/TV sesini hafifçe yükseltir; " +
                         "kırmızı ışıkta veya yavaşlayınca yumuşakça orijinal seviyesine indirir.",
                     13f, Palette.TEXT_FAINT, lines = 3
-                ).apply { margins(t = dp(8)) })
+                ), lp(MATCH, WRAP).margins(t = dp(8)))
             }))
 
             addView(section("Park modu", LinearLayout(this@with).apply {

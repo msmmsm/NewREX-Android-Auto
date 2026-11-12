@@ -60,8 +60,8 @@ object PhoneMaintenanceHelper {
 
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    addView(label("${m.emoji}  ${m.title}", 15f, bold = true))
-                    addView(label(status, 12f, color), lp(MATCH, WRAP).margins(t = context.dp(3)))
+                    addView(context.label("${m.emoji}  ${m.title}", 15f, bold = true))
+                    addView(context.label(status, 12f, color), lp(MATCH, WRAP).margins(t = context.dp(3)))
                 }, lp(0, WRAP, 1f))
 
                 if (day != null) addView(Button(context).apply {
@@ -84,4 +84,5 @@ object PhoneMaintenanceHelper {
         }
     }
 }
+
 

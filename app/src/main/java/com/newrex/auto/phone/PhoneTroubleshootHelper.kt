@@ -46,7 +46,7 @@ object PhoneTroubleshootHelper {
             text = "Arabada görünür yap"
             setOnClickListener { fixInstall(activity) }
         }, lp(MATCH, WRAP).margins(t = activity.dp(8)))
-        box.addView(label("Yükleyiciler:\n" + SelfInstall.report(activity), 12f, Palette.TEXT_FAINT, lines = 4), lp(MATCH, WRAP).margins(t = activity.dp(4)))
+        box.addView(activity.label("Yükleyiciler:\n" + SelfInstall.report(activity), 12f, Palette.TEXT_FAINT, lines = 4), lp(MATCH, WRAP).margins(t = activity.dp(4)))
         return box
     }
 
@@ -101,10 +101,10 @@ object PhoneTroubleshootHelper {
     }
 
     fun buildEntryRow(activity: Activity): View {
-        if (BuildConfig.PARK_ONLY) return label("Bu NewREX'in Park sürümü: arabada park halindeyken açılır, King Installer gerekmez. " +
+        if (BuildConfig.PARK_ONLY) return activity.label("Bu NewREX'in Park sürümü: arabada park halindeyken açılır, King Installer gerekmez. " +
             "Android Auto → Geliştirici ayarları → \"Bilinmeyen kaynaklar\" açık olmalı.", 13f, Palette.TEXT_DIM, lines = 4)
         val box = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
-        val info = label("", 13f, Palette.TEXT_DIM, lines = 4)
+        val info = activity.label("", 13f, Palette.TEXT_DIM, lines = 4)
         val row = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
         val names = listOf("Otomatik", "Normal", "Park")
         fun paint() {
@@ -128,7 +128,7 @@ object PhoneTroubleshootHelper {
             }, lp(0, activity.dp(40), 1f).margins(r = activity.dp(6)))
         }
         paint()
-        box.addView(label("Arabaya giriş kapısı", 14f, bold = true))
+        box.addView(activity.label("Arabaya giriş kapısı", 14f, bold = true))
         box.addView(row, lp(MATCH, WRAP).margins(t = activity.dp(6)))
         box.addView(info, lp(MATCH, WRAP).margins(t = activity.dp(6)))
         return box
@@ -170,4 +170,5 @@ object PhoneTroubleshootHelper {
             "Uygulama arabada görünmüyorsa bu bölümün ekran görüntüsünü geliştiriciye gönder."
     }
 }
+
 

@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.newrex.auto.PlayerHub
+import com.newrex.auto.R
 import com.newrex.auto.data.Kind
 import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Prefs
@@ -54,10 +55,10 @@ class FavoritesPage(ui: CarUi) : Page(ui) {
         scope.launch { Prefs.changes.collect { refreshTabs(); refreshList() } }
     }
 
-    private fun refreshTabs() = with(ctx) {
+    private fun refreshTabs(): Unit = with(ctx) {
         tabs.removeAllViews()
         Tab.values().forEach { t ->
-            val count = countFor(t)
+            val count: Int = countFor(t)
             tabs.addView(
                 pill("${t.label} ($count)", selected = t == tab) { tab = t; refreshTabs(); refreshList() },
                 lp(WRAP, dp(40)).margins(r = dp(8)),
@@ -65,7 +66,7 @@ class FavoritesPage(ui: CarUi) : Page(ui) {
         }
     }
 
-    private fun countFor(t: Tab) = when (t) {
+    private fun countFor(t: Tab): Int = when (t) {
         Tab.ALL -> Prefs.favorites().size
         Tab.TV -> Prefs.favorites(Kind.TV).size
         Tab.RADIO -> Prefs.favorites(Kind.RADIO).size
@@ -84,18 +85,24 @@ class FavoritesPage(ui: CarUi) : Page(ui) {
             Tab.RECENT -> "Henüz bir şey çalmadın.\nTV ya da radyo açtığında burada görünür."
             else -> "Yıldızladığın kanal ve radyolar burada görünür.\nBir yayın açıp ★ tuşuna basarak favorilere ekle."
         } else ""
-        tiles.submit(list.map { e ->
+        tiles.items = list.map { e ->
             Tile(
+                key = e.key,
                 title = e.title,
                 subtitle = when (e.kind) {
                     Kind.TV -> "TV"
                     Kind.RADIO -> e.group.ifBlank { "Radyo" }
                     Kind.PODCAST -> "Podcast"
                 },
-                logo = e.logo,
-                action = { play(e, list) },
+                image = e.image,
+                fallbackIcon = when (e.kind) {
+                    Kind.TV -> R.drawable.ic_live_tv
+                    Kind.RADIO -> R.drawable.ic_radio
+                    Kind.PODCAST -> R.drawable.ic_podcast
+                },
+                onClick = { play(e, list) },
             )
-        })
+        }
     }
 
     private fun play(entry: MediaEntry, list: List<MediaEntry>) {

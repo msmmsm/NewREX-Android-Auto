@@ -265,7 +265,8 @@ class HomePage(ui: CarUi) : Page(ui) {
                     background = rounded(Palette.SURFACE, dpf(14), dp(1), 0x1AFFFFFF)
                     addView(label(header, 10f, Palette.TEXT_FAINT, bold = true))
                     val valColor = if (hasData) Palette.TEXT else Palette.TEXT_FAINT
-                    addView(label(value, 15f, valColor, bold = true).apply { margins(t = dp(2)) })
+                    val valView = label(value, 15f, valColor, bold = true)
+                    addView(valView, lp(WRAP, WRAP).margins(t = dp(2)))
                 }
                 val lp = lp(0, h, 1f).apply {
                     if (i > 0) margins(l = dp(8))
@@ -284,8 +285,9 @@ class HomePage(ui: CarUi) : Page(ui) {
             setPadding(dp(10), dp(6), dp(10), dp(6))
 
             val iconView = ImageView(this@with).apply {
-                if (e.logo.isNotBlank()) {
-                    load(e.logo) {
+                val imgUrl = e.image
+                if (!imgUrl.isNullOrBlank()) {
+                    load(imgUrl) {
                         crossfade(true)
                         transformations(RoundedCornersTransformation(dpf(6)))
                     }

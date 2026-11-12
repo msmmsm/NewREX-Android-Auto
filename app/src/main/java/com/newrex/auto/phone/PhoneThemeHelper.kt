@@ -48,9 +48,9 @@ object PhoneThemeHelper {
             onThemeChanged()
         }
         return arrayOf(
-            label("Tema rengi", 15f, bold = true), accentRow, accentPicker,
-            label("Arka plan", 15f, bold = true), bgRow, bgPicker,
-            label("🌈 ile istediğin rengi seç. Arka plan yazılar okunsun diye fazla açık olamaz. Değişiklik araç ekranına hemen yansır.",
+            context.label("Tema rengi", 15f, bold = true), accentRow, accentPicker,
+            context.label("Arka plan", 15f, bold = true), bgRow, bgPicker,
+            context.label("🌈 ile istediğin rengi seç. Arka plan yazılar okunsun diye fazla açık olamaz. Değişiklik araç ekranına hemen yansır.",
                 12f, Palette.TEXT_FAINT, lines = 3),
         )
     }
@@ -70,9 +70,9 @@ object PhoneThemeHelper {
         }
         updateLooksSummary(onSummaryRefresh)
         return arrayOf(
-            label("Saat", 15f, bold = true), clockRow,
-            label("Radyo frekans göstergesi", 15f, bold = true), fmRow,
-            label("◷ olanlar yuvarlak (akrepli) saat. Seçtiğin tasarım araç ekranına hemen yansır.", 12f, Palette.TEXT_FAINT, lines = 2),
+            context.label("Saat", 15f, bold = true), clockRow,
+            context.label("Radyo frekans göstergesi", 15f, bold = true), fmRow,
+            context.label("◷ olanlar yuvarlak (akrepli) saat. Seçtiğin tasarım araç ekranına hemen yansır.", 12f, Palette.TEXT_FAINT, lines = 2),
         )
     }
 
@@ -138,7 +138,7 @@ object PhoneThemeHelper {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 addView(preview, lp(context.dp(44), context.dp(40)))
-                addView(label("HEX", 13f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(l = context.dp(12), r = context.dp(8)))
+                addView(context.label("HEX", 13f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(l = context.dp(12), r = context.dp(8)))
                 addView(hexBox, lp(0, context.dp(40), 1f))
             }, lp(MATCH, WRAP).margins(t = context.dp(6)))
         }
@@ -160,7 +160,7 @@ object PhoneThemeHelper {
                 gravity = Gravity.CENTER_HORIZONTAL
                 setPadding(context.dp(8), context.dp(8), context.dp(8), context.dp(6))
                 addView(v, lp(MATCH, h))
-                addView(label(names[i], 13f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(t = context.dp(4)))
+                addView(context.label(names[i], 13f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(t = context.dp(4)))
             }
         }
         fun paint() {
@@ -185,4 +185,5 @@ object PhoneThemeHelper {
         }
     }
 }
+
 

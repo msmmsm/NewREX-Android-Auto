@@ -166,11 +166,12 @@ class MiniPlayerView(
             Kind.PODCAST -> entry.group.ifBlank { "Podcast" }
         }
 
-        if (entry.logo.isNotBlank()) {
-            logoView.load(entry.logo) {
+        val imgUrl = entry.image
+        if (!imgUrl.isNullOrBlank()) {
+            logoView.load(imgUrl) {
                 crossfade(true)
                 transformations(RoundedCornersTransformation(context.dpf(8)))
-                error(R.drawable.ic_launcher_foreground)
+                error(R.drawable.ic_car)
             }
         } else {
             logoView.setImageDrawable(rounded(Palette.accent, context.dpf(8)))

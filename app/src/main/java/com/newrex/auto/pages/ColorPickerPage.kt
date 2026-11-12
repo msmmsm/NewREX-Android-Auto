@@ -27,7 +27,9 @@ class ColorPickerPage(
 ) : Page(ui) {
     override fun build(): View = with(ctx) {
         var picked = initial
-        val preview = ColorPickerView(this, initial, maxValue) { c -> picked = c }
+        val preview = ColorPickerView(this, initial, maxValue).apply {
+            onChange = { c -> picked = c }
+        }
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL

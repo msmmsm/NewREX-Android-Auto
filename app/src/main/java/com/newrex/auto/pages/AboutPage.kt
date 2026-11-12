@@ -39,7 +39,7 @@ class AboutPage(ui: CarUi) : Page(ui) {
                     addView(icon(R.drawable.ic_car, 32, Palette.accent), lp(dp(32), dp(32)).margins(r = dp(12)))
                     addView(LinearLayout(this@with).apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(neonText("NewREX", 22f, Palette.accent, bold = true))
+                        addView(label("NewREX", 22f, Palette.accent, bold = true).apply { neonText() })
                         addView(label("Android Auto • v${BuildConfig.VERSION_NAME}", 13f, Palette.TEXT_DIM))
                     })
                 })

@@ -80,7 +80,7 @@ object VehiclePanels {
             splitStr to "0-50 km/s (Ara zaman)",
             bestStr to "🏆 En İyi Derece",
             firstColor = statusColor
-        ).apply { margins(t = dp(8)) })
+        ), lp(MATCH, WRAP).margins(t = dp(8)))
 
         val resetRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL

@@ -40,7 +40,7 @@ object PhoneCarHelper {
         val odo = CarLog.estimatedOdometer()
         val stats = CarLog.fuelStats(odo)
 
-        carBox.addView(label("Araç kilometre ve yakıt bilgisini paylaşmıyorsa bu değerlerle tahmin yapılır: " +
+        carBox.addView(context.label("Araç kilometre ve yakıt bilgisini paylaşmıyorsa bu değerlerle tahmin yapılır: " +
             "girdiğin kilometreye GPS ile gidilen yol eklenir.", 13f, Palette.TEXT_DIM, lines = 4))
 
         carBox.addView(numberRow(context, "Kilometre sayacı", odo?.let { "%.0f".format(it) } ?: "", "km") {
@@ -61,15 +61,15 @@ object PhoneCarHelper {
         })
 
         CarLog.oilKmLeft(odo)?.let { left ->
-            carBox.addView(label(if (left < 0) String.format(tr, "🛢️ Yağ değişimi %,.0f km gecikti!", -left)
+            carBox.addView(context.label(if (left < 0) String.format(tr, "🛢️ Yağ değişimi %,.0f km gecikti!", -left)
                 else String.format(tr, "🛢️ Yağ değişimine %,.0f km kaldı", left), 14f,
                 if (left < 1000) Palette.ORANGE else Palette.GREEN, bold = true), lp(MATCH, WRAP).margins(t = context.dp(6)))
         }
 
-        carBox.addView(label("⛽ Yakıt defteri", 15f, bold = true), lp(MATCH, WRAP).margins(t = context.dp(14)))
+        carBox.addView(context.label("⛽ Yakıt defteri", 15f, bold = true), lp(MATCH, WRAP).margins(t = context.dp(14)))
         val fuel = CarLog.fuel()
         if (fuel.isNotEmpty()) {
-            carBox.addView(label(listOf(
+            carBox.addView(context.label(listOf(
                 "Ortalama: " + (stats.consumption?.let { "%.1f L/100 km".format(it) } ?: "en az 2 dolum gerekli"),
                 "Km başı: " + (stats.costPerKm?.let { "%.2f ₺".format(it) } ?: "—"),
                 "Bu ay: " + String.format(tr, "%,.0f ₺", stats.thisMonth),
@@ -84,7 +84,7 @@ object PhoneCarHelper {
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(context.dp(12), context.dp(8), context.dp(6), context.dp(8))
                 background = rounded(0x14FFFFFF, context.dpf(12))
-                addView(label(fmt.format(Date(e.time)) + "\n" +
+                addView(context.label(fmt.format(Date(e.time)) + "\n" +
                     String.format(tr, "%.1f L • %,.0f ₺ • %,.0f km", e.liters, e.price, e.km), 13f, lines = 2), lp(0, WRAP, 1f))
                 addView(Button(context).apply {
                     text = "Sil"
@@ -113,9 +113,9 @@ object PhoneCarHelper {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            addView(label(title, 14f, lines = 2), lp(0, WRAP, 1f))
+            addView(context.label(title, 14f, lines = 2), lp(0, WRAP, 1f))
             addView(field, lp(context.dp(90), WRAP))
-            addView(label(unit, 13f, Palette.TEXT_DIM), lp(context.dp(28), WRAP).margins(l = context.dp(4)))
+            addView(context.label(unit, 13f, Palette.TEXT_DIM), lp(context.dp(28), WRAP).margins(l = context.dp(4)))
             addView(Button(context).apply {
                 text = "Kaydet"
                 isAllCaps = false
@@ -141,7 +141,7 @@ object PhoneCarHelper {
             orientation = LinearLayout.VERTICAL
             setPadding(context.dp(20), context.dp(8), context.dp(20), 0)
             addView(liters); addView(price); addView(km)
-            addView(label("Depoyu fullediğin alımları gir; tüketim böyle doğru hesaplanır. Kilometreyi aracın göstergesinden yaz.",
+            addView(context.label("Depoyu fullediğin alımları gir; tüketim böyle doğru hesaplanır. Kilometreyi aracın göstergesinden yaz.",
                 12f, Palette.TEXT_DIM, lines = 3), lp(MATCH, WRAP).margins(t = context.dp(6)))
         }
         AlertDialog.Builder(context)
@@ -158,4 +158,5 @@ object PhoneCarHelper {
             .show()
     }
 }
+
 
