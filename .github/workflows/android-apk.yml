@@ -45,7 +45,12 @@ jobs:
         run: ./gradlew --no-daemon testFullDebugUnitTest testParkDebugUnitTest || true
 
       - name: Build Full & Park APKs
-        run: ./gradlew --no-daemon assembleFullDebug assembleParkDebug
+        run: |
+          ./gradlew --no-daemon assembleFullDebug assembleParkDebug 2>&1 | tee build.log || {
+            echo "::error::Gradle build failed, dumping last 100 lines of log:"
+            tail -n 100 build.log
+            exit 1
+          }
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
