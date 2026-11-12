@@ -70,6 +70,16 @@ object CarLog {
         get() = sp.getInt("speedSound", 0)
         set(v) { sp.edit().putInt("speedSound", v).apply(); bump() }
 
+    /** En iyi 0-100 km/s hızlanma süresi (saniye). */
+    var bestZeroHundred: Float?
+        get() = sp.getFloat("best_0_100", 0f).takeIf { it > 0f }
+        set(v) { if (v != null) sp.edit().putFloat("best_0_100", v).apply() else sp.edit().remove("best_0_100").apply(); bump() }
+
+    /** Son yapılan 0-100 km/s hızlanma süresi (saniye). */
+    var lastZeroHundred: Float?
+        get() = sp.getFloat("last_0_100", 0f).takeIf { it > 0f }
+        set(v) { if (v != null) sp.edit().putFloat("last_0_100", v).apply() else sp.edit().remove("last_0_100").apply(); bump() }
+
 
     /** Depo hacmi (litre); menzil tahmini için. Toyota C-HR hibrit ~43 L. */
     var tankLiters: Float

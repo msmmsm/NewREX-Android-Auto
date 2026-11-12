@@ -64,6 +64,21 @@ object Prefs {
         get() = sp.getInt("tvQuality", 0)
         set(v) { sp.edit().putInt("tvQuality", v).apply(); bump(); com.newrex.auto.PlayerHub.applyQuality() }
 
+    /** Hıza duyarlı akıllı ses dengeleme (yol gürültüsü arttıkça ses hafifçe yükselir). */
+    var speedVolumeCompensate: Boolean
+        get() = sp.getBoolean("speedVolComp", true)
+        set(v) { sp.edit().putBoolean("speedVolComp", v).apply(); bump() }
+
+    /** Araç plakası (Örn: 34 REX 1337). */
+    var carPlate: String
+        get() = sp.getString("carPlate", "34 REX 1337") ?: "34 REX 1337"
+        set(v) { sp.edit().putString("carPlate", v.uppercase().trim()).apply(); bump() }
+
+    /** Araç marka ve modeli (Örn: Toyota C-HR (2025)). */
+    var carModel: String
+        get() = sp.getString("carModel", "Toyota C-HR (2025)") ?: "Toyota C-HR (2025)"
+        set(v) { sp.edit().putString("carModel", v.trim()).apply(); bump() }
+
     /** Tasarruf modu: 0 kapalı, 1 açık, 2 otomatik (pil tasarrufu / ısınma). Varsayılan otomatik. */
     var saverMode: Int
         get() = sp.getInt("saverMode", 2)

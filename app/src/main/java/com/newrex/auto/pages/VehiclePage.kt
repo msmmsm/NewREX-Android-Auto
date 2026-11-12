@@ -124,14 +124,47 @@ class VehiclePage(ui: CarUi) : Page(ui) {
             }
         }
 
-        val model = label("", 14f, Palette.TEXT_DIM)
-        observe(VehicleData.model) { model.text = it?.let { m -> "🚗 $m" } ?: ""; model.visibility = if (it == null) View.GONE else View.VISIBLE }
+        val headerCard = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(8), dp(14), dp(8))
+            background = rounded(Palette.SURFACE, dpf(14), dp(1), 0x22FFFFFF)
+
+            val carTitle = label(Prefs.carModel, 15f, bold = true)
+            addView(carTitle, lp(0, WRAP, 1f))
+
+            // Gerçek Türk Plakası Rozeti
+            val plateBox = LinearLayout(this@with).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                background = rounded(android.graphics.Color.WHITE, dpf(4), dp(1), 0xFF888888.toInt())
+                setPadding(0, 0, dp(6), 0)
+
+                val trBadge = label("TR", 9f, android.graphics.Color.WHITE, bold = true).apply {
+                    background = rounded(0xFF003399.toInt(), dpf(3))
+                    setPadding(dp(4), dp(2), dp(4), dp(2))
+                }
+                addView(trBadge, lp(WRAP, MATCH))
+
+                val plateText = label(Prefs.carPlate, 11f, android.graphics.Color.BLACK, bold = true).apply {
+                    typeface = android.graphics.Typeface.MONOSPACE
+                    setPadding(dp(6), dp(2), 0, dp(2))
+                }
+                addView(plateText, lp(WRAP, WRAP))
+            }
+            addView(plateBox, lp(WRAP, WRAP))
+        }
+
+        observe(VehicleData.model) {
+            val titleText = it ?: Prefs.carModel
+            (headerCard.getChildAt(0) as? TextView)?.text = "🚗 $titleText"
+        }
 
         lower = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(12))
-            addView(model, lp(MATCH, WRAP).margins(l = dp(4), b = dp(6)))
+            addView(headerCard, lp(MATCH, WRAP).margins(b = dp(8)))
             addView(HorizontalScrollView(this@with).apply {
                 isHorizontalScrollBarEnabled = false
                 isFillViewport = true
@@ -163,205 +196,22 @@ class VehiclePage(ui: CarUi) : Page(ui) {
 
     private fun buildLower() = with(ctx) {
         lower.removeAllViews()
-        listOf(drivingPanel(), speedAlertPanel(), fuelPanel(), maintenancePanel(), tripsPanel(), parkPanel()).forEach {
+        VehiclePanels.buildPanels(ctx, currentKm()).forEach {
             lower.addView(it, lp(MATCH, WRAP).margins(t = dp(10)))
         }
     }
 
-    private fun box(iconRes: Int, title: String): LinearLayout = with(ctx) {
-        panel().apply {
-            setPadding(dp(16), dp(12), dp(16), dp(12))
-            addView(LinearLayout(this@with).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                addView(icon(iconRes, 18, Palette.accent), lp(dp(18), dp(18)).margins(r = dp(8)))
-                addView(label(title, 16f, bold = true))
-            }, lp(MATCH, WRAP).margins(b = dp(8)))
-        }
-    }
-
-    /** Değer + açıklama şeklinde küçük istatistik kutuları yan yana. İlk değerin rengi [firstColor]. */
-    private fun stats(vararg items: Pair<String, String>, firstColor: Int = Palette.TEXT): View = with(ctx) {
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            items.forEachIndexed { i, (value, caption) ->
-                addView(LinearLayout(this@with).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), dp(8), dp(12), dp(8))
-                    background = rounded(0x14FFFFFF, dpf(12))
-                    addView(label(value, 20f, if (i == 0) firstColor else Palette.TEXT, bold = true))
-                    addView(label(caption, 12f, Palette.TEXT_DIM, lines = 2), lp(WRAP, WRAP).margins(t = dp(2)))
-                }, lp(0, WRAP, 1f).margins(r = dp(8)))
+    private fun refreshDriving() = with(ctx) {
+        // Canlı sürüş puanı yenileme
+        drivingBox?.let { b ->
+            val newDriving = VehiclePanels.drivingPanel(ctx)
+            val idx = lower.indexOfChild(b)
+            if (idx >= 0) {
+                lower.removeViewAt(idx)
+                lower.addView(newDriving, idx, lp(MATCH, WRAP).margins(t = dp(10)))
+                drivingBox = newDriving as? LinearLayout
             }
         }
-    }
-
-    private fun drivingPanel(): View {
-        val b = box(R.drawable.ic_car, "Sürüş puanı (bu yolculuk)")
-        drivingBox = b
-        refreshDriving()
-        return b
-    }
-
-    private fun refreshDriving() = with(ctx) {
-        val b = drivingBox ?: return@with
-        while (b.childCount > 1) b.removeViewAt(1)
-        val km = DriveState.tripMeters.value / 1000f
-        val score = TripStats.score(km)
-        val movingMin = TripStats.movingMs / 60_000f
-        val avg = if (movingMin > 1f) km / movingMin * 60f else null
-        val color = when { score >= 85 -> Palette.GREEN; score >= 60 -> Palette.ORANGE; else -> Palette.RED }
-        b.addView(stats(
-            "$score / 100" to "Ekonomik sürüş",
-            "${TripStats.harshAccel.value}" to "Ani hızlanma",
-            "${TripStats.harshBrake.value}" to "Sert fren",
-            "%.0f".format(TripStats.maxKmh.value) to "En yüksek km/s",
-            (avg?.let { "%.0f".format(it) } ?: "—") to "Ortalama km/s",
-            firstColor = color,
-        ))
-        b.addView(label("Ani hızlanma ve sert frenler puanı düşürür; yumuşak sürüş yakıt tasarrufu sağlar.",
-            12f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(8)))
-    }
-
-    private fun speedAlertPanel(): View = with(ctx) {
-        val b = box(R.drawable.ic_speed, "Hız uyarısı")
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val current = CarLog.speedLimit
-        listOf(0, 50, 70, 90, 110, 120, 130, 140).forEach { v ->
-            row.addView(pill(if (v == 0) "Kapalı" else "$v", selected = v == current, heightDp = 40) {
-                CarLog.speedLimit = v
-            }, lp(WRAP, dp(40)).margins(r = dp(8)))
-        }
-        b.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(row) })
-        // Uyarı sesi: dokununca seçilir ve bir kez dinletilir
-        val sounds = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        com.newrex.auto.SpeedAlert.SOUNDS.forEachIndexed { i, name ->
-            sounds.addView(pill("🔔 $name", selected = i == CarLog.speedSound, heightDp = 40) {
-                CarLog.speedSound = i
-                com.newrex.auto.SpeedAlert.play(ctx, i)
-            }, lp(WRAP, dp(40)).margins(r = dp(8)))
-        }
-        b.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(sounds) },
-            lp(MATCH, WRAP).margins(t = dp(8)))
-        b.addView(label(if (current == 0) "Seçtiğin hızı geçince arabanın hoparlöründen sesli uyarı ve ekranda büyük kırmızı uyarı çıkar."
-            else "$current km/s geçilince uyarır. Hız GPS ile ölçüldüğünde birkaç km/s sapabilir.",
-            12f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(8)))
-        b
-    }
-
-    private fun fuelPanel(): View = with(ctx) {
-        val b = box(R.drawable.ic_gas, "Yakıt defteri")
-        val s = CarLog.fuelStats(currentKm())
-        if (CarLog.fuel().isEmpty()) {
-            b.addView(label("Depoyu fullediğinde telefondaki NewREX uygulamasında \"Yakıt ve kilometre\" bölümüne " +
-                "litre, tutar ve kilometreyi gir. Ortalama tüketim, km başı maliyet ve tahmini menzil burada çıkar.",
-                13f, Palette.TEXT_DIM, lines = 4))
-        } else {
-            b.addView(stats(
-                (s.consumption?.let { "%.1f".format(it) } ?: "—") to "L / 100 km",
-                (s.costPerKm?.let { "%.2f ₺".format(it) } ?: "—") to "km başı",
-                String.format(tr, "%,.0f ₺", s.thisMonth) to "Bu ay",
-                (s.rangeKm?.let { "~%.0f km".format(it) } ?: "—") to "Tahmini menzil",
-            ))
-            if (s.consumption == null) b.addView(label("Ortalama için en az iki dolum ve 50 km yol gerekiyor.",
-                12f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(8)))
-        }
-        b
-    }
-
-    private fun maintenancePanel(): View = with(ctx) {
-        val b = box(R.drawable.ic_build, "Bakım hatırlatıcı")
-        CarLog.oilKmLeft(currentKm())?.let { left ->
-            val color = when { left < 0 -> Palette.RED; left <= 1000 -> Palette.ORANGE; else -> Palette.GREEN }
-            val text = if (left < 0) String.format(tr, "%,.0f km geçti", -left) else String.format(tr, "%,.0f km kaldı", left)
-            b.addView(row("🛢️  Yağ değişimi", text, color), lp(MATCH, WRAP).margins(b = dp(6)))
-        }
-        val due = Prefs.maintenanceDue()
-        if (due.isEmpty() && CarLog.oilChangeKm <= 0f) {
-            b.addView(label("Muayene, sigorta, bakım ve lastik tarihlerini, son yağ değişimi kilometresini telefondaki " +
-                "NewREX uygulamasından gir. Zamanı yaklaşınca burada ve araç açılınca uyarı çıkar.", 13f, Palette.TEXT_DIM, lines = 3))
-        }
-        due.forEach { (m, days) ->
-            val color = when { days < 0 -> Palette.RED; days <= 15 -> Palette.ORANGE; else -> Palette.GREEN }
-            val text = when { days < 0 -> "${-days} gün gecikti"; days == 0L -> "Bugün!"; else -> "$days gün kaldı" }
-            b.addView(row("${m.emoji}  ${m.title}", text, color), lp(MATCH, WRAP).margins(b = dp(6)))
-        }
-        b
-    }
-
-    private fun row(title: String, value: String, color: Int): View = with(ctx) {
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            background = rounded(Palette.withAlpha(color, 0x22), dpf(12))
-            addView(label(title, 15f), lp(0, WRAP, 1f))
-            addView(label(value, 14f, color, bold = true))
-        }
-    }
-
-    /** Yolculuk geçmişinde açık sayfa (her sayfada [TRIPS_PER_PAGE] yolculuk). */
-    private var tripPage = 0
-    private val TRIPS_PER_PAGE = 10
-
-    private fun tripsPanel(): View = with(ctx) {
-        val b = box(R.drawable.ic_history, "Yolculuk geçmişi")
-        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        b.addView(list, lp(MATCH, WRAP))
-        fillTrips(list)
-        b
-    }
-
-    private fun fillTrips(list: LinearLayout): Unit = with(ctx) {
-        list.removeAllViews()
-        val all = CarLog.trips()
-        if (all.isEmpty()) {
-            list.addView(label("Araç kapanınca (Android Auto bağlantısı kesilince) yolculuk buraya kaydedilir.",
-                13f, Palette.TEXT_DIM, lines = 2))
-            return
-        }
-        val pages = (all.size + TRIPS_PER_PAGE - 1) / TRIPS_PER_PAGE
-        tripPage = tripPage.coerceIn(0, pages - 1)
-        val trips = all.drop(tripPage * TRIPS_PER_PAGE).take(TRIPS_PER_PAGE)
-        val fmt = SimpleDateFormat("d MMM HH:mm", tr)
-        trips.forEach { t ->
-            list.addView(LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(12), dp(8), dp(12), dp(8))
-                background = rounded(0x14FFFFFF, dpf(12))
-                addView(label(fmt.format(Date(t.start)), 14f, bold = true), lp(dp(120), WRAP))
-                addView(label("%.1f km • %s".format(t.km, duration(((t.end - t.start) / 60_000).coerceAtLeast(0))), 14f), lp(0, WRAP, 1f))
-                addView(label("ort ${t.avgKmh} • en çok ${t.maxKmh} km/s", 13f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(r = dp(12)))
-                val c = when { t.score >= 85 -> Palette.GREEN; t.score >= 60 -> Palette.ORANGE; else -> Palette.RED }
-                addView(label("${t.score}", 15f, c, bold = true))
-            }, lp(MATCH, WRAP).margins(b = dp(6)))
-        }
-        if (pages > 1) {
-            list.addView(LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                if (tripPage > 0) addView(pill("‹ Yeni yolculuklar", heightDp = 40) { tripPage--; fillTrips(list) },
-                    lp(WRAP, dp(40)).margins(r = dp(12)))
-                addView(label("Sayfa ${tripPage + 1} / $pages  •  ${all.size} yolculuk", 14f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(r = dp(12)))
-                if (tripPage < pages - 1) addView(pill("Eski yolculuklar ›", heightDp = 40) { tripPage++; fillTrips(list) },
-                    lp(WRAP, dp(40)))
-            }, lp(MATCH, WRAP).margins(t = dp(4)))
-        }
-    }
-
-    private fun parkPanel(): View = with(ctx) {
-        val b = box(R.drawable.ic_place, "Park")
-        val lines = ArrayList<String>()
-        if (!DriveState.driving.value && DriveState.stoppedSince > 0) {
-            lines += "Şu an duruyorsun: ${duration((System.currentTimeMillis() - DriveState.stoppedSince) / 60_000)}"
-        }
-        val spot = Prefs.parkedSpot
-        lines += if (spot == null) "Araç kapanınca bulunduğun yer kaydedilir; telefondaki \"Arabam nerede?\" bölümünden haritada açarsın."
-        else "Son park yeri: " + SimpleDateFormat("d MMMM HH:mm", tr).format(Date(spot.time)) +
-            " — telefondan haritada açabilir, otopark süresi için hatırlatıcı kurabilirsin."
-        b.addView(label(lines.joinToString("\n"), 13f, Palette.TEXT_DIM, lines = 4))
-        b
     }
 
     /** Büyük değer + alt yazı. Dönen çift: (değer, alt yazı). */

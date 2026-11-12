@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NewREX Ağ Güvenliği Yapılandırması (mobile-security-coder standartları) -->
+<network-security-config>
+    <!-- Hassas platformlar (YouTube, Netflix, TV+, Google, GitHub) için HTTP kesinlikle yasaktır (Sadece HTTPS) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">google.com</domain>
+        <domain includeSubdomains="true">youtube.com</domain>
+        <domain includeSubdomains="true">googlevideo.com</domain>
+        <domain includeSubdomains="true">netflix.com</domain>
+        <domain includeSubdomains="true">tvplus.com.tr</domain>
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <domain includeSubdomains="true">open-meteo.com</domain>
+    </domain-config>
+
+    <!-- Yerel ağ, kullanıcı özel IPTV listeleri ve radyo akışları için kontrollü temel yapılandırma -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+
