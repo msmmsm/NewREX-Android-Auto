@@ -9,6 +9,7 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import android.widget.LinearLayout
 import com.newrex.auto.WeatherHub
+import com.newrex.auto.DriveState
 import com.newrex.auto.data.WeatherApi
 import com.newrex.auto.PlayerHub
 import com.newrex.auto.R
@@ -63,6 +64,9 @@ class HomePage(ui: CarUi) : Page(ui) {
         scope.launch {
             combine(ui.compact, Prefs.changes, WeatherHub.report) { c, _, _ -> c }.collect { populate(it) }
         }
+        scope.launch {
+            DriveState.driving.collect { populate(ui.compact.value) }
+        }
         scroll
     }
 
@@ -70,6 +74,39 @@ class HomePage(ui: CarUi) : Page(ui) {
         if (lastWidth == 0) return
         container.removeAllViews()
         val gap = dp(if (compact) 8 else 12)
+
+        // Sayfa başlığı: gerçek sürüş durumunu gösterir; araçtan veri gelmiyorsa
+        // hız/yakıt/menzil gibi değerler uydurulmaz.
+        val driving = DriveState.driving.value
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            background = rounded(Palette.SURFACE, dpf(18), dp(1), 0x22FFFFFF)
+            val badge = FrameLayout(this@with).apply {
+                background = rounded(Palette.withAlpha(Palette.accent, 0x35), dpf(14))
+                addView(icon(R.drawable.ic_car, 26, Palette.accent),
+                    flp(dp(26), dp(26), Gravity.CENTER))
+            }
+            addView(badge, lp(dp(48), dp(48)))
+            val heading = LinearLayout(this@with).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(label("NewREX", 19f, bold = true))
+                addView(label("Medya ve araç merkezi", 12f, Palette.TEXT_DIM),
+                    lp(WRAP, WRAP).margins(t = dp(2)))
+            }
+            addView(heading, lp(0, WRAP, 1f).margins(l = dp(12)))
+            val stateColor = if (driving) Palette.ORANGE else Palette.GREEN
+            addView(label(if (driving) "SÜRÜŞTE" else "PARK", 11f, stateColor, bold = true).apply {
+                setPadding(dp(10), dp(7), dp(10), dp(7))
+                background = rounded(Palette.withAlpha(stateColor, 0x28), dpf(12))
+            })
+        }
+        container.addView(header, lp(MATCH, dp(if (compact) 68 else 76)).margins(b = gap))
+
+        container.addView(label("MEDYA", 11f, Palette.TEXT_FAINT, bold = true)
+            .apply { letterSpacing = 0.12f },
+            lp(MATCH, WRAP).margins(b = dp(6)))
 
         val bigCards = listOf(
             bigCard("TV", "Kanallar, IPTV, TV+, Netflix", R.drawable.ic_live_tv, 0xFF06B6D4.toInt(), CardArt.Kind.TV, compact, live = true) { ui.push(TvHubPage(ui)) },
