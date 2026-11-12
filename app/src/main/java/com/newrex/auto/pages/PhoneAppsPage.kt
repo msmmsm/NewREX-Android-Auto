@@ -61,7 +61,7 @@ class PhoneAppsPage(ui: CarUi) : Page(ui) {
                 val textBox = LinearLayout(this@with).apply {
                     orientation = LinearLayout.VERTICAL
                     addView(label("Telefon Uygulama Çekmecesi", 15f, bold = true))
-                    addView(label("Telefonunuzda yüklü tüm uygulamaları doğrudan açabilirsiniz.", 11f, Palette.TEXT_DIM))
+                    addView(label("Uygulama telefonda açılır ve araç ekranı otomatik olarak canlı Yansıtma moduna geçer.", 11f, Palette.TEXT_DIM))
                 }
                 addView(textBox, lp(0, WRAP, 1f))
                 addView(countBadge, lp(WRAP, WRAP))
@@ -116,6 +116,8 @@ class PhoneAppsPage(ui: CarUi) : Page(ui) {
         }
         if (launchIntent != null) {
             ctx.startActivity(launchIntent)
+            // Multimedya ekranını da otomatik olarak canlı Yansıtma sayfasına yönlendir
+            ui.push(MirrorPage(ui))
         }
     }
 
