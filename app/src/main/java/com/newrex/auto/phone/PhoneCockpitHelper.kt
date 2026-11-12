@@ -36,6 +36,31 @@ object PhoneCockpitHelper {
     ) = with(context) {
         cockpitBox.removeAllViews()
 
+        // 0. Sesli Karşılama Ayarı
+        cockpitBox.addView(label("🎙️ Türkçe Sesli Karşılama", 15f, bold = true))
+        val voiceRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = rounded(0x14FFFFFF, dpf(12))
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+
+            val voiceStatus = label(if (Prefs.voiceWelcome) "Açık (\"İyi yolculuklar ${Prefs.userName}\")" else "Kapalı",
+                14f, if (Prefs.voiceWelcome) Palette.GREEN else Palette.TEXT_DIM, bold = true)
+            addView(voiceStatus, lp(0, WRAP, 1f))
+
+            addView(Button(context).apply {
+                text = if (Prefs.voiceWelcome) "Kapat" else "Aç"
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = rounded(0x22FFFFFF, dpf(10))
+                setOnClickListener {
+                    Prefs.voiceWelcome = !Prefs.voiceWelcome
+                    onRefreshNeeded()
+                }
+            })
+        }
+        cockpitBox.addView(voiceRow, lp(MATCH, WRAP).margins(b = dp(12)))
+
         // 1. Plaka ve Model Düzenleme
         cockpitBox.addView(label("🚘 Araç ve Plaka Özelleştirme", 15f, bold = true))
         cockpitBox.addView(label("Araç kokpitinde ve 3D Toyota C-HR modelinde görüntülenecek plaka ve model adı:",

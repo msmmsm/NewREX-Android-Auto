@@ -79,6 +79,26 @@ object Prefs {
         get() = sp.getString("carModel", "Toyota C-HR (2025)") ?: "Toyota C-HR (2025)"
         set(v) { sp.edit().putString("carModel", v.trim()).apply(); bump() }
 
+    /** Sesli karşılama (araca bağlanınca 'İyi yolculuklar Murat' karşılaması). */
+    var voiceWelcome: Boolean
+        get() = sp.getBoolean("voiceWelcome", true)
+        set(v) { sp.edit().putBoolean("voiceWelcome", v).apply(); bump() }
+
+    /** Sesli karşılamada hitap edilecek isim. */
+    var userName: String
+        get() = sp.getString("userName", "Murat") ?: "Murat"
+        set(v) { sp.edit().putString("userName", v.trim()).apply(); bump() }
+
+    /** Sesli karşılama günde yalnızca bir kez mi yapılsın? */
+    var voiceWelcomeOnceDaily: Boolean
+        get() = sp.getBoolean("voiceWelcomeOnce", true)
+        set(v) { sp.edit().putBoolean("voiceWelcomeOnce", v).apply(); bump() }
+
+    /** En son sesli karşılama yapılan günün epoch day değeri. */
+    var lastWelcomeDay: Long
+        get() = sp.getLong("lastWelcomeDay", 0L)
+        set(v) = sp.edit().putLong("lastWelcomeDay", v).apply()
+
     /** Tasarruf modu: 0 kapalı, 1 açık, 2 otomatik (pil tasarrufu / ısınma). Varsayılan otomatik. */
     var saverMode: Int
         get() = sp.getInt("saverMode", 2)

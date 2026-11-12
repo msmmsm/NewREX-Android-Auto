@@ -86,6 +86,35 @@ class SettingsPage(ui: CarUi) : Page(ui) {
                     "Değişiklik açık kanala hemen uygulanır.", 13f, Palette.TEXT_FAINT, lines = 3), lp(MATCH, WRAP).margins(t = dp(10)))
             }))
 
+            // Sesli Karşılama
+            addView(section("Sesli Karşılama", LinearLayout(this@with).apply {
+                orientation = LinearLayout.VERTICAL
+                val toggleLabel = label("", 15f, bold = true)
+                fun updateVoice() {
+                    val on = Prefs.voiceWelcome
+                    toggleLabel.text = if (on) "Sesli karşılama açık: \"İyi yolculuklar ${Prefs.userName}\"" else "Sesli karşılama kapalı"
+                    toggleLabel.setTextColor(if (on) Palette.GREEN else Palette.TEXT_DIM)
+                }
+                updateVoice()
+                addView(toggleLabel, lp(MATCH, WRAP))
+
+                val btnRow = LinearLayout(this@with).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    addView(pill(if (Prefs.voiceWelcome) "Kapat" else "Aç") {
+                        Prefs.voiceWelcome = !Prefs.voiceWelcome
+                        updateVoice()
+                    }, lp(WRAP, dp(40)).margins(r = dp(8), t = dp(8)))
+
+                    addView(pill("Test Et (Dinle)") {
+                        com.newrex.auto.VoiceWelcome.trigger(ctx)
+                    }, lp(WRAP, dp(40)).margins(t = dp(8)))
+                }
+                addView(btnRow, lp(MATCH, WRAP))
+
+                addView(label("Araca bağlandığınızda günün saatine göre Türkçe sesli karşılama yapar.",
+                    12f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(6)))
+            }))
+
             addView(section("Araç Profili & Plaka", LinearLayout(this@with).apply {
                 orientation = LinearLayout.VERTICAL
                 val carRow = LinearLayout(this@with).apply {

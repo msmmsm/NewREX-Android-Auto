@@ -180,6 +180,7 @@ class CarUi(val ctx: Context, startOnApps: Boolean = false, private val onRebuil
             }
         }
         handler.postDelayed({ showStartupAlerts() }, 2500)
+        com.newrex.auto.VoiceWelcome.trigger(ctx)
         scope.launch {
             combine(PlayerHub.now, PlayerHub.playing, Prefs.changes) { e, p, _ -> e to p }
                 .collect { refreshMini() }
