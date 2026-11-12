@@ -99,6 +99,35 @@ object Prefs {
         get() = sp.getLong("lastWelcomeDay", 0L)
         set(v) = sp.edit().putLong("lastWelcomeDay", v).apply()
 
+    /** Ana ekran Widget Görünürlük Tercihleri */
+    var showWidgetHeader: Boolean
+        get() = sp.getBoolean("widgetHeader", true)
+        set(v) { sp.edit().putBoolean("widgetHeader", v).apply(); bump() }
+
+    var showWidgetCar: Boolean
+        get() = sp.getBoolean("widgetCar", true)
+        set(v) { sp.edit().putBoolean("widgetCar", v).apply(); bump() }
+
+    var showWidgetTelemetry: Boolean
+        get() = sp.getBoolean("widgetTelemetry", true)
+        set(v) { sp.edit().putBoolean("widgetTelemetry", v).apply(); bump() }
+
+    var showWidgetEqualizer: Boolean
+        get() = sp.getBoolean("widgetEqualizer", true)
+        set(v) { sp.edit().putBoolean("widgetEqualizer", v).apply(); bump() }
+
+    var equalizerStyle: Int
+        get() = sp.getInt("equalizerStyle", 0)
+        set(v) { sp.edit().putInt("equalizerStyle", v).apply(); bump() }
+
+    var showWidgetWeather: Boolean
+        get() = sp.getBoolean("widgetWeather", true)
+        set(v) { sp.edit().putBoolean("widgetWeather", v).apply(); bump() }
+
+    var showWidgetRecents: Boolean
+        get() = sp.getBoolean("widgetRecents", true)
+        set(v) { sp.edit().putBoolean("widgetRecents", v).apply(); bump() }
+
     /** Tasarruf modu: 0 kapalı, 1 açık, 2 otomatik (pil tasarrufu / ısınma). Varsayılan otomatik. */
     var saverMode: Int
         get() = sp.getInt("saverMode", 2)

@@ -74,6 +74,47 @@ class SettingsPage(ui: CarUi) : Page(ui) {
                 addView(bgs)
             }))
 
+            addView(section("Ana Ekran Widget Yönetimi", LinearLayout(this@with).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(label("Ana ekranda görünmesini istediğiniz bileşenleri açıp kapatabilirsiniz:", 12f, Palette.TEXT_DIM), lp(MATCH, WRAP).margins(b = dp(10)))
+
+                fun toggleRow(title: String, getter: () -> Boolean, setter: (Boolean) -> Unit) = LinearLayout(this@with).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    background = rounded(0x14FFFFFF, dpf(10))
+                    setPadding(dp(12), dp(6), dp(8), dp(6))
+                    val statusText = label(if (getter()) "AÇIK" else "KAPALI", 12f, if (getter()) Palette.GREEN else Palette.TEXT_DIM, bold = true)
+                    addView(label(title, 14f, bold = true), lp(0, WRAP, 1f))
+                    addView(statusText, lp(WRAP, WRAP).margins(r = dp(10)))
+                    addView(pill(if (getter()) "Gizle" else "Göster") {
+                        setter(!getter())
+                        ui.pop(); ui.push(SettingsPage(ui))
+                    }, lp(WRAP, dp(34)))
+                }
+
+                addView(toggleRow("Üst Durum, Saat & Hava", { Prefs.showWidgetHeader }, { Prefs.showWidgetHeader = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+                addView(toggleRow("Canlı Müzik Ekolayzırı", { Prefs.showWidgetEqualizer }, { Prefs.showWidgetEqualizer = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+
+                if (Prefs.showWidgetEqualizer) {
+                    val eqStyles = com.newrex.auto.ui.EqualizerView.Style.values()
+                    val eqStyleRow = LinearLayout(this@with).apply { orientation = LinearLayout.HORIZONTAL }
+                    eqStyles.forEachIndexed { idx, st ->
+                        eqStyleRow.addView(pill(st.label, selected = Prefs.equalizerStyle == idx) {
+                            Prefs.equalizerStyle = idx
+                            ui.pop(); ui.push(SettingsPage(ui))
+                        }, lp(WRAP, dp(34)).margins(r = dp(6), t = dp(2), b = dp(6)))
+                    }
+                    addView(HorizontalScrollView(this@with).apply {
+                        isHorizontalScrollBarEnabled = false
+                        addView(eqStyleRow)
+                    }, lp(MATCH, WRAP))
+                }
+
+                addView(toggleRow("3D Araç Modeli", { Prefs.showWidgetCar }, { Prefs.showWidgetCar = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+                addView(toggleRow("Canlı Telemetri & Hız", { Prefs.showWidgetTelemetry }, { Prefs.showWidgetTelemetry = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+                addView(toggleRow("Son Çalınanlar Şeridi", { Prefs.showWidgetRecents }, { Prefs.showWidgetRecents = it }), lp(MATCH, WRAP))
+            }))
+
             addView(section("TV Görüntü Kalitesi", LinearLayout(this@with).apply {
                 orientation = LinearLayout.VERTICAL
                 val row = LinearLayout(this@with).apply { orientation = LinearLayout.HORIZONTAL }

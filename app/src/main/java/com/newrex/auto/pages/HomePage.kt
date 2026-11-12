@@ -26,6 +26,7 @@ import com.newrex.auto.data.WeatherApi
 import com.newrex.auto.ui.CarModelView
 import com.newrex.auto.ui.CarUi
 import com.newrex.auto.ui.CardArt
+import com.newrex.auto.ui.EqualizerView
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Page
 import com.newrex.auto.ui.Palette
@@ -99,16 +100,27 @@ class HomePage(ui: CarUi) : Page(ui) {
         val gap = dp(if (compact) 8 else 12)
         val snap = TelemetryHub.telemetry.value
 
-        // 1. Üst Durum & Bağlantı Çubuğu (Header)
-        container.addView(buildHeader(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        // 1. Üst Durum & Bağlantı Çubuğu (Header Widget)
+        if (Prefs.showWidgetHeader) {
+            container.addView(buildHeader(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        }
 
-        // 2. Merkez Araç Modeli ve Durum Kartı (3D / 2.5D Görünüm)
-        container.addView(buildVehicleCenterCard(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        // 2. Canlı Ekolayzır (Equalizer / Spectrum Analyzer Widget)
+        if (Prefs.showWidgetEqualizer) {
+            container.addView(buildEqualizerWidget(compact), lp(MATCH, dp(if (compact) 46 else 60)).margins(b = gap))
+        }
 
-        // 3. Canlı Telemetri Gösterge Çubuğu (Hız, Devir/Voltaj, Yakıt, Menzil)
-        container.addView(buildTelemetryRow(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        // 3. Merkez Araç Modeli ve Durum Kartı (3D / 2.5D Görünüm Widget)
+        if (Prefs.showWidgetCar) {
+            container.addView(buildVehicleCenterCard(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        }
 
-        // 4. Medya Başlatıcıları ([ TV ] [ YouTube ] [ Radyo ] [ Web ])
+        // 4. Canlı Telemetri Gösterge Çubuğu (Hız, Devir/Voltaj, Yakıt, Menzil Widget)
+        if (Prefs.showWidgetTelemetry) {
+            container.addView(buildTelemetryRow(compact, snap), lp(MATCH, WRAP).margins(b = gap))
+        }
+
+        // 5. Medya Başlatıcıları ([ TV ] [ YouTube ] [ Radyo ] [ Web ])
         container.addView(
             label("MEDYA MERKEZİ", 11f, Palette.TEXT_FAINT, bold = true).apply { letterSpacing = 0.12f },
             lp(MATCH, WRAP).margins(b = dp(6))
@@ -130,19 +142,22 @@ class HomePage(ui: CarUi) : Page(ui) {
         val bigPerRow = if (compact) 2 else 4
         addGrid(bigCards, bigPerRow, dp(if (compact) 110 else 180), gap)
 
-        // 5. Son Kullanılanlar (Recently Played) Şeridi
-        val recents = Prefs.recents().take(3)
-        if (recents.isNotEmpty()) {
-            container.addView(
-                label("SON KULLANILANLAR", 11f, Palette.TEXT_FAINT, bold = true).apply { letterSpacing = 0.12f },
-                lp(MATCH, WRAP).margins(t = dp(8), b = dp(6))
-            )
-            val recentViews = recents.map { recentCard(it, compact) }
-            addGrid(recentViews, recentViews.size.coerceIn(1, 3), dp(54), gap)
+        // 6. Son Kullanılanlar (Recently Played) Şeridi Widget
+        if (Prefs.showWidgetRecents) {
+            val recents = Prefs.recents().take(3)
+            if (recents.isNotEmpty()) {
+                container.addView(
+                    label("SON KULLANILANLAR", 11f, Palette.TEXT_FAINT, bold = true).apply { letterSpacing = 0.12f },
+                    lp(MATCH, WRAP).margins(t = dp(8), b = dp(6))
+                )
+                val recentViews = recents.map { recentCard(it, compact) }
+                addGrid(recentViews, recentViews.size.coerceIn(1, 3), dp(54), gap)
+            }
         }
 
-        // 6. Sistem Kısayolları (Favoriler, Podcast, Araç Paneli, Hava, Yansıt, Ayarlar)
+        // 7. Sistem Kısayolları (Uygulamalarım, Favoriler, Podcast, Araç, Hava, Yansıt, Ayarlar)
         val shortcuts = ArrayList<Shortcut>()
+        shortcuts += Shortcut("Uygulamalar", "Tüm telefon uygulamaları", R.drawable.ic_apps, 0xFF00E5FF.toInt()) { ui.push(PhoneAppsPage(ui)) }
         shortcuts += Shortcut("Favoriler", "Kanal ve radyolar", R.drawable.ic_star, Palette.ORANGE) { ui.push(FavoritesPage(ui)) }
         shortcuts += Shortcut("Podcast", "Kaldığın yerden", R.drawable.ic_podcast, 0xFFE040FB.toInt()) { ui.push(PodcastPage(ui)) }
         val due = Prefs.maintenanceDue().firstOrNull { it.second <= 15 }
@@ -163,7 +178,7 @@ class HomePage(ui: CarUi) : Page(ui) {
         ) { ui.push(WeatherPage(ui)) }
 
         shortcuts += Shortcut("Yansıt", "Telefon ekranı", R.drawable.ic_cast, 0xFF16B98A.toInt()) { ui.push(MirrorPage(ui)) }
-        shortcuts += Shortcut("Ayarlar", "Tema ve bağlantı", R.drawable.ic_settings, 0xFF8B93A7.toInt()) { ui.push(SettingsPage(ui)) }
+        shortcuts += Shortcut("Ayarlar", "Tema, widget ve bağlantı", R.drawable.ic_settings, 0xFF8B93A7.toInt()) { ui.push(SettingsPage(ui)) }
 
         val usable = lastWidth - container.paddingLeft - container.paddingRight
         val cols = (usable / dp(if (compact) 120 else 170)).coerceIn(2, 6)
@@ -259,6 +274,22 @@ class HomePage(ui: CarUi) : Page(ui) {
                     addView(label(details, 10f, Palette.TEXT_FAINT), lp(WRAP, WRAP))
                 }
                 addView(weatherBar, lp(MATCH, WRAP).margins(t = dp(8)))
+            }
+        }
+    }
+
+    /** Canlı Ekolayzır (Equalizer / Spectrum Analyzer Widget) */
+    private fun buildEqualizerWidget(compact: Boolean): View = with(ctx) {
+        FrameLayout(this).apply {
+            background = rounded(Palette.SURFACE, dpf(14), dp(1), 0x1AFFFFFF)
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            val eq = EqualizerView(this@with, Prefs.equalizerStyle)
+            addView(eq, flp(MATCH, MATCH))
+            onTap {
+                val styles = EqualizerView.Style.values()
+                val next = (Prefs.equalizerStyle + 1) % styles.size
+                Prefs.equalizerStyle = next
+                eq.style = styles[next]
             }
         }
     }

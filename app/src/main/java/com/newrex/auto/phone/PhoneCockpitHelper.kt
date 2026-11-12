@@ -61,6 +61,62 @@ object PhoneCockpitHelper {
         }
         cockpitBox.addView(voiceRow, lp(MATCH, WRAP).margins(b = dp(12)))
 
+        // 0.5 Ana Ekran Widget Yönetimi
+        cockpitBox.addView(label("🧩 Ana Ekran Widget Yönetimi", 15f, bold = true))
+        cockpitBox.addView(label("Android Auto ana ekranında görünmesini istediğiniz bileşenleri seçin:",
+            12f, Palette.TEXT_DIM, lines = 2), lp(MATCH, WRAP).margins(t = dp(2), b = dp(6)))
+
+        fun widgetRow(title: String, getter: () -> Boolean, setter: (Boolean) -> Unit) = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = rounded(0x14FFFFFF, dpf(10))
+            setPadding(dp(12), dp(6), dp(8), dp(6))
+            val statusText = label(if (getter()) "Açık" else "Kapalı", 13f, if (getter()) Palette.GREEN else Palette.TEXT_DIM, bold = true)
+            addView(label(title, 13f, bold = true), lp(0, WRAP, 1f))
+            addView(statusText, lp(WRAP, WRAP).margins(r = dp(8)))
+            addView(Button(context).apply {
+                text = if (getter()) "Gizle" else "Göster"
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = rounded(0x22FFFFFF, dpf(8))
+                setOnClickListener {
+                    setter(!getter())
+                    onRefreshNeeded()
+                }
+            })
+        }
+
+        cockpitBox.addView(widgetRow("Üst Durum & Saat/Hava", { Prefs.showWidgetHeader }, { Prefs.showWidgetHeader = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(widgetRow("Canlı Ekolayzır (Spektrum)", { Prefs.showWidgetEqualizer }, { Prefs.showWidgetEqualizer = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+
+        if (Prefs.showWidgetEqualizer) {
+            val eqStyles = listOf("Klasik Stüdyo", "Cyber Neon", "Alev Kırmızı", "LED Izgara")
+            val eqBox = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                eqStyles.forEachIndexed { idx, st ->
+                    addView(Button(context).apply {
+                        text = st
+                        isAllCaps = false
+                        val isSel = Prefs.equalizerStyle == idx
+                        setTextColor(if (isSel) Color.WHITE else Palette.TEXT_DIM)
+                        background = rounded(if (isSel) Palette.accent else 0x22FFFFFF, dpf(8))
+                        setOnClickListener {
+                            Prefs.equalizerStyle = idx
+                            onRefreshNeeded()
+                        }
+                    }, lp(WRAP, dp(36)).margins(r = dp(6)))
+                }
+            }
+            cockpitBox.addView(android.widget.HorizontalScrollView(context).apply {
+                isHorizontalScrollBarEnabled = false
+                addView(eqBox)
+            }, lp(MATCH, WRAP).margins(b = dp(6)))
+        }
+
+        cockpitBox.addView(widgetRow("3D Araç Modeli", { Prefs.showWidgetCar }, { Prefs.showWidgetCar = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(widgetRow("Canlı Telemetri & Hız", { Prefs.showWidgetTelemetry }, { Prefs.showWidgetTelemetry = it }), lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(widgetRow("Son Çalınanlar Şeridi", { Prefs.showWidgetRecents }, { Prefs.showWidgetRecents = it }), lp(MATCH, WRAP).margins(b = dp(12)))
+
         // 1. Plaka ve Model Düzenleme
         cockpitBox.addView(label("🚘 Araç ve Plaka Özelleştirme", 15f, bold = true))
         cockpitBox.addView(label("Araç kokpitinde ve 3D Toyota C-HR modelinde görüntülenecek plaka ve model adı:",
