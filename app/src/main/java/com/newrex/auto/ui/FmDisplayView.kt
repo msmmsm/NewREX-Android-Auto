@@ -39,6 +39,8 @@ class FmDisplayView(context: Context, style: Int = 0) : View(context) {
             Style("İbreli", ORANGE),
             Style("LED", RED),
             Style("Sade", 0),
+            Style("OLED Spektrum", CYAN),
+            Style("MBUX Dijital", 0),
         )
 
         // 5x7 noktalı yazı tipi (her satır 5 bit)
@@ -85,6 +87,8 @@ class FmDisplayView(context: Context, style: Int = 0) : View(context) {
             5 -> drawMeter(canvas, w, h)
             6 -> drawLed(canvas, w, h)
             7 -> drawPlain(canvas, w, h)
+            8 -> drawOledSpectrum(canvas, w, h)
+            9 -> drawMbuxDigital(canvas, w, h)
         }
     }
 
@@ -374,7 +378,68 @@ class FmDisplayView(context: Context, style: Int = 0) : View(context) {
         c.drawLine(left, y, left + (right - left) * p, y, line)
         fill.color = color
         fill.setShadowLayer(size * 0.04f, 0f, 0f, color)
-        c.drawCircle(left + (right - left) * p, y, size * 0.03f, fill)
+        c.drawCircle(left + (right - left) * p, y, size * 0.04f, fill)
         fill.clearShadowLayer()
+    }
+
+    /** OLED Spektrum: Müzik ekolayzır barları ve modern frekans */
+    private fun drawOledSpectrum(c: Canvas, w: Float, h: Float) {
+        val r = panelRect(w, h, 2.5f)
+        fill.color = 0x2E000000.toInt()
+        c.drawRoundRect(r, 14f, 14f, fill)
+
+        // Arka plan spektrum çubukları
+        val barCount = 18
+        val barW = (r.width() - 36f) / barCount
+        val barBaseY = r.bottom - 12f
+        line.strokeCap = Paint.Cap.ROUND
+        line.strokeWidth = barW * 0.65f
+        for (i in 0 until barCount) {
+            val bx = r.left + 18f + i * barW + barW / 2
+            val waveHeight = (sin((i * 0.6 + freq * 0.1).toDouble()).toFloat().coerceAtLeast(0.1f) + 0.2f) * (r.height() * 0.35f)
+            line.color = 0x263DF5D0.toInt()
+            c.drawLine(bx, barBaseY, bx, barBaseY - (r.height() * 0.4f), line)
+            line.color = 0xFF3DF5D0.toInt()
+            c.drawLine(bx, barBaseY, bx, barBaseY - waveHeight, line)
+        }
+
+        // Frekans Metni
+        val size = r.height() * 0.52f
+        txt(c, label, r.centerX(), r.centerY() + size * 0.15f, size, 0xFFFFFFFF.toInt(), condensed, glow = 10f, glowColor = 0xFF3DF5D0.toInt())
+        txt(c, "FM STEREO • MHz", r.centerX(), r.top + size * 0.35f, size * 0.2f, 0xFF3DF5D0.toInt(), medium, spacing = 0.12f)
+    }
+
+    /** MBUX Dijital: Lüks Alman otomobili minimalist radyo kadranı */
+    private fun drawMbuxDigital(c: Canvas, w: Float, h: Float) {
+        val r = panelRect(w, h, 2.8f)
+        val color = Palette.accent
+
+        // Zarif metalik çerçeve
+        fill.color = 0x22FFFFFF
+        c.drawRoundRect(r, 18f, 18f, fill)
+        line.strokeWidth = 2f
+        line.color = Palette.withAlpha(color, 0x66)
+        c.drawRoundRect(r, 18f, 18f, line)
+
+        // Frekans
+        val size = r.height() * 0.58f
+        txt(c, label, r.centerX() - 24f, r.centerY() + size * 0.3f, size, Palette.TEXT, light)
+        txt(c, "MHz", r.centerX() + (size * 0.8f), r.centerY() + size * 0.28f, size * 0.24f, Palette.TEXT_DIM, medium, Paint.Align.LEFT)
+
+        // Dinamik bant göstergesi
+        val barY = r.bottom - 10f
+        val startX = r.left + 24f
+        val endX = r.right - 24f
+        line.strokeWidth = 3f
+        line.color = 0x22FFFFFF
+        c.drawLine(startX, barY, endX, barY, line)
+
+        val p = (freq - FmPresets.MIN) / (FmPresets.MAX - FmPresets.MIN).toFloat()
+        val curX = startX + (endX - startX) * p
+        line.color = color
+        line.strokeWidth = 5f
+        c.drawLine(startX, barY, curX, barY, line)
+        fill.color = color
+        c.drawCircle(curX, barY, 6f, fill)
     }
 }

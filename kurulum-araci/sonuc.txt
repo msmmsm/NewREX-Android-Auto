@@ -1,0 +1,60 @@
+﻿NewREX Kurulum Aracı - 12.11.2026 20:14
+  ADIM 1 / 6 :  Başlamadan önce
+  Merhaba! Bu araç NewREX Android Auto'yu telefonuna, arabada sürüş
+  sırasında da açılacak şekilde kurar. Android Auto'nun istediği
+  "Play Store kurdu" kaydını (imzayı) atmaya çalışır ve sonunda
+  başarılı olup olmadığını açıkça yazar.
+
+  Bu pencere sen kapatmadıkça kapanmaz. Her adımda ne yaptığını yazar.
+
+  Telefonunun markası hangisi? Numarasını yazıp Enter'a bas:
+
+    1) Samsung
+    2) Xiaomi / Redmi / POCO
+    3) Realme / Oppo / OnePlus
+    4) Honor / Huawei
+    5) Tecno / Infinix / itel
+    6) Diğer
+
+  >> Numara : 1
+  ADIM 2 / 6 :  Telefonda geliştirici ayarlarını aç
+  (Daha önce yaptıysan direkt Enter'a bas.)
+
+  A) Geliştirici seçeneklerini aç:
+     Ayarlar > Telefon hakkında > Yazılım bilgileri > "Yapım numarası"na 7 kez dokun.
+     "Geliştirici oldunuz" yazısı çıkınca tamam.
+
+  B) USB hata ayıklamayı aç:
+     Ayarlar > (en altta) Geliştirici seçenekleri > "USB hata ayıklama" AÇ.
+
+  D) Play Protect'i geçici kapat (kurulumu engellemesin diye):
+     Play Store > sağ üstte profil resmi > Play Protect > ayarlar (çark) >
+     "Uygulamaları Play Protect ile tara" KAPAT. (İş bitince geri açarsın.)
+     Samsung: Ayarlar > Güvenlik ve gizlilik > Otomatik Engelleyici KAPAT.
+
+  >> Hepsini yaptıysan Enter'a bas : 
+  ADIM 3 / 6 :  Gerekli dosyalar hazırlanıyor
+  ... Google'ın resmi ADB aracı indiriliyor (bir kereye mahsus, ~10 MB)
+  ADB hazır.
+  ... NewREX'in en son sürümü GitHub'dan indiriliyor
+  İndirildi: NewREX-Android-Auto-1.5.2.apk (sürüm v1.5.2)
+    [ayrıntı] APK: C:\Users\murat\Documents\GitHub\NewREX-Android-Auto\kurulum-araci\NewREX-Android-Auto-1.5.2.apk (6280000 bayt)
+  ADIM 4 / 6 :  Telefonu kabloyla bilgisayara tak
+  1. Telefonun kilidini aç ve USB kablosuyla bilgisayara tak.
+  2. Telefonda "USB kullanımı" sorulursa "Dosya aktarımı"nı seç.
+  3. "USB hata ayıklamaya izin verilsin mi?" çıkınca:
+     "Bu bilgisayara her zaman izin ver"i işaretle > "İzin ver".
+
+  ... Telefon bekleniyor (telefon gelene kadar bekler, acele etme)
+  -> Telefon görüldü! Telefonun ekranına bak ve "İzin ver"e bas.
+  -> Telefon görüldü! Telefonun ekranına bak ve "İzin ver"e bas.
+
+  Telefon bağlandı: samsung SM-A155F (Android 16)
+    [ayrıntı] Yükleyiciler: package:com.google.android.packageinstaller
+Error: java.lang.SecurityException: Shell does not have permission to access user 150
+ com.android.server.am.ActivityManagerService.handleIncomingUser:8 android.app.ActivityManager.handleIncomingUser:6316 com.android.server.pm.PackageManagerShellCommand.translateUserId:24
+  Telefonda NewREX 1.5.2 kurulu. Kayıt: yükleyen=com.android.vending, başlatan=com.google.android.packageinstaller
+
+  Bu telefonda imza ZATEN ATILMIŞ, kurulum düzgün!
+
+  >> Yine de yeniden kurmak istersen E yaz, kapatmak için Enter : 

@@ -43,6 +43,9 @@ import com.newrex.auto.ui.pressable
 import com.newrex.auto.ui.rounded
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * NewREX Yeni Nesil Otomobil Kokpit & Telemetri Ana Ekranı (MBUX / Tesla İlhamlı)
@@ -176,48 +179,87 @@ class HomePage(ui: CarUi) : Page(ui) {
         }, lp(MATCH, WRAP).margins(t = dp(18)))
     }
 
-    /** 1. Üst Durum & Bağlantı Çubuğu */
+    /** 1. Üst Durum & Bağlantı Çubuğu (Genişletilmiş Tarih, Saat, Hava Durumu & Telemetri HUD) */
     private fun buildHeader(compact: Boolean, snap: TelemetrySnapshot): View = with(ctx) {
         LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(10), dp(14), dp(10))
+            orientation = LinearLayout.VERTICAL
             background = rounded(Palette.SURFACE, dpf(18), dp(1), 0x22FFFFFF)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
 
-            // Logo & Başlık
-            val badge = FrameLayout(this@with).apply {
-                background = rounded(Palette.withAlpha(Palette.accent, 0x35), dpf(14))
-                addView(icon(R.drawable.ic_car, 24, Palette.accent), flp(dp(24), dp(24), Gravity.CENTER))
-            }
-            addView(badge, lp(dp(44), dp(44)))
+            // Üst Satır: Logo, Marka, Güncel Tarih & Saat, OBD & Sürüş Rozetleri
+            val topRow = LinearLayout(this@with).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
 
-            val heading = LinearLayout(this@with).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(label("NewREX", 18f, bold = true))
-                val subText = when {
-                    snap.isObdConnected -> "OBD-II CAN-Bus Aktif"
-                    snap.speedSource == TelemetrySource.CAR_HARDWARE -> "Android Auto Donanım Bağlı"
-                    else -> "Kokpit ve Medya Merkezi"
+                val badge = FrameLayout(this@with).apply {
+                    background = rounded(Palette.withAlpha(Palette.accent, 0x35), dpf(12))
+                    addView(icon(R.drawable.ic_car, 22, Palette.accent), flp(dp(22), dp(22), Gravity.CENTER))
                 }
-                addView(label(subText, 11f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(t = dp(2)))
-            }
-            addView(heading, lp(0, WRAP, 1f).margins(l = dp(12)))
+                addView(badge, lp(dp(38), dp(38)))
 
-            // OBD-II Durum Rozeti
-            val obdChip = label(if (snap.isObdConnected) "OBD2 ●" else "OBD2 ○", 10f,
-                if (snap.isObdConnected) Palette.GREEN else Palette.TEXT_FAINT, bold = true).apply {
-                setPadding(dp(8), dp(4), dp(8), dp(4))
-                background = rounded(if (snap.isObdConnected) Palette.withAlpha(Palette.GREEN, 0x22) else 0x1AFFFFFF, dpf(8))
-            }
-            addView(obdChip, lp(WRAP, WRAP).margins(r = dp(8)))
+                val heading = LinearLayout(this@with).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(label("NewREX", 17f, bold = true))
+                    val subText = when {
+                        snap.isObdConnected -> "OBD-II CAN-Bus Aktif"
+                        snap.speedSource == TelemetrySource.CAR_HARDWARE -> "Android Auto Donanım Bağlı"
+                        else -> "Kokpit ve Medya Merkezi"
+                    }
+                    addView(label(subText, 10f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(t = dp(1)))
+                }
+                addView(heading, lp(0, WRAP, 1f).margins(l = dp(10)))
 
-            // Sürüş Durum Rozeti (PARK / SÜRÜŞTE)
-            val stateColor = if (snap.isDriving) Palette.ORANGE else Palette.GREEN
-            val stateText = if (snap.isDriving) "SÜRÜŞTE" else "PARK"
-            addView(label(stateText, 11f, stateColor, bold = true).apply {
-                setPadding(dp(10), dp(6), dp(10), dp(6))
-                background = rounded(Palette.withAlpha(stateColor, 0x28), dpf(12))
-            })
+                // Canlı Tarih & Saat Göstergesi
+                val timeFormat = SimpleDateFormat("HH:mm", Locale("tr", "TR"))
+                val dateFormat = SimpleDateFormat("d MMMM EEEE", Locale("tr", "TR"))
+                val now = Date()
+                val dateBox = LinearLayout(this@with).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.END
+                    addView(label(timeFormat.format(now), 16f, Palette.TEXT, bold = true))
+                    addView(label(dateFormat.format(now), 10f, Palette.TEXT_DIM), lp(WRAP, WRAP).margins(t = dp(1)))
+                }
+                addView(dateBox, lp(WRAP, WRAP).margins(r = dp(12)))
+
+                // OBD-II Durum Rozeti
+                val obdChip = label(if (snap.isObdConnected) "OBD2 ●" else "OBD2 ○", 10f,
+                    if (snap.isObdConnected) Palette.GREEN else Palette.TEXT_FAINT, bold = true).apply {
+                    setPadding(dp(7), dp(3), dp(7), dp(3))
+                    background = rounded(if (snap.isObdConnected) Palette.withAlpha(Palette.GREEN, 0x22) else 0x1AFFFFFF, dpf(6))
+                }
+                addView(obdChip, lp(WRAP, WRAP).margins(r = dp(6)))
+
+                // Sürüş Durum Rozeti (PARK / SÜRÜŞTE)
+                val stateColor = if (snap.isDriving) Palette.ORANGE else Palette.GREEN
+                val stateText = if (snap.isDriving) "SÜRÜŞTE" else "PARK"
+                addView(label(stateText, 10f, stateColor, bold = true).apply {
+                    setPadding(dp(8), dp(4), dp(8), dp(4))
+                    background = rounded(Palette.withAlpha(stateColor, 0x28), dpf(8))
+                })
+            }
+            addView(topRow, lp(MATCH, WRAP))
+
+            // Alt Satır: Hava Durumu Bilgi Çubuğu (Derece, Durum, Hissedilen, Nem, Rüzgar & Konum)
+            val w = WeatherHub.report.value
+            if (w != null) {
+                val weatherBar = LinearLayout(this@with).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    background = rounded(0x14FFFFFF, dpf(10))
+                    setPadding(dp(10), dp(5), dp(10), dp(5))
+
+                    val emoji = WeatherApi.emoji(w.code, w.isDay)
+                    val desc = WeatherApi.describe(w.code)
+                    val placeStr = w.place ?: "Mevcut Konum"
+
+                    addView(label("$emoji ${w.temp}°C", 13f, Palette.TEXT, bold = true))
+                    addView(label(" •  $desc ($placeStr)", 11f, Palette.TEXT_DIM), lp(0, WRAP, 1f).margins(l = dp(6)))
+
+                    val details = "Hissedilen: ${w.feels}° • Nem: %${w.humidity} • Rüzgar: ${w.wind} km/s"
+                    addView(label(details, 10f, Palette.TEXT_FAINT), lp(WRAP, WRAP))
+                }
+                addView(weatherBar, lp(MATCH, WRAP).margins(t = dp(8)))
+            }
         }
     }
 

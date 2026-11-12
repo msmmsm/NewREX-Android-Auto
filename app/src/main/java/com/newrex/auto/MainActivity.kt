@@ -51,6 +51,7 @@ import com.newrex.auto.ui.neonText
 import com.newrex.auto.ui.panel
 import com.newrex.auto.ui.rounded
 import com.newrex.auto.phone.PhoneCarHelper
+import com.newrex.auto.phone.PhoneCockpitHelper
 import com.newrex.auto.phone.PhoneMaintenanceHelper
 import com.newrex.auto.phone.PhoneThemeHelper
 import com.newrex.auto.phone.PhoneTroubleshootHelper
@@ -82,6 +83,8 @@ class MainActivity : Activity() {
     private lateinit var playlistBox: LinearLayout
     private lateinit var carBox: LinearLayout
     private lateinit var carSummary: TextView
+    private lateinit var cockpitBox: LinearLayout
+    private lateinit var cockpitSummary: TextView
     private lateinit var playlistSummary: TextView
     private val tr = java.util.Locale("tr", "TR")
 
@@ -164,6 +167,10 @@ class MainActivity : Activity() {
         carBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         carSummary = summary()
         col.addView(section(R.drawable.ic_gas, 0xFF16B98A.toInt(), "Yakıt ve kilometre", carSummary, carBox))
+
+        cockpitBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        cockpitSummary = summary()
+        col.addView(section(R.drawable.ic_car, 0xFF06B6D4.toInt(), "Kokpit & Araç Telemetrisi", cockpitSummary, cockpitBox))
 
         playlistBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         playlistSummary = summary()
@@ -308,6 +315,12 @@ class MainActivity : Activity() {
         ).joinToString(" • ").ifEmpty { "Kilometre, yakıt alımları, yağ değişimi" }
 
         PhoneCarHelper.buildCarViews(this, carBox) { refreshCar() }
+        refreshCockpit()
+    }
+
+    private fun refreshCockpit() {
+        cockpitSummary.text = "${Prefs.carModel} • ${Prefs.carPlate}"
+        PhoneCockpitHelper.buildCockpitViews(this, cockpitBox) { refreshCockpit() }
     }
 
     // ---- Tema ----

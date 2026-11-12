@@ -39,6 +39,8 @@ class ClockView(context: Context, style: Int = 0) : View(context) {
             Style("Roma", 1f, true, true, 230),
             Style("Spor", 1f, true, true, 230),
             Style("Halka", 1f, true, true, 220),
+            Style("Kokpit HUD", 1f, true, true, 230),
+            Style("Cyberpunk", 2.4f, false, true, 120),
         )
 
         /** Karşılama ekranındaki boyut (küçük/orta/büyük) için piksel ölçüsü. */
@@ -133,6 +135,8 @@ class ClockView(context: Context, style: Int = 0) : View(context) {
             9 -> drawRoman(canvas, w, h)
             10 -> drawSport(canvas, w, h)
             11 -> drawRings(canvas, w, h)
+            12 -> drawCockpitHud(canvas, w, h)
+            13 -> drawCyberpunk(canvas, w, h)
         }
         canvas.restore()
     }
@@ -434,6 +438,64 @@ class ClockView(context: Context, style: Int = 0) : View(context) {
         val size = fit(t, r * 0.42f, r * 0.95f, light)
         txt(c, t, cx, cy + size * 0.32f, size, Palette.TEXT, light)
         txt(c, date("d MMM EEE").uppercase(tr), cx, cy + size * 0.32f + r * 0.18f, r * 0.08f, Palette.TEXT_DIM, medium, spacing = 0.15f)
+    }
+
+    private fun drawCockpitHud(c: Canvas, w: Float, h: Float) {
+        val cx = w / 2; val cy = h / 2; val r = min(w, h) * 0.47f
+        // Karbon / mat siyah dış zemin
+        fill.color = 0x33000000.toInt()
+        c.drawCircle(cx, cy, r, fill)
+
+        // Otomotiv gösterge skalası (240 derece yay)
+        line.strokeWidth = r * 0.04f
+        line.color = 0x22FFFFFF
+        rect.set(cx - r * 0.85f, cy - r * 0.85f, cx + r * 0.85f, cy + r * 0.85f)
+        c.drawArc(rect, 150f, 240f, false, line)
+
+        // İlerleme yayı
+        line.color = accent
+        line.setShadowLayer(r * 0.08f, 0f, 0f, accent)
+        val p = (hour % 12 + minute / 60f) / 12f
+        c.drawArc(rect, 150f, 240f * p, false, line)
+        line.clearShadowLayer()
+
+        // Dijital saat & tarih
+        val t = "${two(hour)}:${two(minute)}"
+        txt(c, t, cx, cy + r * 0.1f, r * 0.42f, Palette.TEXT, black)
+        txt(c, ":${two(second)}", cx + r * 0.45f, cy - r * 0.02f, r * 0.18f, accent, condensed)
+        txt(c, date("d MMMM EEEE").uppercase(tr), cx, cy + r * 0.32f, r * 0.1f, Palette.TEXT_DIM, medium, spacing = 0.1f)
+
+        // İbreler
+        hand(c, cx, cy, hourAngle, r * 0.5f, r * 0.08f, r * 0.06f, Palette.TEXT)
+        hand(c, cx, cy, minuteAngle, r * 0.75f, r * 0.1f, r * 0.04f, Palette.TEXT)
+        hand(c, cx, cy, secondAngle, r * 0.85f, r * 0.15f, r * 0.018f, accent)
+        fill.color = accent
+        c.drawCircle(cx, cy, r * 0.05f, fill)
+    }
+
+    private fun drawCyberpunk(c: Canvas, w: Float, h: Float) {
+        val pad = w * 0.06f
+        val innerW = w - pad * 2
+        val innerH = h * 0.7f
+
+        // Çift renkli neon ızgara kutusu
+        rect.set(pad, (h - innerH) / 2, w - pad, (h + innerH) / 2)
+        fill.color = 0x2A000000.toInt()
+        c.drawRoundRect(rect, 16f, 16f, fill)
+        line.strokeWidth = 3f
+        line.color = accent
+        line.setShadowLayer(12f, 0f, 0f, accent)
+        c.drawRoundRect(rect, 16f, 16f, line)
+        line.clearShadowLayer()
+
+        // Büyük 7-segment / neon stil saat
+        val t = "${two(hour)}:${two(minute)}"
+        val size = fit(t, innerH * 0.65f, innerW * 0.75f, condensed)
+        txt(c, t, w * 0.44f, h * 0.56f, size, Palette.TEXT, condensed, glow = 16f, glowColor = accent)
+
+        // Saniye ve Tarih
+        txt(c, two(second), w * 0.82f, h * 0.5f, size * 0.45f, accent, condensed, glow = 10f, glowColor = accent)
+        txt(c, date("d MMM yyyy • EEE").uppercase(tr), w / 2, h * 0.8f, innerH * 0.15f, Palette.TEXT_DIM, medium, spacing = 0.15f)
     }
 }
 
