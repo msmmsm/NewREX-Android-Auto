@@ -19,14 +19,20 @@ internal object PodcastRss {
     )
 
     fun resolveEnclosureUrl(feedUrl: String, enclosureUrl: String): String? {
-        if (enclosureUrl.isBlank()) return null
+        if (enclosureUrl.isBlank() || enclosureUrl.length > MAX_URL_LENGTH || enclosureUrl.any { it.isWhitespace() || it.isISOControl() }) return null
         val enclosure = runCatching { URI(enclosureUrl) }.getOrNull() ?: return null
-        if (enclosure.isAbsolute) return enclosureUrl
-        val feed = runCatching { URI(feedUrl) }.getOrNull() ?: return null
-        if (feed.scheme !in setOf("http", "https")) return null
-        return runCatching { feed.resolve(enclosure).toString() }.getOrNull()
+        val resolved = if (enclosure.isAbsolute) enclosure else {
+            val feed = runCatching { URI(feedUrl) }.getOrNull() ?: return null
+            if (feed.scheme?.lowercase() !in setOf("http", "https") || feed.host.isNullOrBlank() || feed.rawUserInfo != null) return null
+            runCatching { feed.resolve(enclosure) }.getOrNull() ?: return null
+        }
+        return resolved.toASCIIString().takeIf {
+            resolved.scheme?.lowercase() in setOf("http", "https") && !resolved.host.isNullOrBlank() &&
+                resolved.rawUserInfo == null && it.length <= MAX_URL_LENGTH
+        }
     }
 
+    private const val MAX_URL_LENGTH = 4096
     fun formatDate(raw: String): String {
         val value = raw.trim()
         if (value.isEmpty()) return ""
