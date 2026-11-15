@@ -14,6 +14,7 @@ import com.newrex.auto.data.Logos
 import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.RadioApi
+import com.newrex.auto.data.RadioHealth
 import com.newrex.auto.ui.CarUi
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Page
@@ -76,6 +77,23 @@ class RadioPage(ui: CarUi, private val onPick: ((MediaEntry) -> Unit)? = null) :
     }
 
     override fun actions(): List<View> = listOf(
+        ctx.circleButton(R.drawable.ic_speed) {
+            val station = PlayerHub.now.value?.takeIf { it.kind == Kind.RADIO }
+            if (station == null) {
+                status.text = "Önce bir radyo istasyonu başlatın; ardından yayın testi yapabilirsiniz."
+                status.visibility = View.VISIBLE
+            } else {
+                status.text = "${station.title}: yayın bağlantısı sınanıyor…"
+                status.visibility = View.VISIBLE
+                scope.launch {
+                    val result = RadioHealth.check(station)
+                    val http = result.httpCode?.let { " · HTTP $it" }.orEmpty()
+                    val latency = result.latencyMs?.let { " · ${it} ms" }.orEmpty()
+                    val type = result.contentType?.let { " · $it" }.orEmpty()
+                    status.text = "${station.title}\n${result.message}$http$latency$type"
+                }
+            }
+        },
         ctx.circleButton(R.drawable.ic_search) {
             ui.showKeyboard("Radyo ara (ör. Kral, Power, haber)") { q ->
                 searchQuery = q
