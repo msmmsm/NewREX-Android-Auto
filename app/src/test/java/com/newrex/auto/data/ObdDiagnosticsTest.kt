@@ -40,6 +40,14 @@ class ObdDiagnosticsTest {
         assertNull(ObdDiagnostics.description("P9999"))
     }
 
+    @Test fun distinguishesValidEmptyDtcScanFromInvalidResponse() {
+        assertEquals(true, ObdDiagnostics.isDtcScanResponseValid("NO DATA"))
+        assertEquals(true, ObdDiagnostics.isDtcScanResponseValid("7E803430000"))
+        assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("SEARCHING..."))
+        assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("03"))
+        assertEquals(false, ObdDiagnostics.isDtcScanResponseValid(""))
+    }
+
     @Test fun convertsRawPidByteToPercentage() {
         assertEquals(0, ObdDiagnostics.percent(0))
         assertEquals(50, ObdDiagnostics.percent(128))
