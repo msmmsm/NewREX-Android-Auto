@@ -99,7 +99,6 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
     private val hideFit = Runnable { fitButton.animate().alpha(0f).setDuration(300).withEndAction { fitButton.visibility = View.GONE }.start() }
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
-    private var youtubeDocumentActive = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun build(): View = with(ctx) {
@@ -149,7 +148,6 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
                 }
 
                 override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-                    youtubeDocumentActive = mode == Mode.YOUTUBE && isYouTubeUrl(url)
                     progressBar.visibility = View.VISIBLE
                 }
 
@@ -290,13 +288,6 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
         ctx.circleButton(R.drawable.ic_home) { web.loadUrl(startUrl()) },
         ctx.circleButton(R.drawable.ic_refresh) { web.reload() },
     )
-
-    private fun isYouTubeUrl(url: String?): Boolean {
-        val host = runCatching { android.net.Uri.parse(url).host?.lowercase(java.util.Locale.ROOT) }.getOrNull()
-            ?: return false
-        return host == "youtube.com" || host.endsWith(".youtube.com") ||
-            host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com")
-    }
 
     // YouTube her açılışta kendi ana sayfasıyla gelir (kategoriler YouTube'un kendi satırında)
     private fun startUrl() = mode.home
