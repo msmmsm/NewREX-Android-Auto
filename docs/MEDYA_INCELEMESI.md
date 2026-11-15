@@ -18,12 +18,14 @@ Dal: `master`
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
 
 ### Açık riskler / doğrulama işleri
-- [ ] Uygulama arka plana alındığında, ekran kilitlendiğinde ve süreç Android tarafından sonlandırıldığında oynatma/MediaSession yaşam döngüsü gerçek cihazda doğrulanmalı.
-- [ ] Uzun süreli arka plan oynatımı ürün gereksinimiyse `MediaSessionService` tabanlı servis mimarisi değerlendirilmeli; foreground service türü/izinleri, bildirim ve Android 14/15 davranışı birlikte tasarlanmalı.
+- [x] Media3 `MediaSessionService` sınıfı, medya foreground service izinleri ve `mediaPlayback` manifest tanımı eklendi.
+- [x] `CarActivity` servis bağlantısını `MediaController` ile kuruyor; Activity artık `PlayerHub.release()` çağırmıyor.
+- [ ] Arka plana alma, ekran kilidi, araç bağlantısının kesilmesi/yeniden kurulması ve Android süreç sonlandırması gerçek cihazlarda doğrulanmalı.
+- [ ] Android 14/15 ve farklı üretici pil yönetimi davranışları fiziksel cihazlarda test edilmeli; servis uygulama davranışı bu testler tamamlanmadan doğrulanmış sayılmaz.
 - [ ] Ağ kopması, DNS hatası, HTTP 404/5xx, hatalı MIME türü, bozuk HLS manifesti ve canlı pencerenin gerisinde kalma senaryoları test edilmeli.
 - [ ] Podcast konumu için 10 saniyelik kayıt aralığında beklenmedik süreç sonlandırmasındaki olası ilerleme kaybı ölçülmeli.
 - [ ] `stop()`, `release()`, parça değiştirme ve sayfa yok edilmesi sırasında durum akışlarının (playing/buffering/error) tutarlılığı test edilmeli.
-- [ ] Medya oturumu kimliği ve görünen metadata ürün adı OmniDrive ile tutarlı tutulmalı.
+- [x] Medya oturumu kimliği `omnidrive` olarak ayarlandı; metadata başlıkları OmniDrive TV/Radyo/Podcast olarak kalıyor.
 
 ## 2. IPTV M3U / HLS M3U8 — `data/Net.kt`
 
@@ -104,7 +106,7 @@ Dal: `master`
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
-| P1 | Player/MediaSession arka plan dayanıklılığı | Kaynakta MediaSessionService/medya foreground service yok; gerçek cihaz testi ve servis mimarisi kararı açık |
+| P1 | Player/MediaSession arka plan dayanıklılığı | MediaSessionService mimarisi eklendi; gerçek cihaz/Android Auto testi açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
 
 ## Doğrulama sınırı
