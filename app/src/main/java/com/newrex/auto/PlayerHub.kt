@@ -218,9 +218,10 @@ object PlayerHub {
                     e.errorCode >= PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED
                 if (cur?.kind == Kind.RADIO && gone && heal(cur)) return
                 // İnternet yokken art arda yayın/alternatif aramak yerine bağlantının geri gelmesini bekle.
-                val offline = e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
-                    e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
-                    !networkAvailable.value
+                val networkFailure = e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                    e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
+                // Yerel ağ IPTV'si internet erişimi olmadan da çalışabilir; yalnızca gerçek ağ hatasını çevrimdışı say.
+                val offline = networkFailure && !networkAvailable.value
                 if (offline) {
                     cur?.takeIf { it.kind == Kind.PODCAST }?.let { Prefs.savePosition(it.url, p.currentPosition) }
                     persistQueue()
