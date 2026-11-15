@@ -46,7 +46,7 @@ object ObdDiagnostics {
         val normalized = raw.uppercase()
         if (normalized.contains("NO DATA")) return true
         val clean = normalized.filter { it in '0'..'9' || it in 'A'..'F' }
-        return clean.contains("43")
+        return Regex("43(?:[0-9A-F]{4})+").containsMatchIn(clean)
     }
 
     /** Mode 02 PID 00 destek bitmap'ini ayrıştırır. */
