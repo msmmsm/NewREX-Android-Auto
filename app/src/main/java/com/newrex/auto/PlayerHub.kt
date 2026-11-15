@@ -81,6 +81,7 @@ object PlayerHub {
 
     private val handler = Handler(Looper.getMainLooper())
     private var ticks = 0
+    private var queueTicks = 0
     private val ticker = object : Runnable {
         override fun run() {
             val p = exo ?: return
@@ -88,9 +89,10 @@ object PlayerHub {
             if (e?.kind == Kind.PODCAST) {
                 position.value = p.currentPosition
                 duration.value = p.duration.coerceAtLeast(0)
-                // Kalınan yer 10 saniyede bir kaydedilir (her saniye diske yazmak gereksiz yük)
                 if (p.isPlaying && ++ticks % 10 == 0) Prefs.savePosition(e.url, p.currentPosition)
             }
+            // Kuyruk ve seçili öğe 5 saniyede bir kalıcılaştırılır; canlı yayın konumu sıfırdır.
+            if (p.isPlaying && ++queueTicks % 5 == 0) persistQueue()
             handler.postDelayed(this, 1000)
         }
     }
@@ -99,6 +101,21 @@ object PlayerHub {
 
     /** MediaSessionService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
     internal val mediaSession: MediaSession? get() = session
+
+    /** Media3 playback-resumption callback'i için kaydedilmiş kuyruğu belleğe alır. */
+    internal fun restoreQueue(snapshot: com.newrex.auto.data.PlaybackQueueSnapshot) {
+        queue = snapshot.entries
+        index = snapshot.index
+        now.value = queue.getOrNull(index)
+        position.value = snapshot.positionMs
+    }
+
+    private fun persistQueue() {
+        if (queue.isEmpty() || index !in queue.indices) return
+        val current = now.value
+        val resumePosition = if (current?.kind == Kind.PODCAST) exo?.currentPosition ?: 0L else 0L
+        Prefs.savePlaybackQueue(queue, index, resumePosition)
+    }
 
     fun init(context: Context) {
         if (exo != null) return
@@ -128,6 +145,17 @@ object PlayerHub {
         p.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playing.value = isPlaying
+                if (!isPlaying) persistQueue()
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val mediaId = mediaItem?.mediaId ?: return
+                val nextIndex = queue.indexOfFirst { it.key == mediaId }
+                if (nextIndex >= 0) {
+                    index = nextIndex
+                    now.value = queue[nextIndex]
+                    persistQueue()
+                }
             }
 
             override fun onPlaybackStateChanged(state: Int) {
@@ -266,12 +294,14 @@ object PlayerHub {
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
         exo?.stop()
         exo?.clearMediaItems()
+        Prefs.clearPlaybackQueue()
         now.value = null
         error.value = null
         // Oturum servis yaşamı boyunca açık kalır; boş oynatma listesi medya bildirimini sonlandırır.
     }
 
     fun release() {
+        persistQueue()
         cancelRecovery()
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
         handler.removeCallbacks(ticker)
@@ -374,6 +404,7 @@ object PlayerHub {
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
         val e = queue[index]
         now.value = e
+        persistQueue()
         error.value = null
         Prefs.addRecent(e)
         if (e.kind == Kind.PODCAST) player.setMediaSource(sourceFor(e), Prefs.position(e.url)) else player.setMediaSource(sourceFor(e))
