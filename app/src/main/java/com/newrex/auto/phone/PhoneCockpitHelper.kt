@@ -274,12 +274,12 @@ object PhoneCockpitHelper {
                     frame == null -> "ECU desteklenen bir dondurulmuş kare döndürmedi veya yanıt ayrıştırılamadı."
                     else -> buildString {
                         append("Dondurulmuş kare #${frame.frameNumber} • Geçmiş arıza anı verisi")
-                        frame.rpm?.let { append("\\nMotor devri: $it dev/dk") }
-                        frame.speedKmh?.let { append("\\nAraç hızı: $it km/s") }
-                        frame.coolantTempC?.let { append("\\nSoğutma suyu: $it °C") }
-                        frame.intakeAirTempC?.let { append("\\nEmme havası: $it °C") }
-                        frame.engineLoadPercent?.let { append("\\nMotor yükü: $it%") }
-                        frame.throttlePercent?.let { append("\\nGaz kelebeği: $it%") }
+                        frame.rpm?.let { append("\nMotor devri: $it dev/dk") }
+                        frame.speedKmh?.let { append("\nAraç hızı: $it km/s") }
+                        frame.coolantTempC?.let { append("\nSoğutma suyu: $it °C") }
+                        frame.intakeAirTempC?.let { append("\nEmme havası: $it °C") }
+                        frame.engineLoadPercent?.let { append("\nMotor yükü: $it%") }
+                        frame.throttlePercent?.let { append("\nGaz kelebeği: $it%") }
                     }
                 }
                 diagnosticStatus.setTextColor(Palette.TEXT)
