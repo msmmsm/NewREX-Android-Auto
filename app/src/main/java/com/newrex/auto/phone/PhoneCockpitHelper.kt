@@ -282,14 +282,20 @@ object PhoneCockpitHelper {
             diagnosticStatus.text = "ECU arıza kodları okunuyor…"
             diagnosticStatus.setTextColor(Palette.TEXT_DIM)
             diagnosticsScope.launch {
-                val codes = ObdManager.readDtcCodes()
-                renderDtcs(codes, scanCompleted = true)
-                diagnosticStatus.text = if (ObdManager.state.value != ObdManager.ConnectionState.CONNECTED) {
-                    "Okuma tamamlanamadı: OBD-II bağlantısı kesildi."
-                } else if (codes.isEmpty()) {
-                    "ECU yanıtında arıza kodu bulunmadı. Bu sonuç, desteklenen ECU'ların tümünü kapsadığı anlamına gelmeyebilir."
-                } else {
-                    "${codes.size} arıza kodu okundu."
+                val scan = ObdManager.scanDtcCodes()
+                if (scan.completed) {
+                    Prefs.recordDtcScan(scan.codes)
+                    renderDtcs(scan.codes, scanCompleted = true)
+                    renderHistory()
+                }
+                diagnosticStatus.text = when {
+                    ObdManager.state.value != ObdManager.ConnectionState.CONNECTED ->
+                        "Okuma tamamlanamadı: OBD-II bağlantısı kesildi."
+                    !scan.completed ->
+                        "ECU yanıtı doğrulanamadı. Geçmiş kayıtlar değiştirilmedi; yeniden dene."
+                    scan.codes.isEmpty() ->
+                        "Doğrulanmış taramada görüntülenebilir arıza kodu alınmadı. Bu sonuç, desteklenen ECU'ların tümünü kapsadığı anlamına gelmeyebilir."
+                    else -> "${scan.codes.size} arıza kodu okundu ve geçmişe kaydedildi."
                 }
             }
         }
