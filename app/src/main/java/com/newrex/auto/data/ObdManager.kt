@@ -193,40 +193,41 @@ object ObdManager {
         var loopCount = 0
         while (isActive) {
             try {
+                // Başarısız/bozuk yanıt, önceki değeri ekranda sonsuza kadar tutmasın.
                 // Hız (km/s) - PID 010D
                 if (isPidSupported(0x0D)) {
                     val speedRaw = sendCommand("010D")
-                    parseSpeed(speedRaw)?.let { TelemetryHub.obdSpeed.value = it }
+                    TelemetryHub.obdSpeed.value = parseSpeed(speedRaw)
                 }
 
                 // Motor Devri (RPM) - PID 010C
                 if (isPidSupported(0x0C)) {
                     val rpmRaw = sendCommand("010C")
-                    parseRpm(rpmRaw)?.let { TelemetryHub.obdRpm.value = it }
+                    TelemetryHub.obdRpm.value = parseRpm(rpmRaw)
                 }
 
                 // Motor yükü - PID 0104
                 if (loopCount % 5 == 0 && isPidSupported(0x04)) {
                     val loadRaw = sendCommand("0104")
-                    parseEngineLoad(loadRaw)?.let { TelemetryHub.obdEngineLoad.value = it }
+                    TelemetryHub.obdEngineLoad.value = parseEngineLoad(loadRaw)
                 }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
                 if (loopCount % 5 == 0 && isPidSupported(0x05)) {
                     val tempRaw = sendCommand("0105")
-                    parseCoolant(tempRaw)?.let { TelemetryHub.obdCoolantTemp.value = it }
+                    TelemetryHub.obdCoolantTemp.value = parseCoolant(tempRaw)
                 }
 
                 // Akü Voltajı (V) - "AT RV"
                 if (loopCount % 10 == 0) {
                     val voltRaw = sendCommand("ATRV")
-                    parseVoltage(voltRaw)?.let { TelemetryHub.obdBatteryVoltage.value = it }
+                    TelemetryHub.obdBatteryVoltage.value = parseVoltage(voltRaw)
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
                 if (loopCount % 20 == 0 && isPidSupported(0x2F)) {
                     val fuelRaw = sendCommand("012F")
-                    parseFuel(fuelRaw)?.let { TelemetryHub.obdFuelLevel.value = it }
+                    TelemetryHub.obdFuelLevel.value = parseFuel(fuelRaw)
                 }
 
                 loopCount++
