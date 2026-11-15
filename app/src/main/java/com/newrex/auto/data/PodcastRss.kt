@@ -18,12 +18,20 @@ internal object PodcastRss {
         "yyyy-MM-dd'T'HH:mm:ss'Z'",
     )
 
+    /** RSS kaynağı için dış ağa çıkmadan önce HTTP(S) adresini doğrula. */
+    fun isSafeFeedUrl(value: String): Boolean {
+        if (value.isBlank() || value.length > MAX_URL_LENGTH || value.any { it.isWhitespace() || it.isISOControl() }) return false
+        val uri = runCatching { URI(value) }.getOrNull() ?: return false
+        return uri.scheme?.lowercase() in setOf("http", "https") &&
+            !uri.host.isNullOrBlank() && uri.rawUserInfo == null
+    }
+
     fun resolveEnclosureUrl(feedUrl: String, enclosureUrl: String): String? {
         if (enclosureUrl.isBlank() || enclosureUrl.length > MAX_URL_LENGTH || enclosureUrl.any { it.isWhitespace() || it.isISOControl() }) return null
         val enclosure = runCatching { URI(enclosureUrl) }.getOrNull() ?: return null
         val resolved = if (enclosure.isAbsolute) enclosure else {
             val feed = runCatching { URI(feedUrl) }.getOrNull() ?: return null
-            if (feed.scheme?.lowercase() !in setOf("http", "https") || feed.host.isNullOrBlank() || feed.rawUserInfo != null) return null
+            if (!isSafeFeedUrl(feedUrl)) return null
             runCatching { feed.resolve(enclosure) }.getOrNull() ?: return null
         }
         return resolved.toASCIIString().takeIf {
