@@ -18,6 +18,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
@@ -66,6 +67,7 @@ object PlayerHub {
     /** Bu yayın en az bir kez çaldı mı: çalmış yayın kopunca uzun beklenir, hiç açılmayan için kısa. */
     private var playedOk = false
     private var healJob: Job? = null
+    private var lastRadioFailureMessage: String? = null
 
     /** Bu istasyon için denenmiş ve çalmayan adresler. */
     private val dead = HashSet<String>()
@@ -194,7 +196,12 @@ object PlayerHub {
 
             override fun onPlaybackStateChanged(state: Int) {
                 buffering.value = state == Player.STATE_BUFFERING
-                if (state == Player.STATE_READY) { error.value = null; playedOk = true; handler.postDelayed(stable, 30_000) }
+                if (state == Player.STATE_READY) {
+                    error.value = null
+                    lastRadioFailureMessage = null
+                    playedOk = true
+                    handler.postDelayed(stable, 30_000)
+                }
                 else handler.removeCallbacks(stable)
                 if (state == Player.STATE_ENDED) {
                     val e = now.value
@@ -212,6 +219,8 @@ object PlayerHub {
                     return
                 }
                 val cur = now.value
+                val radioMessage = if (cur?.kind == Kind.RADIO) radioFailureMessage(e) else null
+                if (radioMessage != null) lastRadioFailureMessage = radioMessage
                 // Adres ölmüşse (404, 501…) beklemeden yedek yayına geç; diğer hatalarda önce yeniden bağlan
                 // (bozuk yayın listesi, çözülemeyen ses gibi 3000+ hatalar da tekrar denemekle düzelmez)
                 val gone = e.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ||
@@ -233,7 +242,7 @@ object PlayerHub {
                 if (cur != null && cur.kind != Kind.PODCAST && retry()) return
                 if (cur?.kind == Kind.RADIO && heal(cur)) return
                 buffering.value = false
-                error.value = "Yayın açılamadı. Başka bir kanal/istasyon deneyin."
+                error.value = radioMessage ?: "Yayın açılamadı. Başka bir kanal/istasyon deneyin."
             }
         })
 
@@ -515,6 +524,35 @@ object PlayerHub {
     }
 
     /** Yayın tamamen ölmüşse aynı adlı istasyonun başka bir yayın adresine geçer. */
+    /** Radyo hatasını HTTP durum kodu ve medya ayrıştırma türüne göre kullanıcıya açıklar. */
+    private fun radioFailureMessage(error: PlaybackException): String {
+        var cause: Throwable? = error
+        repeat(12) {
+            val response = cause as? HttpDataSource.InvalidResponseCodeException
+            if (response != null) {
+                return when (response.responseCode) {
+                    401, 403 -> "Radyo sunucusu erişimi reddetti (HTTP ${response.responseCode})."
+                    404, 410 -> "Radyo yayını bulunamadı veya kaldırıldı (HTTP ${response.responseCode})."
+                    429 -> "Radyo sunucusu istek sınırına ulaştı (HTTP 429). Daha sonra tekrar deneyin."
+                    in 500..599 -> "Radyo sunucusunda geçici sorun var (HTTP ${response.responseCode})."
+                    else -> "Radyo sunucusu isteği reddetti (HTTP ${response.responseCode})."
+                }
+            }
+            cause = cause?.cause
+        }
+        return when (error.errorCode) {
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED ->
+                "Adres açıldı ancak desteklenmeyen veya bozuk bir ses akışı döndürdü."
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                "Radyo sunucusuna ulaşılamıyor. İnternet bağlantısını kontrol edin."
+            else -> "Radyo yayını başlatılamadı. İstasyon adresi veya sunucusu hatalı olabilir."
+        }
+    }
+
     private fun heal(e: MediaEntry): Boolean {
         if (healJob?.isActive == true) return true
         dead += e.url
@@ -528,7 +566,7 @@ object PlayerHub {
             if (now.value?.key != e.key) return@launch
             if (alt == null) {
                 buffering.value = false
-                error.value = "Yayın açılamadı. Başka bir kanal/istasyon deneyin."
+                error.value = lastRadioFailureMessage ?: "Radyo alternatifi bulunamadı. Başka bir istasyon deneyin."
                 return@launch
             }
             val fixed = e.copy(url = alt.url, image = e.image ?: alt.image, home = e.home ?: alt.home)
