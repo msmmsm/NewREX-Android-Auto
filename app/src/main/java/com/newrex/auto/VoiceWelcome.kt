@@ -1,4 +1,4 @@
-// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
+// OmniDrive Android Auto — Copyright (C) 2026 OmniDrive — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto
 
 import android.content.Context
@@ -22,7 +22,7 @@ import java.util.Locale
  * Android Auto Bağlantısında Türkçe Sesli Karşılama Motoru
  *
  * Sürücü araca bindiğinde günün saatine göre hitap eder:
- * "Günaydın Murat, NewREX'e hoş geldin. İyi yolculuklar!"
+ * "Günaydın Murat, OmniDrive'e hoş geldin. İyi yolculuklar!"
  * Konuşurken radyo/müziği geçici olarak hafifçe kısar (Audio Focus Ducking).
  */
 object VoiceWelcome {
@@ -59,7 +59,7 @@ object VoiceWelcome {
             else -> "İyi geceler"
         }
         val name = Prefs.userName.ifBlank { "Kaptan" }
-        val message = "$greeting $name, NewREX'e hoş geldin. İyi yolculuklar!"
+        val message = "$greeting $name, OmniDrive'e hoş geldin. İyi yolculuklar!"
 
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
