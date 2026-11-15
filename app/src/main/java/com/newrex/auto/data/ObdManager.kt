@@ -299,6 +299,44 @@ object ObdManager {
     }
 
     /**
+     * Mode 09: yalnızca standart kimlik PID bitmap'inde desteklendiği bildirilen alanları okur.
+     * VIN ve ECU tanımlayıcıları uygulama belleğinde kalır; kalıcı depolama veya log kullanılmaz.
+     */
+    suspend fun readVehicleIdentity(): ObdVehicleIdentity? = withContext(Dispatchers.IO) {
+        if (state.value != ConnectionState.CONNECTED) return@withContext null
+        try {
+            val supported = ObdVehicleInfo.parseSupportedPids(sendCommand("0900"))
+                ?: return@withContext null
+            val vin = if (0x02 in supported) ObdVehicleInfo.parseVin(sendCommand("0902")) else null
+            val calibrationIds = if (0x04 in supported) {
+                ObdVehicleInfo.parseAsciiValues(sendCommand("0904"), 0x04)
+            } else emptyList()
+            val cvns = if (0x06 in supported) {
+                ObdVehicleInfo.parseCvns(sendCommand("0906"))
+            } else emptyList()
+            val ecuNames = if (0x0A in supported) {
+                ObdVehicleInfo.parseAsciiValues(sendCommand("090A"), 0x0A)
+            } else emptyList()
+            if (vin == null && calibrationIds.isEmpty() && cvns.isEmpty() && ecuNames.isEmpty()) {
+                null
+            } else {
+                TelemetryHub.markObdDataUpdated()
+                ObdVehicleIdentity(
+                    vin = vin,
+                    ecuName = ecuNames.firstOrNull(),
+                    calibrationIds = calibrationIds,
+                    calibrationVerificationNumbers = cvns
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is java.io.IOException) markConnectionError()
+            null
+        }
+    }
+
+    /**
      * Arıza Kodlarını (DTC) Oku (Mode 03)
      */
     suspend fun readDtcCodes(): List<String> = scanDtcCodes().codes
