@@ -60,7 +60,10 @@ object Playlists {
                 ?.bufferedReader()?.use { it.readText() }
                 ?: throw IOException("dosya okunamadı")
         }
-        val cacheKey = MessageDigest.getInstance("SHA-256")\n            .digest(pl.url.toByteArray(Charsets.UTF_8))\n            .joinToString("") { "%02x".format(it) }\n        val cache = File(context.cacheDir, "pl_$cacheKey.m3u")
+        val cacheKey = MessageDigest.getInstance("SHA-256")
+            .digest(pl.url.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val cache = File(context.cacheDir, "pl_$cacheKey.m3u")
         val fresh = cache.exists() &&
             System.currentTimeMillis() - cache.lastModified() < CACHE_HOURS * 3_600_000L
         if (fresh && !forceRefresh) return cache.readText()
