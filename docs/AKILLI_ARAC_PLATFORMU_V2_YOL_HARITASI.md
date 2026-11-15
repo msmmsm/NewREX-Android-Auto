@@ -251,3 +251,13 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - PID yanıtı bozuk veya eksikse ilgili sensör alanı eski değerde bırakılmaz, `null` yapılır. Son başarılı OBD yanıt zaman damgası yalnızca geçerli ayrıştırmada ilerler.
 - ELM voltajı yalnızca sayısal biçimde ve 0–30 V aralığında kabul edilir; negatif, aşırı veya ek metin içeren yanıtlar reddedilir.
 - Yeniden bağlanma politikası için 3 deneme sınırı ve 1/3/7 saniyelik bekleme dizisi birim testleriyle tanımlanmıştır. Gerçek bağlantı kopma/yeniden bağlanma doğrulaması Bluetooth adaptörü ve araç üzerinde beklemektedir.
+
+
+### Mode 02 Freeze Frame ve Türkçe DTC kataloğu
+
+- `ObdManager.readFreezeFrame()` Mode 02 PID 00 destek bitmap'ini önce sorgular; yalnızca ECU'nun desteklediği seçili standart PID'leri ister.
+- Okunabilen alanlar: motor devri, araç hızı, soğutma suyu sıcaklığı, emme havası sıcaklığı, motor yükü ve gaz kelebeği konumu.
+- Freeze Frame verisi `ObdFreezeFrame` modeliyle döndürülür; canlı telemetri StateFlow alanlarına yazılmaz. Böylece geçmişteki arıza anı ölçümleri güncel değerlerle karıştırılmaz.
+- `ObdDiagnostics.description(code)` sınırlı Türkçe DTC kataloğunda bulunan kodlara açıklama verir. Katalogda bulunmayan kodlar için açıklama uydurulmaz; ham kod korunur.
+- Freeze Frame bitmap'i, CAN başlığı, kare numarası, eksik yanıt ve bilinen/bilinmeyen DTC açıklaması için birim testleri eklendi.
+- Bu aşama veri erişim katmanını sağlar. DTC/Freeze Frame kullanıcı ekranı, gerçek ECU uyumluluk doğrulaması ve araç üzerindeki kabul testi henüz tamamlanmamıştır.
