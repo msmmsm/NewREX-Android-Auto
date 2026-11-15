@@ -28,15 +28,17 @@ object Updates {
     suspend fun check(context: Context): Release? = withContext(Dispatchers.IO) {
         val sp = context.getSharedPreferences("newrex_update", Context.MODE_PRIVATE)
         if (System.currentTimeMillis() - sp.getLong("checked", 0) > CHECK_EVERY_MS) {
-            runCatching {
-                val j = JSONObject(Net.get(API))
-                sp.edit()
-                    .putLong("checked", System.currentTimeMillis())
-                    .putString("version", j.optString("tag_name").removePrefix("v"))
-                    .putString("notes", j.optString("body"))
-                    .putString("url", j.optString("html_url").ifBlank { PAGE })
-                    .apply()
+            val release = runCatching { JSONObject(Net.get(API)) }.getOrNull()
+            val edit = sp.edit().putLong("checked", System.currentTimeMillis())
+            if (release != null) {
+                edit.putString("version", release.optString("tag_name").removePrefix("v"))
+                    .putString("notes", release.optString("body"))
+                    .putString("url", release.optString("html_url").ifBlank { PAGE })
+            } else {
+                // Eski NewREX sürümünden kalmış önbellek OmniDrive güncellemesi gibi sunulmasın.
+                edit.remove("version").remove("notes").remove("url")
             }
+            edit.apply()
         }
         val version = sp.getString("version", null) ?: return@withContext null
         if (!newer(version, BuildConfig.VERSION_NAME)) return@withContext null
