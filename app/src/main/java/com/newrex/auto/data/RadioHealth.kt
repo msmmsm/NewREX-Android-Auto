@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.IOException
 import java.net.InetAddress
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -71,7 +70,7 @@ object RadioHealth {
                         response.code, elapsed, type
                     )
                 }
-                val state = if (classification.first == State.HEALTHY && elapsed >= 2000) State.SLOW else classification.first
+                val state = if (classification.first == State.HEALTHY && latencyState(elapsed) == State.SLOW) State.SLOW else classification.first
                 val message = if (state == State.SLOW) "Yayın yanıt verdi ancak bağlantı yavaş." else classification.second
                 Result(state, message, response.code, elapsed, type)
             }
@@ -80,7 +79,7 @@ object RadioHealth {
                 is java.net.UnknownHostException -> "İstasyon sunucusunun adresi bulunamadı."
                 is javax.net.ssl.SSLException -> "Güvenli bağlantı kurulamadı; sertifika veya TLS sorunu olabilir."
                 is java.net.SocketTimeoutException -> "İlk yayın verisi 4 saniye içinde gelmedi."
-                else -> "Yayın bağlantısı kurulamadı: \${e.message ?: "ağ hatası"}"
+                else -> "Yayın bağlantısı kurulamadı: ${e.message ?: "ağ hatası"}"
             })
         }
     }
