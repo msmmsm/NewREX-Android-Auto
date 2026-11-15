@@ -71,7 +71,9 @@ object RadioHealth {
                         response.code, elapsed, type
                     )
                 }
-                Result(classification.first, classification.second, response.code, elapsed, type)
+                val state = if (classification.first == State.HEALTHY && elapsed >= 2000) State.SLOW else classification.first
+                val message = if (state == State.SLOW) "Yayın yanıt verdi ancak bağlantı yavaş." else classification.second
+                Result(state, message, response.code, elapsed, type)
             }
         } catch (e: Exception) {
             Result(State.NETWORK_ERROR, when (e) {
