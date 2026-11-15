@@ -15,6 +15,7 @@ Dal: `master`
 - `CarActivity`, `SessionToken` ve asenkron `MediaController` bağlantısıyla servise bağlanıyor. Activity yok edilirken yalnızca controller bağlantısı bırakılıyor; oynatma sürerken servis/oynatıcı serbest bırakılmıyor.
 - Manifestte `FOREGROUND_SERVICE` ve `FOREGROUND_SERVICE_MEDIA_PLAYBACK` izinleri ile `mediaPlayback` türünde, Media3 oturum eylemi yayınlayan servis tanımlandı. Media3, oynatma sürerken foreground durumunu ve medya bildirimini yönetiyor.
 - `PlayerHub.stop()` artık MediaSession'ı bırakmıyor; oynatma listesini temizliyor. Oturum ve ExoPlayer yalnızca servis `onDestroy()` aşamasında serbest bırakılıyor.
+- Oynatma kuyruğu ve seçili indeks hâlâ `PlayerHub` belleğinde tutuluyor. Media3 `onPlaybackResumption` geri yükleme akışı ve kalıcı kuyruk kaydı henüz uygulanmadı; süreç sonlandırılırsa otomatik devam garanti edilmez.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
@@ -22,7 +23,8 @@ Dal: `master`
 ### Açık riskler / doğrulama işleri
 - [x] Media3 `MediaSessionService` sınıfı, medya foreground service izinleri ve `mediaPlayback` manifest tanımı eklendi.
 - [x] `CarActivity` servis bağlantısını `MediaController` ile kuruyor; Activity artık `PlayerHub.release()` çağırmıyor.
-- [ ] Arka plana alma, ekran kilidi, araç bağlantısının kesilmesi/yeniden kurulması ve Android süreç sonlandırması gerçek cihazlarda doğrulanmalı.
+- [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
+- [ ] Kuyruğu ve mevcut öğeyi kalıcı sakla; Media3 `onPlaybackResumption` ile süreç yeniden oluşturulduğunda oynatma devamını uygula. Bu yapılana kadar süreç sonlandırması/force-stop sonrası otomatik devam desteklenmiyor.
 - [ ] Android 14/15 ve farklı üretici pil yönetimi davranışları fiziksel cihazlarda test edilmeli; servis uygulama davranışı bu testler tamamlanmadan doğrulanmış sayılmaz.
 - [ ] Ağ kopması, DNS hatası, HTTP 404/5xx, hatalı MIME türü, bozuk HLS manifesti ve canlı pencerenin gerisinde kalma senaryoları test edilmeli.
 - [ ] Podcast konumu için 10 saniyelik kayıt aralığında beklenmedik süreç sonlandırmasındaki olası ilerleme kaybı ölçülmeli.
