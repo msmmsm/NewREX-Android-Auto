@@ -43,7 +43,7 @@ gibi, IP adresini görebilir. OmniDrive bu bağlantılara aracılık etmez ve i�
 - **iptv-org** (github.io): varsayılan TV listesi
 - Eklediğin IPTV listesinin ve kanalların sunucuları
 - Radyo, kanal ve podcast görsellerinin barındırıldığı siteler
-- **GitHub** (api.github.com): uygulamayı açınca yeni sürüm var mı diye son yayına bakmak için (birkaç saatte bir; senden hiçbir bilgi gönderilmez)
+- **GitHub** (api.github.com): OmniDrive deposundaki son yayını kontrol etmek için (birkaç saatte bir; senden hiçbir bilgi gönderilmez)
 
 ## Hesap girişleri
 
