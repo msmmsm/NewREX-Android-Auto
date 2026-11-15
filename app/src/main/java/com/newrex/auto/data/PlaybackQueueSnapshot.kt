@@ -60,9 +60,9 @@ data class PlaybackQueueSnapshot(
                     kind = kind,
                     title = item.optString("title").take(300),
                     url = url.take(4096),
-                    image = item.optString("image").takeIf { it.isNotBlank() }?.take(4096),
+                    image = safeOptionalUrl(item.optString("image")),
                     group = item.optString("group").take(300),
-                    home = item.optString("home").takeIf { it.isNotBlank() }?.take(4096),
+                    home = safeOptionalUrl(item.optString("home")),
                 )
             }
             val index = json.optInt("index", -1)
