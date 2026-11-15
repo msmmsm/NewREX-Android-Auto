@@ -8,7 +8,7 @@ class ObdVehicleInfoTest {
     @Test fun readsOnlyPidsAdvertisedByMode09Bitmap() {
         assertEquals(
             setOf(0x02, 0x04, 0x06, 0x0A),
-            ObdVehicleInfo.parseSupportedPids("7E806490055000000")
+            ObdVehicleInfo.parseSupportedPids("7E806490055400000")
         )
         assertNull(ObdVehicleInfo.parseSupportedPids("NO DATA"))
         assertNull(ObdVehicleInfo.parseSupportedPids("490000"))
@@ -26,7 +26,7 @@ class ObdVehicleInfoTest {
     @Test fun parsesVinAcrossIsoTpContinuationFrame() {
         assertEquals(
             "1HGCM82633A004352",
-            ObdVehicleInfo.parseVin("490201314847434D3832363333213341303034333532")
+            ObdVehicleInfo.parseVin("490201314847434D38213236333341303034333532")
         )
     }
 
