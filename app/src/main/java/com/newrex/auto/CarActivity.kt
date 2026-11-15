@@ -37,6 +37,7 @@ class CarActivity : Activity() {
     private var ui: CarUi? = null
     private var guideShown = false
     private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var mediaController: MediaController? = null
     private var destroyed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,8 +53,8 @@ class CarActivity : Activity() {
 
 
     /**
-     * MediaController bağlantısı MediaSessionService'i oluşturur ve bağlı tutar.
-     * Oynatıcı yalnızca servis içinde başlatılır; Activity kapanınca PlayerHub bırakılmaz.
+     * MediaController bağlantısı MediaLibraryService'i oluşturur ve bağlı tutar.
+     * Oynatıcı yalnızca servis içinde başlatılır; UI komutları MediaController üzerinden oturuma iletilir.
      */
     private fun connectMediaService() {
         val token = SessionToken(this, ComponentName(this, OmniDriveMediaService::class.java))
@@ -62,7 +63,11 @@ class CarActivity : Activity() {
         future.addListener({
             if (destroyed) return@addListener
             runCatching { future.get() }
-                .onSuccess { buildUi() }
+                .onSuccess { controller ->
+                    mediaController = controller
+                    PlayerHub.attachController(controller)
+                    buildUi()
+                }
                 .onFailure {
                     setContentView(android.widget.TextView(this).apply {
                         text = "Medya hizmeti başlatılamadı. OmniDrive'i yeniden açın."
@@ -137,6 +142,8 @@ class CarActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        mediaController?.let(PlayerHub::detachController)
+        mediaController = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null
         handler.removeCallbacksAndMessages(null)
