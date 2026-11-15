@@ -89,6 +89,7 @@ Dal: `master`
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
 - **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
+- **RSS enclosure URL güvenliği güçlendirildi.** Bölüm adresleri yalnızca HTTP(S), geçerli host ve kimlik bilgisi içermeyen URL'lerden kabul edilir. `file:`, `ftp:`, `content:` gibi şemalar, kullanıcı/parola gömülü adresler, boşluk/kontrol karakterleri ve 4 KiB üzerindeki URL'ler reddedilir. Göreli adresler yalnızca güvenli HTTP(S) feed adresine göre çözümlenir; özel ağ adresleri bu aşamada ayrıca engellenmez.
 - **RSS tarih ayrıştırması güçlendirildi.** Saniyeli/saniyesiz RFC 822 tarihleri ve yaygın saat dilimi yazımları deneniyor; tanınmayan tarih boş bırakılıyor.
 - Feed yükleme ve bölüm listesi Android cihazda farklı RSS sağlayıcılarıyla doğrulanmadı.
 
@@ -96,6 +97,7 @@ Dal: `master`
 - [x] RSS tarih biçimlerine toleranslı ayrıştırma ve bozuk tarih testleri eklendi.
 - [ ] Enclosure MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
+- [x] RSS enclosure şeması, kimlik bilgisi ve uzunluk doğrulaması için regresyon testleri eklendi.
 - [ ] Uzun RSS, eksik alan, XML namespace ve bozuk XML testleri.
 - [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
