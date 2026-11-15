@@ -26,7 +26,7 @@ object PodcastDownloads {
             get() = if (totalBytes > 0) ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100) else 0
     }
 
-    private data class Record(val key: String, val id: Long, val title: String)
+    private data class Record(val key: String, val id: Long, val title: String, val image: String?, val group: String)
 
     private lateinit var context: Context
     private lateinit var manager: DownloadManager
@@ -93,7 +93,7 @@ object PodcastDownloads {
     }
 
     /** Yalnızca HTTP(S) podcast enclosure adresleri indirilebilir. */
-    fun enqueue(url: String, title: String): Long? {
+    fun enqueue(url: String, title: String, image: String? = null, group: String = ""): Long? {
         if (!isHttpUrl(url)) return null
         synchronized(lock) {
             val existing = find(url)
@@ -113,7 +113,7 @@ object PodcastDownloads {
             }.getOrNull() ?: return null
             val id = runCatching { manager.enqueue(request) }.getOrNull() ?: return null
             val records = readRecords().filterNot { it.key == key(url) }.toMutableList()
-            records += Record(key(url), id, title.take(120))
+            records += Record(key(url), id, title.take(120), image?.take(2048), group.take(300))
             writeRecords(records)
             statusCache[id] = Status(State.PENDING)
             return id
@@ -132,6 +132,31 @@ object PodcastDownloads {
     }
 
     fun downloadedCount(): Int = readRecords().count { statusById(it.id).state == State.SUCCESSFUL }
+
+    /** RSS erişimi olmasa bile indirilmiş bölümleri DownloadManager kayıtlarından listeler. */
+    fun downloadedEntries(): List<MediaEntry> {
+        val records = readRecords()
+        if (records.isEmpty()) return emptyList()
+        val byId = records.associateBy { it.id }
+        val cursor = runCatching {
+            manager.query(DownloadManager.Query().setFilterById(*records.map { it.id }.toLongArray()))
+        }.getOrNull() ?: return emptyList()
+        val result = ArrayList<MediaEntry>()
+        cursor.use {
+            val idColumn = it.getColumnIndex(DownloadManager.COLUMN_ID)
+            val uriColumn = it.getColumnIndex(DownloadManager.COLUMN_URI)
+            val statusColumn = it.getColumnIndex(DownloadManager.COLUMN_STATUS)
+            if (idColumn < 0 || uriColumn < 0 || statusColumn < 0) return emptyList()
+            while (it.moveToNext()) {
+                if (it.getInt(statusColumn) != DownloadManager.STATUS_SUCCESSFUL) continue
+                val record = byId[it.getLong(idColumn)] ?: continue
+                val sourceUrl = it.getString(uriColumn) ?: continue
+                if (!isHttpUrl(sourceUrl)) continue
+                result += MediaEntry(Kind.PODCAST, record.title, sourceUrl, record.image, record.group)
+            }
+        }
+        return result
+    }
 
     private fun statusById(id: Long): Status {
         val cursor = runCatching { manager.query(DownloadManager.Query().setFilterById(id)) }.getOrNull()
@@ -162,14 +187,15 @@ object PodcastDownloads {
                 val key = item.optString("key")
                 val id = item.optLong("id", -1)
                 if (key.length != 64 || id <= 0) null
-                else Record(key, id, item.optString("title"))
+                else Record(key, id, item.optString("title"), item.optString("image").ifBlank { null }, item.optString("group"))
             }
         }.getOrDefault(emptyList())
     }
 
     private fun writeRecords(records: List<Record>) {
         val array = JSONArray()
-        records.forEach { array.put(JSONObject().put("key", it.key).put("id", it.id).put("title", it.title)) }
+        records.forEach { array.put(JSONObject().put("key", it.key).put("id", it.id).put("title", it.title)
+            .put("image", it.image ?: "").put("group", it.group)) }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
             .putString(RECORDS_KEY, array.toString()).apply()
     }
