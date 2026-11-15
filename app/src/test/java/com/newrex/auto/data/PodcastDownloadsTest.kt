@@ -27,6 +27,28 @@ class PodcastDownloadsTest {
         assertTrue(name.endsWith(".m4a"))
     }
 
+    @Test fun acceptsCommonPodcastMediaMimeTypes() {
+        assertTrue(PodcastDownloads.isAllowedDownloadedMime("audio/mpeg"))
+        assertTrue(PodcastDownloads.isAllowedDownloadedMime("audio/mp4"))
+        assertTrue(PodcastDownloads.isAllowedDownloadedMime("application/ogg"))
+        assertTrue(PodcastDownloads.isAllowedDownloadedMime("application/octet-stream"))
+        assertTrue(PodcastDownloads.isAllowedDownloadedMime("video/mp4"))
+    }
+
+    @Test fun rejectsNonMediaMimeTypesAndMissingMime() {
+        assertFalse(PodcastDownloads.isAllowedDownloadedMime("text/html"))
+        assertFalse(PodcastDownloads.isAllowedDownloadedMime("application/json"))
+        assertFalse(PodcastDownloads.isAllowedDownloadedMime(null))
+    }
+
+    @Test fun enforcesPositivePerEpisodeSizeLimit() {
+        assertTrue(PodcastDownloads.isAllowedDownloadedSize(1))
+        assertTrue(PodcastDownloads.isAllowedDownloadedSize(PodcastDownloads.MAX_EPISODE_BYTES))
+        assertFalse(PodcastDownloads.isAllowedDownloadedSize(0))
+        assertFalse(PodcastDownloads.isAllowedDownloadedSize(-1))
+        assertFalse(PodcastDownloads.isAllowedDownloadedSize(PodcastDownloads.MAX_EPISODE_BYTES + 1))
+    }
+
     @Test fun unknownExtensionUsesSafeAudioSuffix() {
         val name = PodcastDownloads.fileNameFor("https://podcast.example/audio", "Bölüm")
         assertTrue(name.endsWith(".audio"))
