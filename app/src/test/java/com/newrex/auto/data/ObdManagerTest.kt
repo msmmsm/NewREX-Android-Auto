@@ -89,6 +89,16 @@ class ObdManagerTest {
     }
 
     @Test
+    fun parsesStandardHybridBatteryRemainingLifePidWithoutCallingItSoc() {
+        assertEquals(50.196f, ObdManager.parseHybridBatteryRemainingLife("415B80")!!, 0.01f)
+        assertEquals(100f, ObdManager.parseHybridBatteryRemainingLife("7E803415BFF")!!, 0.001f)
+        assertEquals(0f, ObdManager.parseHybridBatteryRemainingLife("415B00")!!, 0.001f)
+        assertNull(ObdManager.parseHybridBatteryRemainingLife("NO DATA"))
+        assertNull(ObdManager.parseHybridBatteryRemainingLife("415B"))
+        assertNull(ObdManager.parseHybridBatteryRemainingLife("415BZZ"))
+    }
+
+    @Test
     fun acceptsOnlyPositiveMode04Acknowledgement() {
         assertTrue(ObdManager.hasDtcClearAcknowledgement("44"))
         assertTrue(ObdManager.hasDtcClearAcknowledgement("7E80144"))
