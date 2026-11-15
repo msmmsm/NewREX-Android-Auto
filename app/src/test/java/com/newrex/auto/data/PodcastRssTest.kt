@@ -51,6 +51,11 @@ class PodcastRssTest {
         assertEquals(false, PodcastRss.isSafeFeedUrl("https://pod.example.org/" + "a".repeat(4100)))
     }
 
+    @Test fun validatesPodcastArtworkUrlWithFeedRules() {
+        assertEquals("https://pod.example.org/cover.jpg", PodcastRss.resolveEnclosureUrl("https://pod.example.org/feed.xml", "/cover.jpg"))
+        assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/feed.xml", "javascript:alert(1)"))
+    }
+
     @Test fun rejectsOversizedEnclosureAddress() {
         assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "https://cdn.example.org/" + "a".repeat(4100)))
     }
