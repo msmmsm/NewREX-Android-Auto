@@ -13,11 +13,13 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import com.newrex.auto.PlayerHub
+import com.newrex.auto.DriveState
 import com.newrex.auto.R
 import com.newrex.auto.data.Kind
 import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.PodcastApi
 import com.newrex.auto.data.PodcastShow
+import com.newrex.auto.data.PodcastDownloads
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.ui.CarUi
 import com.newrex.auto.ui.MATCH
@@ -42,6 +44,7 @@ import com.newrex.auto.ui.rounded
 import com.newrex.auto.ui.tileGrid
 import com.newrex.auto.ui.verticalList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 /** Podcast programları: popüler listesi, abonelikler, son dinlenenler ve arama. */
 class PodcastPage(ui: CarUi) : Page(ui) {
@@ -163,6 +166,7 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
     private lateinit var subButton: FrameLayout
 
     override fun build(): View = with(ctx) {
+        PodcastDownloads.init(this)
         adapter = EpisodeAdapter()
         status = label("Bölümler yükleniyor…", 16f, Palette.TEXT_DIM, lines = 3).apply { gravity = Gravity.CENTER }
 
@@ -209,6 +213,13 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
             scope.launch {
                 kotlinx.coroutines.flow.combine(PlayerHub.now, PlayerHub.playing) { _, _ -> }.collect { adapter.notifyDataSetChanged() }
             }
+            // DownloadManager indirmeyi uygulama kapalıyken de sürdürür; açık ekranda durum/progress yenilenir.
+            scope.launch {
+                while (true) {
+                    delay(2500)
+                    adapter.notifyDataSetChanged()
+                }
+            }
         }
     }
 
@@ -224,7 +235,13 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
     private inner class EpisodeAdapter : RecyclerView.Adapter<EpisodeAdapter.VH>() {
         var meta: Map<String, String> = emptyMap()
 
-        inner class VH(val root: LinearLayout, val title: TextView, val sub: TextView, val icon: ImageView) : RecyclerView.ViewHolder(root)
+        inner class VH(
+            val root: LinearLayout,
+            val title: TextView,
+            val sub: TextView,
+            val icon: ImageView,
+            val download: TextView,
+        ) : RecyclerView.ViewHolder(root)
 
         override fun getItemCount() = episodes.size
 
@@ -232,6 +249,11 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
             val ic = icon(R.drawable.ic_play, 22)
             val t = label("", 15f, bold = true, lines = 2)
             val s = label("", 12f, Palette.TEXT_DIM)
+            val download = label("İndir", 12f, bold = true).apply {
+                gravity = Gravity.CENTER
+                setPadding(dp(10), dp(8), dp(10), dp(8))
+                background = rounded(Palette.SURFACE_STRONG, dpf(10))
+            }
             val root = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -245,9 +267,10 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
                     addView(t)
                     addView(s, lp(MATCH, WRAP).margins(t = dp(4)))
                 }, lp(0, WRAP, 1f))
+                addView(download, lp(WRAP, WRAP).margins(l = dp(8)))
                 layoutParams = RecyclerView.LayoutParams(MATCH, WRAP).margins(b = dp(6))
             }
-            VH(root, t, s, ic)
+            VH(root, t, s, ic, download)
         }
 
         override fun onBindViewHolder(h: VH, position: Int) {
@@ -262,6 +285,37 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
             val resume = if (pos > 60_000) "  •  Kaldığın yer: ${pos / 60_000} dk" else ""
             h.sub.text = (meta[e.url].orEmpty() + resume).trim().ifBlank { show.name }
             h.icon.setImageResource(if (playing && PlayerHub.playing.value) R.drawable.ic_pause else R.drawable.ic_play)
+            val downloadState = PodcastDownloads.status(e.url)
+            h.download.text = when (downloadState.state) {
+                PodcastDownloads.State.NONE -> "İndir"
+                PodcastDownloads.State.PENDING -> "Sırada"
+                PodcastDownloads.State.RUNNING -> "%${downloadState.progress}"
+                PodcastDownloads.State.PAUSED -> "Bekliyor"
+                PodcastDownloads.State.SUCCESSFUL -> "✓"
+                PodcastDownloads.State.FAILED -> "Tekrar"
+            }
+            h.download.alpha = if (DriveState.driving.value) 0.45f else 1f
+            h.download.setOnClickListener {
+                if (DriveState.driving.value) {
+                    ui.toast("Podcast indirmek için aracı park et.")
+                    return@setOnClickListener
+                }
+                when (downloadState.state) {
+                    PodcastDownloads.State.SUCCESSFUL -> {
+                        PodcastDownloads.delete(e.url)
+                        ui.toast("İndirilen bölüm silindi.")
+                    }
+                    PodcastDownloads.State.PENDING, PodcastDownloads.State.RUNNING, PodcastDownloads.State.PAUSED -> {
+                        PodcastDownloads.delete(e.url)
+                        ui.toast("İndirme iptal edildi.")
+                    }
+                    else -> {
+                        val id = PodcastDownloads.enqueue(e.url, e.title)
+                        ui.toast(if (id == null) "İndirme başlatılamadı. Adresi kontrol et." else "Podcast indirme kuyruğuna eklendi.")
+                    }
+                }
+                notifyDataSetChanged()
+            }
             h.root.onTap {
                 if (playing) PlayerHub.toggle() else PlayerHub.play(episodes, position)
                 notifyDataSetChanged()
