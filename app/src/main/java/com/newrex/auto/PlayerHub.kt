@@ -2,6 +2,9 @@
 package com.newrex.auto
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.AudioAttributes
@@ -75,6 +78,9 @@ object PlayerHub {
     private var sessionPlayer: Player? = null
     /** UI denetimleri MediaController üzerinden oturuma gider; oynatıcı yalnızca servis sahibidir. */
     private var mediaController: MediaController? = null
+    private var connectivityManager: ConnectivityManager? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    val networkAvailable = MutableStateFlow(false)
     private var queue: List<MediaEntry> = emptyList()
     private var index = 0
 
@@ -153,6 +159,7 @@ object PlayerHub {
             .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(6))
         tvSources = sources(STREAM_USER_AGENT)
         audioSources = sources(AUDIO_USER_AGENT)
+        registerNetworkMonitor(context)
         val p = ExoPlayer.Builder(context)
             .setMediaSourceFactory(audioSources)
             .setAudioAttributes(
@@ -207,11 +214,19 @@ object PlayerHub {
                     e.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ||
                     e.errorCode >= PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED
                 if (cur?.kind == Kind.RADIO && gone && heal(cur)) return
-                if (cur != null && cur.kind != Kind.PODCAST && retry()) return
-                // İnternet yokken yedek yayın aramak boşuna
+                // İnternet yokken art arda yayın/alternatif aramak yerine bağlantının geri gelmesini bekle.
                 val offline = e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
-                    e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
-                if (cur?.kind == Kind.RADIO && !offline && heal(cur)) return
+                    e.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                    !networkAvailable.value
+                if (offline) {
+                    cur?.takeIf { it.kind == Kind.PODCAST }?.let { Prefs.savePosition(it.url, p.currentPosition) }
+                    persistQueue()
+                    buffering.value = true
+                    error.value = "İnternet bağlantısı bekleniyor…"
+                    return
+                }
+                if (cur != null && cur.kind != Kind.PODCAST && retry()) return
+                if (cur?.kind == Kind.RADIO && heal(cur)) return
                 buffering.value = false
                 error.value = "Yayın açılamadı. Başka bir kanal/istasyon deneyin."
             }
@@ -446,6 +461,7 @@ object PlayerHub {
         cancelRecovery()
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
         handler.removeCallbacks(ticker)
+        unregisterNetworkMonitor()
         session?.release()
         exo?.release()
         session = null
@@ -578,9 +594,52 @@ object PlayerHub {
     private fun reload() {
         val p = exo ?: return
         val e = now.value ?: return
-        p.setMediaSource(sourceFor(e))
+        if (e.kind == Kind.PODCAST) {
+            Prefs.savePosition(e.url, p.currentPosition)
+            p.setMediaSource(sourceFor(e), Prefs.position(e.url))
+        } else {
+            p.setMediaSource(sourceFor(e))
+        }
         p.prepare()
         p.play()
+    }
+
+    /** Ağ kesintisinde gereksiz tekrar denemelerini durdurur; doğrulanmış bağlantı dönünce kaldığı yerden açar. */
+    private fun registerNetworkMonitor(context: Context) {
+        val manager = context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            ?: return
+        connectivityManager = manager
+        networkAvailable.value = manager.activeNetwork?.let { network ->
+            manager.getNetworkCapabilities(network)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        } ?: false
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                val wasOffline = !networkAvailable.value
+                networkAvailable.value = true
+                if (wasOffline) handler.postDelayed({
+                    val p = exo ?: return@postDelayed
+                    if (p.playWhenReady && !p.isPlaying && now.value != null) reload()
+                }, 700)
+            }
+
+            override fun onLost(network: Network) {
+                val active = manager.activeNetwork
+                networkAvailable.value = active?.let {
+                    manager.getNetworkCapabilities(it)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+                } ?: false
+            }
+        }
+        runCatching { manager.registerDefaultNetworkCallback(callback) }
+            .onSuccess { networkCallback = callback }
+    }
+
+    private fun unregisterNetworkMonitor() {
+        val manager = connectivityManager
+        val callback = networkCallback
+        if (manager != null && callback != null) runCatching { manager.unregisterNetworkCallback(callback) }
+        networkCallback = null
+        connectivityManager = null
+        networkAvailable.value = false
     }
 
     private fun start() {
