@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.net.URI
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Android DownloadManager ile uygulamaya özel alana podcast indirir.
@@ -32,6 +33,7 @@ object PodcastDownloads {
     private lateinit var manager: DownloadManager
     private val lock = Any()
     private val statusCache = ConcurrentHashMap<Long, Status>()
+    val changes = MutableStateFlow(0)
     private const val PREFS_NAME = "omnidrive_podcast_downloads"
     private const val RECORDS_KEY = "records"
 
@@ -88,8 +90,10 @@ object PodcastDownloads {
             }
         }
         records.forEach { refreshed.putIfAbsent(it.id, Status(State.FAILED)) }
+        val changed = statusCache.toMap() != refreshed
         statusCache.clear()
         statusCache.putAll(refreshed)
+        if (changed) changes.value++
     }
 
     /** Yalnızca HTTP(S) podcast enclosure adresleri indirilebilir. */
@@ -118,6 +122,7 @@ object PodcastDownloads {
             records += Record(key(url), id, title.take(120), image?.take(2048), group.take(300))
             writeRecords(records)
             statusCache[id] = Status(State.PENDING)
+            changes.value++
             return id
         }
     }
@@ -129,6 +134,7 @@ object PodcastDownloads {
             runCatching { manager.remove(record.id) }
             statusCache.remove(record.id)
             writeRecords(readRecords().filterNot { it.key == record.key })
+            changes.value++
             return true
         }
     }
