@@ -11,8 +11,10 @@ Dal: `master`
 
 ### Mevcut uygulama
 - TV, radyo ve podcast aynı Media3/ExoPlayer örneğini kullanıyor.
-- Medya oturumu oynatma başlayınca `PlayerHub` içinde oluşturuluyor; durdurmada oturum bırakılıyor.
-- `PlayerHub`, `CarActivity` tarafından başlatılıyor ve etkinlik kalıcı olarak kapatılırken serbest bırakılıyor. Manifestte `MediaSessionService` veya medya oynatma türünde bir foreground service tanımı bulunmuyor. Bu nedenle uygulama arka plana alındığında ve Android süreci sonlandırdığında kesintisiz oynatma garantisi kaynak kodundan doğrulanamıyor.
+- `OmniDriveMediaService`, Media3 `MediaSessionService` sınıfından türetildi; ExoPlayer ve tek `MediaSession` servis oluşturulurken başlatılıyor.
+- `CarActivity`, `SessionToken` ve asenkron `MediaController` bağlantısıyla servise bağlanıyor. Activity yok edilirken yalnızca controller bağlantısı bırakılıyor; oynatma sürerken servis/oynatıcı serbest bırakılmıyor.
+- Manifestte `FOREGROUND_SERVICE` ve `FOREGROUND_SERVICE_MEDIA_PLAYBACK` izinleri ile `mediaPlayback` türünde, Media3 oturum eylemi yayınlayan servis tanımlandı. Media3, oynatma sürerken foreground durumunu ve medya bildirimini yönetiyor.
+- `PlayerHub.stop()` artık MediaSession'ı bırakmıyor; oynatma listesini temizliyor. Oturum ve ExoPlayer yalnızca servis `onDestroy()` aşamasında serbest bırakılıyor.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
