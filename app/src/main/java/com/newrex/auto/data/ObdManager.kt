@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.SocketTimeoutException
 import java.util.UUID
 
 /**
@@ -120,6 +122,9 @@ object ObdManager {
                 // Telemetri Sorgulama Döngüsü
                 startPollingLoop()
 
+            } catch (e: CancellationException) {
+                closeTransport()
+                throw e
             } catch (e: Exception) {
                 state.value = ConnectionState.ERROR
                 TelemetryHub.obdConnected.value = false
@@ -271,8 +276,8 @@ object ObdManager {
         if (state.value != ConnectionState.CONNECTED) return@withContext false
         try {
             val res = sendCommand("04")
-            // Mode 04 için başarılı ECU yanıtı 44'tür; yalnızca onaydan sonra yerel liste temizlenir.
-            val acknowledged = res.replace(" ", "").replace("\r", "").replace("\n", "").uppercase().contains("44")
+            // Komut yankısı veya başka bir hex alanı değil, gerçek Mode 04 yanıtı aranır.
+            val acknowledged = hasDtcClearAcknowledgement(res)
             if (acknowledged) TelemetryHub.obdDtcList.value = emptyList()
             acknowledged
         } catch (e: Exception) {
@@ -282,31 +287,64 @@ object ObdManager {
 
     private suspend fun sendCommand(cmd: String): String = withContext(Dispatchers.IO) {
         commandMutex.withLock {
-            val out = outStream ?: return@withLock ""
-            val ins = inStream ?: return@withLock ""
+            val out = outStream ?: throw java.io.IOException("OBD çıkış akışı kapalı")
+            val ins = inStream ?: throw java.io.IOException("OBD giriş akışı kapalı")
 
-            out.write((cmd + "\r").toByteArray())
+            // Önceki komuttan kalmış baytlar yeni yanıtın başına eklenmesin.
+            // ELM komutları mutex ile sıralandığından burada yalnızca bekleyen artıkları temizle.
+            var drained = 0
+            while (ins.available() > 0 && drained < MAX_RESPONSE_BYTES) {
+                val skipped = ins.read()
+                if (skipped < 0) throw java.io.IOException("OBD bağlantısı kapandı")
+                drained++
+            }
+
+            out.write((cmd + "\r").toByteArray(Charsets.US_ASCII))
             out.flush()
 
-            val sb = StringBuilder()
+            val response = StringBuilder()
             val buffer = ByteArray(128)
-            val startTime = System.currentTimeMillis()
+            val deadline = System.nanoTime() + COMMAND_TIMEOUT_MS * 1_000_000L
+            var promptReceived = false
 
-            while (System.currentTimeMillis() - startTime < 1200) {
-                if (ins.available() > 0) {
-                    val read = ins.read(buffer)
-                    if (read > 0) {
-                        val chunk = String(buffer, 0, read)
-                        sb.append(chunk)
-                        if (chunk.contains(">")) break // ELM327 yanıt sonu belirteci
+            while (System.nanoTime() < deadline) {
+                if (!kotlin.coroutines.coroutineContext.isActive) {
+                    throw CancellationException("OBD komutu iptal edildi")
+                }
+                val available = ins.available()
+                if (available > 0) {
+                    val read = ins.read(buffer, 0, minOf(buffer.size, available))
+                    if (read < 0) throw java.io.IOException("OBD bağlantısı okuma sırasında kapandı")
+                    if (read == 0) {
+                        delay(5)
+                        continue
                     }
+                    for (index in 0 until read) {
+                        val value = buffer[index].toInt().toChar()
+                        if (value == '>') {
+                            promptReceived = true
+                            break
+                        }
+                        response.append(value)
+                        if (response.length > MAX_RESPONSE_BYTES) {
+                            throw java.io.IOException("OBD yanıtı izin verilen boyutu aştı")
+                        }
+                    }
+                    if (promptReceived) break
                 } else {
                     delay(10)
                 }
             }
-            sb.toString().replace(">", "").trim()
+
+            if (!promptReceived) {
+                throw SocketTimeoutException("ELM327 yanıt sonlandırıcısı zamanında alınamadı: $cmd")
+            }
+            response.toString().trim()
         }
     }
+
+    private const val COMMAND_TIMEOUT_MS = 1_500L
+    private const val MAX_RESPONSE_BYTES = 4_096
 
     // ---- PID Ayrıştırıcı Fonksiyonlar ----
 
@@ -341,6 +379,17 @@ object ObdManager {
     internal fun parseVoltage(raw: String): Float? {
         val digits = raw.replace("V", "", ignoreCase = true).trim()
         return digits.toFloatOrNull()
+    }
+
+    internal fun hasDtcClearAcknowledgement(raw: String): Boolean {
+        val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
+        // 44, Mode 04 pozitif yanıt servis kodudur. Tek başına substring eşleşmesi
+        // yerine ELM başlıksız yanıtı veya 7E8–7EF CAN yanıtını kabul et.
+        if (clean == "44" || clean.startsWith("44")) return true
+        val ecuHeader = Regex("7E[89A-F][0-9A-F]")
+        return ecuHeader.findAll(clean).any { match ->
+            clean.substring(match.range.last + 1).startsWith("44")
+        }
     }
 
     internal fun parseDtc(raw: String): List<String> {
