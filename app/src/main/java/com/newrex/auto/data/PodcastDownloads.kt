@@ -1,3 +1,4 @@
+// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
 // OmniDrive — Podcast çevrimdışı indirme yönetimi
 package com.newrex.auto.data
 
