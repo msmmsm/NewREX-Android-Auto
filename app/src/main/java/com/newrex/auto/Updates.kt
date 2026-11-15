@@ -12,8 +12,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /**
- * Yeni sürüm var mı diye GitHub'daki son yayına bakar (en fazla birkaç saatte bir). Sadece herkese açık
- * yayın bilgisi okunur; telefondan hiçbir bilgi gönderilmez.
+ * Yeni sürüm var mı diye GitHub'daki son yayına bakar (en fazla birkaç saatte bir).
+ * Uygulama içeriği gönderilmez; GitHub bağlantı sırasında IP adresini görebilir.
  */
 object Updates {
     private const val API = "https://api.github.com/repos/msmmsm/NewREX-Android-Auto/releases/latest"
