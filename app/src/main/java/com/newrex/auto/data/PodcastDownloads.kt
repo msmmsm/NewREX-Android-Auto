@@ -211,8 +211,12 @@ object PodcastDownloads {
 
     internal fun isAllowedDownloadedMime(mime: String?): Boolean {
         val value = mime?.substringBefore(';')?.trim()?.lowercase() ?: return false
-        return value.startsWith("audio/") ||
-            value in setOf("application/ogg", "application/octet-stream", "video/mp4")
+        return value in setOf(
+            "audio/mpeg", "audio/mp3", "audio/mp4", "audio/aac", "audio/ogg",
+            "audio/wav", "audio/x-wav", "audio/flac", "audio/x-m4a",
+            "audio/3gpp", "audio/amr", "audio/webm",
+            "application/ogg", "application/octet-stream", "video/mp4",
+        )
     }
 
     private fun statusById(id: Long): Status {
