@@ -113,7 +113,10 @@ object PlayerHub {
     private fun persistQueue() {
         if (queue.isEmpty() || index !in queue.indices) return
         val current = now.value
-        val resumePosition = if (current?.kind == Kind.PODCAST) exo?.currentPosition ?: 0L else 0L
+        val activeItemMatches = exo?.currentMediaItem?.mediaId == current?.key
+        val resumePosition = if (current?.kind == Kind.PODCAST) {
+            if (activeItemMatches) exo?.currentPosition ?: 0L else Prefs.position(current.url)
+        } else 0L
         Prefs.savePlaybackQueue(queue, index, resumePosition)
     }
 
