@@ -7,9 +7,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.SslErrorHandler
+import android.net.http.SslError
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -132,6 +133,8 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
             settings.allowFileAccess = false
             settings.allowContentAccess = false
             settings.safeBrowsingEnabled = true
+            // HTTPS sayfaların HTTP alt kaynak yüklemesine izin verme.
+            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
             // Hesaba bir kez girilince oturum kalsın (TV+, Netflix, YouTube): çerezler telefonda saklanır, silinmez
             val view = this
             android.webkit.CookieManager.getInstance().apply {
@@ -145,15 +148,6 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
                     return scheme != "http" && scheme != "https"
                 }
 
-                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-                    // Filtre yalnızca YouTube sayfasındayken etkin; TV+, Netflix ve genel web değişmez.
-                    if (mode == Mode.YOUTUBE && youtubeDocumentActive &&
-                        YouTubeAdBlocker.shouldBlock(request.url.toString())) {
-                        return YouTubeAdBlocker.emptyResponse()
-                    }
-                    return super.shouldInterceptRequest(view, request)
-                }
-
                 override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                     youtubeDocumentActive = mode == Mode.YOUTUBE && isYouTubeUrl(url)
                     progressBar.visibility = View.VISIBLE
@@ -161,10 +155,15 @@ class WebPage(ui: CarUi, private val mode: Mode) : Page(ui) {
 
                 override fun onPageFinished(view: WebView, url: String?) {
                     progressBar.visibility = View.GONE
-                    if (mode == Mode.YOUTUBE && isYouTubeUrl(url)) {
-                        // Reklam katmanlarını gizle ve atlanabilir video reklamlarını geçmeyi dene.
-                        view.evaluateJavascript(YouTubeAdBlocker.pageScript, null)
-                    }
+                }
+
+                // Sertifika veya TLS hatasında bağlantıyı hiçbir koşulda sürdürme.
+                override fun onReceivedSslError(
+                    view: WebView,
+                    handler: SslErrorHandler,
+                    error: SslError,
+                ) {
+                    handler.cancel()
                 }
             }
             webChromeClient = object : WebChromeClient() {
