@@ -46,7 +46,7 @@ Dal: `master`
 - [x] Önbellek dosya adını URL'nin SHA-256 özetiyle üret.
 - [ ] Hatalı veya desteklenmeyen URI şemalarını kontrollü hata olarak raporla; kullanıcıya özel ağ/HTTP kaynaklarını gereksiz yere devre dışı bırakma.
 
-> JUnit testleri kaynak koduna eklendi ancak bu ortamda Android Gradle derlemesi/testi çalıştırılamadığı için sonuçları henüz doğrulanmadı.
+> IPTV ve podcast için JUnit regresyon testleri kaynak koduna eklendi ancak bu ortamda Android Gradle derlemesi/testi çalıştırılamadığı için sonuçları henüz doğrulanmadı.
 
 ## 3. Podcast RSS — `data/Services.kt`, `pages/PodcastPage.kt`
 
@@ -60,13 +60,14 @@ Dal: `master`
 - **Bölüm indirme ve çevrimdışı dinleme akışı görünmüyor.** Mevcut davranış akış üzerinden oynatma ve konum saklama. Uygulama çevrimdışı indirme destekliyor şeklinde tanıtılmamalı.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
-- RSS içindeki bölüm adresleri için göreli URL çözümlemesi yapılmıyor.
+- **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
+- **RSS tarih ayrıştırması güçlendirildi.** Saniyeli/saniyesiz RFC 822 tarihleri ve yaygın saat dilimi yazımları deneniyor; tanınmayan tarih boş bırakılıyor.
 - Feed yükleme ve bölüm listesi Android cihazda farklı RSS sağlayıcılarıyla doğrulanmadı.
 
 ### Düzeltme ve test planı
-- [ ] RSS tarih biçimlerine toleranslı ayrıştırma ve bozuk tarih testleri.
-- [ ] Enclosure URL/MIME/uzunluk doğrulaması ve hata mesajları.
-- [ ] Göreli enclosure URL'leri için feed URL'sine göre çözümleme.
+- [x] RSS tarih biçimlerine toleranslı ayrıştırma ve bozuk tarih testleri eklendi.
+- [ ] Enclosure MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
+- [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [ ] Uzun RSS, eksik alan, XML namespace ve bozuk XML testleri.
 - [ ] Çevrimdışı indirme isteniyorsa indirme kuyruğu, depolama kotası, iptal/devam, dosya temizliği ve çevrimdışı oynatma ayrı bir özellik olarak tasarlanmalı; şu an varmış gibi gösterilmemeli.
 
@@ -98,7 +99,7 @@ Dal: `master`
 |---|---|---|
 | P0 | HLS M3U8 manifestini kanal listesi gibi ayrıştırma riskini gider | Kod düzeltildi; test sonucu bekliyor |
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
-| P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | Açık |
+| P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam filtresi ve sürüş güvenliği risklerini doğrula | Açık |
 | P1 | Player/MediaSession yaşam döngüsünü gerçek cihazda test et | Açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
