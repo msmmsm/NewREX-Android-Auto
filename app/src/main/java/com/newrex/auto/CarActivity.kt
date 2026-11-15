@@ -1,4 +1,4 @@
-// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
+// OmniDrive Android Auto — Copyright (C) 2026 OmniDrive — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto
 
 import android.app.Activity
@@ -24,7 +24,7 @@ import com.newrex.auto.ui.rounded
 /**
  * Android Auto'nun "park halindeyken" uygulama kapısı (Android 15+). Bu kapı Play Store dışından kurulan
  * uygulamalarda da Android Auto'daki "Bilinmeyen kaynaklar" ayarıyla açılır; King Installer'ın çalışmadığı
- * telefonlarda (Xiaomi, Tecno...) NewREX arabada buradan görünür. Ekran, araç ekranında doğrudan çalışan
+ * telefonlarda (Xiaomi, Tecno...) OmniDrive arabada buradan görünür. Ekran, araç ekranında doğrudan çalışan
  * normal bir uygulama ekranıdır; sürüş başlayınca Android Auto bu kapıyı kendisi kapatır.
  */
 class CarActivity : Activity() {
@@ -75,10 +75,10 @@ class CarActivity : Activity() {
             setPadding(dp(24), dp(20), dp(24), dp(20))
             background = rounded(0xF2161A2B.toInt(), dpf(22), dp(1), Palette.withAlpha(Palette.accent, 0x99))
             addView(label("🚗  Sürüşte de kullanmak için küçük bir adım kaldı", 20f, bold = true, lines = 2))
-            addView(label("NewREX şu an \"park modunda\" açıldı: araç hareket edince Android Auto uygulamayı kapatır. " +
+            addView(label("OmniDrive şu an \"park modunda\" açıldı: araç hareket edince Android Auto uygulamayı kapatır. " +
                 "Bunu telefondan bir kez düzeltmen yeterli:", 15f, Palette.TEXT_DIM, lines = 3), lp(MATCH, WRAP).margins(t = dp(10)))
             addView(label("1.  Telefonda Play Protect'i (Samsung'da Otomatik Engelleyici'yi de) kısa süreliğine kapat\n" +
-                "2.  NewREX'i aç → çıkan pencerede \"Şimdi yap\" → \"Güncelle\"\n" +
+                "2.  OmniDrive'i aç → çıkan pencerede \"Şimdi yap\" → \"Güncelle\"\n" +
                 "3.  Kapattıklarını geri aç, telefonu arabadan çıkarıp tekrar bağla",
                 15f, Palette.TEXT, lines = 8).apply { setLineSpacing(dpf(4), 1f) }, lp(MATCH, WRAP).margins(t = dp(12)))
             addView(pill("Anladım", selected = true) { close(box) }, lp(WRAP, dp(44)).margins(t = dp(16)))
