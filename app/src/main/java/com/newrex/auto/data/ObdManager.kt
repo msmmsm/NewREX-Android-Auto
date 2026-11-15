@@ -177,7 +177,7 @@ object ObdManager {
                 }
 
                 loopCount++
-                delay(80) // 12-15 Hz taze veri akışı
+                delay(80) // Sorgu sürelerine ek kısa bekleme; gerçek örnekleme hızı ECU/adaptöre bağlıdır.
             } catch (e: Exception) {
                 if (isActive) {
                     delay(500)
