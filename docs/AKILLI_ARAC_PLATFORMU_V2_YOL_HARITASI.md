@@ -4,6 +4,23 @@
 > Hedef: Android telefon + Android Auto + uyumlu OBD-II/BLE donanımı ile güvenilir, Türkçe akıllı araç platformu.  
 > Temel ilke: Ölçülmeyen veya araç tarafından sağlanmayan hiçbir veri üretilmiş gibi gösterilmez. Güvenlik-kritik araç kontrolü yapılmaz.
 
+## 2. Standart OBD-II ECU kimlik keşfi (Mode 09)
+
+OmniDrive, OBD-II bağlantısı kurulduğunda kullanıcı isteğiyle standart SAE J1979 Service 09 üzerinden emisyonla ilişkili ECU kimlik alanlarını okuyabilir:
+
+- Önce PID 00 destek bitmap'i okunur. ECU'nun desteklediğini bildirmediği PID için sorgu gönderilmez.
+- Destekleniyorsa PID 02 VIN, PID 04 kalibrasyon kimliği (CALID), PID 06 kalibrasyon doğrulama numarası (CVN) ve PID 0A ECU adı okunur.
+- VIN tam biçimi uygulama ekranında gösterilmez; yalnızca maskelenmiş biçimde gösterilir. Kimlik verileri kalıcı depolamaya veya loglara yazılmaz.
+- Yanıt yoksa veya ayrıştırılamıyorsa tahmini ECU kimliği üretilmez.
+- Bu tarama yalnızca standart OBD-II emisyon ECU'sunu tanımlar. Toyota hibrit batarya, radar, kör nokta veya kamera ECU'larını keşfettiği anlamına gelmez.
+- Çoklu ECU yanıtlarının her adaptör/protokolde eksiksiz toplanması henüz doğrulanmamıştır. İlk yanıtın kimliği, tüm araç ECU'larının envanteri olarak sunulmaz.
+
+**Güvenlik sınırı:** Bu özellik salt okunur sorgularla sınırlıdır. Kalibrasyon yazma, kodlama, aktif test, güvenlik ECU'su komutu veya CAN enjeksiyonu yapılmaz.
+
+Teknik dayanak:
+- SAE J1979 Mode 09 araç bilgisi ve desteklenen kimlik alanları: https://py-obdii.readthedocs.io/en/latest/api/modes/mode_09.html
+- VIN, CALID, CVN ve ECU adı alanlarının Mode 09 kapsamı: https://ww2.arb.ca.gov/sites/default/files/classic/msprog/hdim/meetings/20191108_workgroup/hdim_obd_specs_tables.pdf
+
 ## 1. Ürün kapsamı
 
 ### 1.1 Dijital kokpit
