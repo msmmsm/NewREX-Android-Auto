@@ -56,12 +56,12 @@ Dal: `master`
 - Aynı URL'ye sahip kanallar tekilleştiriliyor.
 
 ### Statik bulgular
-1. **HLS manifesti ile kanal listesi ayrımı yok.** `#EXT-X-...` satırları yorum satırı olarak atlanıyor; ardından gelen segment URI'leri normal kanal girdisi gibi değerlendirilebilir. HLS medya manifesti bir kanal listesi değildir.
+1. **HLS manifesti ile kanal listesi ayrımı düzeltildi.** `#EXT-X-...` satırı içeren ana/medya manifestleri IPTV kanal listesi olarak ayrıştırılmaz; segment URI'leri kanal olarak eklenmez.
 2. **Göreli URI çözümlemesi eklendi.** HTTP(S) kaynak listesindeki göreli kanal adresleri liste URL'sine göre çözülüyor.
 3. **EXTINF başlık ayrıştırması düzeltildi.** Tırnak dışındaki ilk virgül ayırıcı olarak kullanılıyor; kanal adının içindeki virgüller korunuyor.
 4. **Önbellek anahtarı güçlendirildi.** URL tabanlı `String.hashCode()` yerine SHA-256 özeti kullanılıyor. Eski hash adlı dosyalar kullanılmayacak; Android önbelleği temizlendiğinde silinebilir.
 5. **M3U kaynak sınırları ve URI doğrulaması eklendi.** Liste 8 MiB, 100.000 satır ve 10.000 kanal ile sınırlandırılır; başlık/grup uzunlukları kesilir. Kanal akışlarında HTTP(S) ve RTSP kabul edilir; `file:`, `content:`, `javascript:` gibi şemalar, hatalı host ve URL içine gömülü kullanıcı/parola reddedilir. Logo adresleri yalnızca güvenli HTTP(S) kabul eder. Yerel ağdaki HTTP IPTV adresleri bilerek engellenmez; RTSP korunur. HTTP(S) liste URL'sinden göreli adres çözümlemesi yapılır; güvenilir HTTP(S) taban URL yoksa göreli kayıt atlanır.
-5. **Liste hata görünürlüğü** hâlâ ayrıca UI/cihaz testi gerektiriyor.
+6. **Liste hata görünürlüğü** hâlâ ayrıca UI/cihaz testi gerektiriyor.
 
 ### Düzeltme ve test planı
 - [x] `#EXT-X-` içeren HLS ana/medya manifestlerini kanal listesi ayrıştırıcısından ayır.
