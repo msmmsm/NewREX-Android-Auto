@@ -301,6 +301,50 @@ object ObdManager {
     }
 
     /**
+     * Mode 02 Freeze Frame: ECU'nun arıza anında sakladığı desteklenen standart alanları okur.
+     * Bu veri geçmiş bir andan gelir; canlı telemetri alanlarına yazılmaz.
+     */
+    suspend fun readFreezeFrame(): ObdFreezeFrame? = withContext(Dispatchers.IO) {
+        if (state.value != ConnectionState.CONNECTED) return@withContext null
+        try {
+            val values = listOf(
+                0x0C to sendCommand("020C"),
+                0x0D to sendCommand("020D"),
+                0x05 to sendCommand("0205"),
+                0x0F to sendCommand("020F"),
+                0x04 to sendCommand("0204"),
+                0x11 to sendCommand("0211")
+            )
+            val parsed = values.mapNotNull { (pid, raw) ->
+                val size = if (pid == 0x0C) 2 else 1
+                ObdDiagnostics.parseFreezeFrameBytes(raw, pid, size)?.let { pid to it }
+            }
+            if (parsed.isEmpty()) return@withContext null
+            val frame = parsed.first().second.first
+            fun bytes(pid: Int): List<Int>? = parsed.firstOrNull {
+                it.first == pid && it.second.first == frame
+            }?.second?.second
+            val rpmBytes = bytes(0x0C)
+            val rpm = rpmBytes?.let { (it[0] * 256 + it[1]) / 4 }
+            TelemetryHub.markObdDataUpdated()
+            ObdFreezeFrame(
+                frameNumber = frame,
+                rpm = rpm,
+                speedKmh = bytes(0x0D)?.firstOrNull(),
+                coolantTempC = bytes(0x05)?.firstOrNull()?.minus(40),
+                intakeAirTempC = bytes(0x0F)?.firstOrNull()?.minus(40),
+                engineLoadPercent = bytes(0x04)?.firstOrNull()?.let(ObdDiagnostics::percent),
+                throttlePercent = bytes(0x11)?.firstOrNull()?.let(ObdDiagnostics::percent)
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is java.io.IOException) markConnectionError()
+            null
+        }
+    }
+
+    /**
      * Arıza Kodlarını Sıfırla (Mode 04 - Check Engine Söndür)
      */
     suspend fun clearDtcCodes(): Boolean = withContext(Dispatchers.IO) {
