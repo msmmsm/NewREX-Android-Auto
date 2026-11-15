@@ -51,6 +51,7 @@ class RadioPage(ui: CarUi, private val onPick: ((MediaEntry) -> Unit)? = null) :
     private lateinit var status: TextView
 
     override fun build(): View = with(ctx) {
+        RadioApi.init(this)
         tiles = TileAdapter(this)
         status = label("", 16f, Palette.TEXT_DIM, lines = 3).apply { gravity = Gravity.CENTER }
         tabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
