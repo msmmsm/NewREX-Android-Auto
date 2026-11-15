@@ -142,7 +142,7 @@ class CarActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
-        mediaController?.let(PlayerHub::detachController)
+        mediaController?.let { PlayerHub.detachController(it) }
         mediaController = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null
