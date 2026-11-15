@@ -109,7 +109,7 @@ object RadioApi {
             "/search?name=${URLEncoder.encode(name.trim(), "UTF-8")}" +
                 (country?.let { "&countrycode=$it" } ?: "") +
                 "&hidebroken=true&order=clickcount&reverse=true&limit=$limit",
-            "search_${(country ?: "all")}_${name.trim().lowercase()}"
+            "search_${sha256((country ?: "all") + "|" + name.trim().lowercase())}"
         )
 
     private suspend fun query(path: String, cacheKey: String): List<MediaEntry> = withContext(Dispatchers.IO) {
@@ -184,9 +184,30 @@ object RadioApi {
         if (!::preferences.isInitialized) return
         val rows = JSONArray()
         items.take(300).forEach { rows.put(it.toJson()) }
+        val savedAt = System.currentTimeMillis()
         preferences.edit().putString(
             key,
-            org.json.JSONObject().put("savedAt", System.currentTimeMillis()).put("items", rows).toString()
+            org.json.JSONObject().put("savedAt", savedAt).put("items", rows).toString()
         ).apply()
+        if (key.startsWith("search_")) {
+            val old = preferences.all.keys.filter { it.startsWith("search_") }
+                .mapNotNull { cacheKey ->
+                    val time = runCatching {
+                        org.json.JSONObject(preferences.getString(cacheKey, null) ?: return@runCatching 0L)
+                            .optLong("savedAt")
+                    }.getOrDefault(0L)
+                    cacheKey to time
+                }.sortedBy { it.second }
+            if (old.size > 20) {
+                preferences.edit().also { edit ->
+                    old.take(old.size - 20).forEach { edit.remove(it.first) }
+                }.apply()
+            }
+        }
+    }
+
+    private fun sha256(value: String): String =
+        java.security.MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 }
