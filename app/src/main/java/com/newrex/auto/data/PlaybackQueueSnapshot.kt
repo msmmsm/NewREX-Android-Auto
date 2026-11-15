@@ -25,13 +25,15 @@ data class PlaybackQueueSnapshot(
         private const val VERSION = 1
 
         fun create(entries: List<MediaEntry>, index: Int, positionMs: Long): PlaybackQueueSnapshot? {
-            if (entries.isEmpty() || entries.size > MAX_ENTRIES) return null
-            if (index !in entries.indices) return null
-            val safeEntries = entries.mapNotNull(::validateEntry)
-            if (safeEntries.size != entries.size) return null
+            if (entries.isEmpty() || index !in entries.indices) return null
+            // Büyük IPTV listelerinde seçili öğeyi koruyan 50 öğelik pencere saklanır.
+            val start = if (entries.size <= MAX_ENTRIES) 0 else (index - MAX_ENTRIES / 2).coerceIn(0, entries.size - MAX_ENTRIES)
+            val window = entries.drop(start).take(MAX_ENTRIES)
+            val safeEntries = window.mapNotNull(::validateEntry)
+            if (safeEntries.size != window.size) return null
             return PlaybackQueueSnapshot(
                 entries = safeEntries,
-                index = index,
+                index = index - start,
                 positionMs = positionMs.coerceIn(0L, MAX_POSITION_MS),
             )
         }
@@ -50,7 +52,10 @@ data class PlaybackQueueSnapshot(
                 require(uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) {
                     "Yalnızca HTTP(S) adresleri geri yüklenebilir"
                 }
-                require(!item.optString("title").isBlank()) { "Medya başlığı boş" }
+                require(!uri.host.isNullOrBlank() && uri.rawUserInfo == null) {
+                    "Kimlik bilgisi içeren veya sunucusu olmayan adres geri yüklenemez"
+                }
+                require(url.length <= 4096 && !item.optString("title").isBlank()) { "Medya alanı geçersiz" }
                 MediaEntry(
                     kind = kind,
                     title = item.optString("title").take(300),
@@ -71,7 +76,7 @@ data class PlaybackQueueSnapshot(
             if (entry.title.isBlank() || entry.url.length > 4096) return null
             val uri = runCatching { java.net.URI(entry.url) }.getOrNull() ?: return null
             if (!uri.scheme.equals("http", true) && !uri.scheme.equals("https", true)) return null
-            if (uri.host.isNullOrBlank()) return null
+            if (uri.host.isNullOrBlank() || uri.rawUserInfo != null) return null
             return entry.copy(
                 title = entry.title.take(300),
                 image = entry.image?.take(4096),
