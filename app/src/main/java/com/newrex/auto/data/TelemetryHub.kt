@@ -44,7 +44,9 @@ data class TelemetrySnapshot(
     val isDriving: Boolean = false,
     val isObdConnected: Boolean = false,
     val dtcCount: Int = 0,
-    val lastUpdatedMs: Long = 0L
+    val lastUpdatedMs: Long = 0L,
+    /** Timestamp of the latest successfully parsed OBD-II response. */
+    val obdLastUpdatedMs: Long? = null
 )
 
 /**
@@ -67,6 +69,7 @@ object TelemetryHub {
     val obdEngineLoad = MutableStateFlow<Int?>(null)
     val obdBoost = MutableStateFlow<Float?>(null)
     val obdDtcList = MutableStateFlow<List<String>>(emptyList())
+    val obdLastUpdatedMs = MutableStateFlow<Long?>(null)
 
     /**
      * Tüm katmanları (OBD-II, Android Auto CarHardware, GPS) öncelik sırasına göre
@@ -87,7 +90,8 @@ object TelemetryHub {
         VehicleData.fuelPercent,
         VehicleData.rangeKm,
         VehicleData.odometerKm,
-        obdDtcList
+        obdDtcList,
+        obdLastUpdatedMs
     ) { values ->
         val isObd = values[0] as Boolean
         val oSpeed = values[1] as Float?
@@ -105,6 +109,7 @@ object TelemetryHub {
         val carOdo = values[13] as Float?
         @Suppress("UNCHECKED_CAST")
         val dtcs = values[14] as List<String>
+        val obdUpdatedAt = values[15] as Long?
 
         // 1. Hız Belirleme
         val (finalSpeed, speedSrc) = when {
@@ -136,7 +141,8 @@ object TelemetryHub {
             isDriving = isDriving,
             isObdConnected = isObd,
             dtcCount = dtcs.size,
-            lastUpdatedMs = System.currentTimeMillis()
+            lastUpdatedMs = System.currentTimeMillis(),
+            obdLastUpdatedMs = obdUpdatedAt
         )
     }.stateIn(
         scope = scope,
@@ -154,6 +160,12 @@ object TelemetryHub {
         obdEngineLoad.value = null
         obdBoost.value = null
         obdDtcList.value = emptyList()
+        obdLastUpdatedMs.value = null
+    }
+
+    /** Only successful, parsed OBD responses advance this timestamp. */
+    fun markObdDataUpdated(nowMs: Long = System.currentTimeMillis()) {
+        obdLastUpdatedMs.value = nowMs
     }
 
     /**
