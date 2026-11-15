@@ -3,7 +3,7 @@
 Tarih: 2026-11-15  
 Depo: `msmmsm/NewREX-Android-Auto`  
 Dal: `master`  
-İncelenen commit: `092d9634c6b679f0d0e63ad75b61bd2f9e072c49`
+İncelenen kaynak: `master` (IPTV ayrıştırıcı düzeltmeleri 2026-11-15 tarihinde eklendi)
 
 > Bu belge kaynak kodu incelemesidir. APK derlemesi, otomatik test, gerçek IPTV/radyo/RSS adresleri, Android telefon veya Android Auto araç ekranı üzerinde oynatma testi yapılmamıştır. Kodda bir ekranın bulunması özelliğin çalıştığını kanıtlamaz.
 
@@ -33,18 +33,20 @@ Dal: `master`
 
 ### Statik bulgular
 1. **HLS manifesti ile kanal listesi ayrımı yok.** `#EXT-X-...` satırları yorum satırı olarak atlanıyor; ardından gelen segment URI'leri normal kanal girdisi gibi değerlendirilebilir. HLS medya manifesti bir kanal listesi değildir.
-2. **Göreli URI çözümlemesi yok.** Kanal/segment adresi liste URL'sine göre göreli ise ham metin oynatıcıya aktarılıyor. Sunucuya göre bu adres çözümlenemeyebilir.
-3. **EXTINF başlık ayrıştırması kırılgan.** `substringAfterLast(",")` kullanımı kanal başlığının kendisinde virgül varsa başlığın son bölümünü alır. Virgülün tırnak içindeki özniteliklerde bulunması da basit bölme yöntemlerini kırabilir.
-4. **İndirme önbelleği anahtarı `String.hashCode()` tabanlı.** Hash çakışması durumunda farklı iki listenin önbellek dosyası çakışabilir. URL'den kriptografik özet türetilmesi daha güvenlidir.
-5. **Hata görünürlüğü sınırlı.** Liste bazında hatalar toplanıyor; ancak kullanıcının arayüzde hangi listenin neden başarısız olduğunu görüp göremediği ayrıca doğrulanmalı.
+2. **Göreli URI çözümlemesi eklendi.** HTTP(S) kaynak listesindeki göreli kanal adresleri liste URL'sine göre çözülüyor.
+3. **EXTINF başlık ayrıştırması düzeltildi.** Tırnak dışındaki ilk virgül ayırıcı olarak kullanılıyor; kanal adının içindeki virgüller korunuyor.
+4. **Önbellek anahtarı güçlendirildi.** URL tabanlı `String.hashCode()` yerine SHA-256 özeti kullanılıyor. Eski hash adlı dosyalar kullanılmayacak; Android önbelleği temizlendiğinde silinebilir.
+5. **Liste hata görünürlüğü** hâlâ ayrıca UI/cihaz testi gerektiriyor.
 
 ### Düzeltme ve test planı
-- [ ] `#EXT-X-` içeren HLS medya manifestlerini kanal listesi ayrıştırıcısından ayır.
-- [ ] HTTP(S) liste adresi biliniyorsa göreli URI'leri RFC uyumlu biçimde ana liste URL'sine göre çöz.
-- [ ] EXTINF satırında tırnak dışındaki ilk ayırıcı virgülü bul; başlıktaki virgülleri koru.
-- [ ] UTF-8 BOM, CRLF, boş satır, eksik EXTINF, tırnaklı öznitelik, göreli URI, mutlak URI ve yinelenen kanal için birim testleri ekle.
-- [ ] Önbellek dosya adını URL'nin SHA-256 özetiyle üret; eski önbelleğe güvenli geçiş/temizleme davranışını belirle.
+- [x] `#EXT-X-` içeren HLS ana/medya manifestlerini kanal listesi ayrıştırıcısından ayır.
+- [x] HTTP(S) liste adresi biliniyorsa göreli URI'leri ana liste URL'sine göre çöz.
+- [x] EXTINF satırında tırnak dışındaki ilk ayırıcı virgülü bul; başlıktaki virgülleri koru.
+- [x] UTF-8 BOM, CRLF, HLS medya/ana manifesti, başlık virgülü ve göreli URI için JUnit regresyon testleri ekle.
+- [x] Önbellek dosya adını URL'nin SHA-256 özetiyle üret.
 - [ ] Hatalı veya desteklenmeyen URI şemalarını kontrollü hata olarak raporla; kullanıcıya özel ağ/HTTP kaynaklarını gereksiz yere devre dışı bırakma.
+
+> JUnit testleri kaynak koduna eklendi ancak bu ortamda Android Gradle derlemesi/testi çalıştırılamadığı için sonuçları henüz doğrulanmadı.
 
 ## 3. Podcast RSS — `data/Services.kt`, `pages/PodcastPage.kt`
 
@@ -94,8 +96,8 @@ Dal: `master`
 
 | Öncelik | İş | Durum |
 |---|---|---|
-| P0 | HLS M3U8 manifestini kanal listesi gibi ayrıştırma riskini gider | Açık |
-| P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Açık |
+| P0 | HLS M3U8 manifestini kanal listesi gibi ayrıştırma riskini gider | Kod düzeltildi; test sonucu bekliyor |
+| P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | Açık |
 | P1 | WebView/YouTube oturum, reklam filtresi ve sürüş güvenliği risklerini doğrula | Açık |
 | P1 | Player/MediaSession yaşam döngüsünü gerçek cihazda test et | Açık |
