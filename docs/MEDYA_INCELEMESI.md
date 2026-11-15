@@ -60,6 +60,7 @@ Dal: `master`
 2. **Göreli URI çözümlemesi eklendi.** HTTP(S) kaynak listesindeki göreli kanal adresleri liste URL'sine göre çözülüyor.
 3. **EXTINF başlık ayrıştırması düzeltildi.** Tırnak dışındaki ilk virgül ayırıcı olarak kullanılıyor; kanal adının içindeki virgüller korunuyor.
 4. **Önbellek anahtarı güçlendirildi.** URL tabanlı `String.hashCode()` yerine SHA-256 özeti kullanılıyor. Eski hash adlı dosyalar kullanılmayacak; Android önbelleği temizlendiğinde silinebilir.
+5. **M3U kaynak sınırları ve URI doğrulaması eklendi.** Liste 8 MiB, 100.000 satır ve 10.000 kanal ile sınırlandırılır; başlık/grup uzunlukları kesilir. Kanal akışlarında HTTP(S) ve RTSP kabul edilir; `file:`, `content:`, `javascript:` gibi şemalar, hatalı host ve URL içine gömülü kullanıcı/parola reddedilir. Logo adresleri yalnızca güvenli HTTP(S) kabul eder. Yerel ağdaki HTTP IPTV adresleri bilerek engellenmez; RTSP korunur. HTTP(S) liste URL'sinden göreli adres çözümlemesi yapılır; güvenilir HTTP(S) taban URL yoksa göreli kayıt atlanır.
 5. **Liste hata görünürlüğü** hâlâ ayrıca UI/cihaz testi gerektiriyor.
 
 ### Düzeltme ve test planı
@@ -68,7 +69,7 @@ Dal: `master`
 - [x] EXTINF satırında tırnak dışındaki ilk ayırıcı virgülü bul; başlıktaki virgülleri koru.
 - [x] UTF-8 BOM, CRLF, HLS medya/ana manifesti, başlık virgülü ve göreli URI için JUnit regresyon testleri ekle.
 - [x] Önbellek dosya adını URL'nin SHA-256 özetiyle üret.
-- [ ] Hatalı veya desteklenmeyen URI şemalarını kontrollü hata olarak raporla; kullanıcıya özel ağ/HTTP kaynaklarını gereksiz yere devre dışı bırakma.
+- [x] Hatalı/desteklenmeyen URI şemalarını ve kimlik bilgili adresleri reddet; özel ağ HTTP ve RTSP akışlarını koru; liste kaynak boyutlarını sınırla.
 
 > IPTV ve podcast için JUnit regresyon testleri kaynak koduna eklendi ancak bu ortamda Android Gradle derlemesi/testi çalıştırılamadığı için sonuçları henüz doğrulanmadı.
 
