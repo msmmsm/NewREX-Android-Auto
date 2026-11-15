@@ -280,3 +280,12 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Kokpitte son 10 kayıt gösterilir; toplam kayıt sayısı ayrıca belirtilir. Son taramada raporlanmamak arızanın giderildiği anlamına gelmez.
 - ECU Mode 04 temizleme isteğini olumlu yanıtladığında geçmiş silinmez; temizleme onayı zamanı saklanır. Kod yeniden raporlanırsa son tarama durumu güncellenir.
 - Geçmiş birimi için tekrar tarama, boş tarama, zaman damgası, temizleme onayı ve 100 kayıt sınırı testleri eklendi. Android derlemesi ve JUnit testleri bu ortamda çalıştırılmadı.
+
+### Standart hibrit batarya PID 5B — sınırlı destek
+
+- SAE J1979 Mode 01 PID 5B, destek bitmap'inde ilan edilmişse sorgulanır; yanıt `0–100%` aralığında ayrıştırılır.
+- Parametrenin standart adı hibrit/EV batarya paketi **kalan ömrüdür**. Arayüzde bu ad kullanılır; SOC (şarj seviyesi) veya SOH (sağlık durumu) olarak yeniden adlandırılmaz.
+- ECU PID 5B'yi desteklemiyorsa komut gönderilmez ve değer yok olarak gösterilir. Yanıt hatalıysa eski değer korunmaz.
+- Toyota HV batarya ECU'sundaki SOC, blok gerilimleri, akım ve sıcaklık gibi daha ayrıntılı parametreler için üreticiye özgü teşhis erişimi gerekir. Toyota teknik dokümanlarında bu veriler HV Battery / HV ECU Data List üzerinden listelenir; ECU seçimi ve araç varyantı önemlidir. Bu nedenle doğrulanmamış Mode 21/22 PID'leri veya CAN başlıkları OmniDrive'e eklenmedi.
+- Kaynaklar: SAE J1979 PID 5B tanımı ([SAE J1979 kopyası](https://www.autonerdz.com/yabbfiles/Attachments/1979v3.pdf)); Toyota hibrit batarya Data List örneği ([Toyota Hybrid Battery Control](https://toyotaspace.com/wp-content/uploads/2024/07/Hybrid-Battery-Control.pdf)); hibrit batarya freeze-frame/Data List alanları ([Toyota Prius Repair Manual](https://toyotamanuals.gitlab.io/PZ471-Z01S0-CA/htmlweb/rm/rm1076e/m_05_0662.pdf)).
+- Gerçek Toyota C-HR model yılı, pazar ve hibrit varyantında PID desteği/ölçüm doğruluğu fiziksel araç ve uyumlu tarayıcıyla doğrulanmayı bekler. Derleme, JUnit ve araç testi yapılmadan özellik yayın onaylı sayılmaz.
