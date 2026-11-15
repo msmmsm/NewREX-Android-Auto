@@ -386,9 +386,9 @@ object ObdManager {
         // 44, Mode 04 pozitif yanıt servis kodudur. Tek başına substring eşleşmesi
         // yerine ELM başlıksız yanıtı veya 7E8–7EF CAN yanıtını kabul et.
         if (clean == "44" || clean.startsWith("44")) return true
-        val ecuHeader = Regex("7E[89A-F][0-9A-F]")
+        val ecuHeader = Regex("7E[89A-F]")
         return ecuHeader.findAll(clean).any { match ->
-            clean.substring(match.range.last + 1).startsWith("44")
+            clean.substring(match.range.last + 1).matches(Regex("^(?:0[1-8])?44.*"))
         }
     }
 
