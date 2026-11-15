@@ -64,7 +64,7 @@ https://example.com/live.m3u8""",
     }
     @Test fun rejectsUnsafeSchemesAndCredentialBearingUrls() {
         val result = PlaylistParser.parse(
-            "#EXTM3U\\n#EXTINF:-1,File\\nfile:///etc/passwd\\n#EXTINF:-1,Script\\njavascript:alert(1)\\n#EXTINF:-1,Credentials\\nhttps://user:pass@example.com/live\\n",
+            "#EXTM3U\n#EXTINF:-1,File\nfile:///etc/passwd\n#EXTINF:-1,Script\njavascript:alert(1)\n#EXTINF:-1,Credentials\nhttps://user:pass@example.com/live\n",
             "Test",
         )
         assertTrue(result.isEmpty())
@@ -72,7 +72,7 @@ https://example.com/live.m3u8""",
 
     @Test fun acceptsPrivateLanHttpAndRtspStreams() {
         val result = PlaylistParser.parse(
-            "#EXTM3U\\n#EXTINF:-1,LAN\\nhttp://192.168.1.20:8080/live\\n#EXTINF:-1,RTSP\\nrtsp://camera.lan/live\\n",
+            "#EXTM3U\n#EXTINF:-1,LAN\nhttp://192.168.1.20:8080/live\n#EXTINF:-1,RTSP\nrtsp://camera.lan/live\n",
             "Test",
         )
         assertEquals(2, result.size)
@@ -82,7 +82,7 @@ https://example.com/live.m3u8""",
 
     @Test fun rejectsRelativeUrlsWithoutTrustedHttpPlaylistBase() {
         val result = PlaylistParser.parse(
-            "#EXTM3U\\n#EXTINF:-1,Relative\\n../live/channel.m3u8",
+            "#EXTM3U\n#EXTINF:-1,Relative\n../live/channel.m3u8",
             "Test",
             "content://provider/list.m3u",
         )
@@ -90,7 +90,7 @@ https://example.com/live.m3u8""",
     }
 
     @Test fun rejectsOversizedPlaylistInput() {
-        val oversized = "#EXTM3U\\n" + " ".repeat(8 * 1024 * 1024)
+        val oversized = "#EXTM3U\n" + " ".repeat(8 * 1024 * 1024)
         assertTrue(PlaylistParser.parse(oversized, "Test").isEmpty())
     }
 
