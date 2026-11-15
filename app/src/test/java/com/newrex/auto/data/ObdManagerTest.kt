@@ -13,6 +13,7 @@ class ObdManagerTest {
         assertEquals(83, ObdManager.parseCoolant("41057B"))
         assertEquals(50.196f, ObdManager.parseFuel("412F80")!!, 0.01f)
         assertEquals(12.6f, ObdManager.parseVoltage("12.6V")!!, 0.001f)
+        assertEquals(14.2f, ObdManager.parseVoltage("14.2")!!, 0.001f)
     }
 
     @Test
@@ -35,6 +36,9 @@ class ObdManagerTest {
         assertNull(ObdManager.parseCoolant("ERROR"))
         assertNull(ObdManager.parseFuel("412FZZ"))
         assertNull(ObdManager.parseVoltage("NO DATA"))
+        assertNull(ObdManager.parseVoltage("31.0V"))
+        assertNull(ObdManager.parseVoltage("-1.0V"))
+        assertNull(ObdManager.parseVoltage("12.6Vgarbage"))
     }
 
     @Test
