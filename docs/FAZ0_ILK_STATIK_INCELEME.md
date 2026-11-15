@@ -3,7 +3,7 @@
 Tarih: 2026-11-15  
 İncelenen depo: msmmsm/NewREX-Android-Auto  
 İncelenen dal: master  
-İncelenen son bilinen commit: c5d202848fc4b72868c5b2ed4ecbf7c706f8557d  
+İncelenen dalın güncel commit'i: f12535baa1197433b01d4890c207e1b660981b3c  
 İnceleme türü: Kaynak kodu statik incelemesi. APK, gerçek telefon, Android Auto araç ekranı, OBD adaptörü veya Toyota C-HR üzerinde bu kayıtta test yapılmamıştır.
 
 ## Bulgular
@@ -16,7 +16,7 @@ Uygulama düzeyinde `android:usesCleartextTraffic="true"` tanımlı. Aynı manif
 ### F0-02 — Marka, paket kimliği ve ek lisans koşulları
 **Dosyalar:** README.md, app/build.gradle.kts, NOTICE.md  
 **Durum:** Yayın öncesi blokaj  
-README ve son commit uygulama markasının OmniDrive yönünde değiştiğini gösteriyor. Gradle yapılandırmasında namespace ve applicationId hâlâ `com.newrex.auto`. NOTICE.md, değiştirilmiş sürüm için farklı uygulama adı ve farklı uygulama kimliği şartı içeriyor. Bu koşulların hukuki yorumu uzman incelemesi gerektirebilir; teknik olarak ise yeni dağıtım kimliği seçilmeden ve atıf/marka ekranı doğrulanmadan yeni sürüm yayımlanmamalı.
+Uygulama adı OmniDrive ve Gradle `applicationId` değeri `com.omnidrive.auto` olarak değiştirildi. Kotlin `namespace` değeri `com.newrex.auto` bırakıldı; bu, Android kurulum kimliği değildir. NOTICE.md'nin farklı ad ve farklı application ID koşulu teknik olarak karşılanıyor. Hakkında ekranında `Original developer: NewREX` atfı ve özgün proje bağlantısı korunuyor. Hukuki uygunluk hakkında ayrıca hukuk görüşü verilmiş değildir.
 
 ### F0-03 — Gizlilik beyanının doğrulanması
 **Dosya:** PRIVACY.md  
@@ -26,7 +26,7 @@ Gizlilik metni, üçüncü taraf servislerin IP adresini görebildiğini ve hava
 ### F0-04 — Uygulama kategorisi
 **Dosya:** app/src/main/AndroidManifest.xml  
 **Durum:** Kontrol edilmeli  
-`android:appCategory="game"` tanımlı. Uygulamanın gerçek işleviyle uyumlu kategori seçilmeli.
+`android:appCategory="productivity"` olarak değiştirildi.
 
 ### F0-05 — README özellik iddiaları
 **Dosya:** README.md  
@@ -47,7 +47,8 @@ README; 3D C-HR modeli, OBD-II, DTC, performans sayacı, hız uyarısı, araç t
 - [ ] Kaynak kodu özellik envanteri ve README iddia matrisi
 - [ ] Gradle bağımlılıkları, lisanslar ve kullanılmayan bağımlılıklar denetimi
 - [ ] Temiz checkout derleme, lint ve test raporu (otomatik testler eklendi; CI henüz çalıştırılmadı)
-- [ ] Marka/paket kimliği kararı ve NOTICE/GPL uyum incelemesi
+- [x] Marka/paket kimliği teknik değişikliği ve Hakkında atfı
+- [ ] NOTICE/GPL koşullarının hukuki incelemesi
 - [ ] PRIVACY.md veri akışı doğrulaması
 - [ ] Gerçek OBD adaptörü ve araç test planı
 
@@ -62,7 +63,7 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Uygulama kaynaklarındaki `app_name` zaten `OmniDrive` olarak tanımlıydı; Hakkında ekranı hâlâ NewREX gösteriyordu. Hakkında ekranı OmniDrive olarak düzeltildi.
 - Özgün geliştirici atfı NewREX olarak korundu; atıf bağlantısı özgün projeye, uygulama içi GitHub bağlantısı ise msmmsm deposuna ayrıldı.
 - README ve gizlilik belgesinin ürün adı OmniDrive olarak güncellendi.
-- Paket kimliği `com.newrex.auto` henüz değiştirilmedi. NOTICE.md ek koşulu nedeniyle dağıtım öncesi ayrı paket kimliği kararı ve mevcut kurulumdan geçiş testi zorunlu.
+- Android `applicationId` artık `com.omnidrive.auto`; kaynak `namespace` değeri `com.newrex.auto` olarak korundu. Eski uygulamadan ayrı kurulum oluşur; veri aktarımı yoktur.
 
 ### OBD-II kaynak kodu bulguları
 - Mevcut `ObdManager` yalnızca Bluetooth Classic RFCOMM/SPP kullanıyor; BLE tarama/bağlantı kodu yok. README'deki BLE iddiası düzeltilerek desteklenmediği belirtildi.
@@ -70,16 +71,16 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - DTC silme işlemi, ECU'nun Mode 04 olumlu yanıtı (`44`) alınmadan yerel hata listesini temizleyebiliyordu. Yerel liste artık yalnızca olumlu yanıt sonrası temizleniyor.
 - DTC kategori kodlamasında C/B/U ailelerinin bazı alt kategorileri yanlış oluşturulabiliyordu. SAE iki kategori biti çözümlemesi düzeltildi.
 - Adaptör bağlantısı kesilince önceki bağlantıdan kalan RPM, hız, sıcaklık, voltaj, yakıt ve DTC değerleri temizleniyor.
-- Bu davranışlar için JUnit testleri eklendi; GitHub Actions test adımında başarısızlıkları gizleyen `|| true` kaldırıldı.
+- Bu davranışlar için JUnit testleri eklendi. Testler GitHub Actions üzerinden çalıştırılmadı; bu çalışma için Actions kullanılmayacak.
 
 ### Uygulama yapılandırması
 - Manifest uygulama kategorisi `game` yerine `productivity` yapıldı.
 - Cleartext HTTP izni henüz daraltılmadı. Kullanıcı tanımlı IPTV/radyo akışları ve yerel ağ kaynakları HTTP kullanabildiğinden, gerçek URL envanteri ve uyumluluk testi olmadan genel izni kapatmak medya işlevlerini bozabilir. Bu konu açık güvenlik işi olarak kalıyor.
-- Depoda önceden `app/src/test` ve `app/src/androidTest` test dosyası bulunmuyordu. Yeni OBD parser testleri ilk otomatik test katmanıdır.
+- Yeni OBD parser testleri eklendi; test kaynak dosyasında şu anda 7 test metodu bulunuyor. Yerel Android SDK/Gradle ortamı olmadığı için testler henüz çalıştırılmadı.
 
 ### Doğrulama durumu
 - Kaynak değişiklikleri GitHub `master` dalına işlendi.
-- Bu güncelleme için GitHub Actions çalışması henüz görünmüyor; commit durumlarında da raporlanmış kontrol yok. Dolayısıyla derleme ve testlerin başarılı olduğu iddia edilmiyor.
+- Kullanıcının talimatı doğrultusunda GitHub Actions kullanılmadı. Bu çalışma ortamında Android SDK ve Gradle bulunmadığından yerel APK derlemesi/testi de yapılamadı. Derleme ve testlerin başarılı olduğu iddia edilmiyor.
 - Gerçek ELM327 adaptörü, araç ECU'su ve Toyota C-HR üzerinde fiziksel test yapılmadı.
 
 
@@ -92,7 +93,7 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Hakkında ekranında lisansın istediği tam `Original developer: NewREX` atfı ve özgün proje bağlantısı gösteriliyor.
 
 ### Açık dağıtım blokajı
-- `applicationId` ve `namespace` hâlâ `com.newrex.auto`. `applicationId` değerini `com.omnidrive.auto` yapmak mevcut kurulumun üzerine normal güncelleme olarak kurulmayı engeller; yeni paket ayrı uygulama olur. Kullanıcı verilerinin taşınması ve self-install/kurulum aracı uyumu test edilmeden bu değişiklik yapılmadı.
+- `applicationId` `com.omnidrive.auto` olarak değiştirildi; mevcut `com.newrex.auto` uygulamasının üzerine güncelleme olmaz. Yeni paket ayrı uygulama olarak kurulur ve veriler otomatik taşınmaz. `SelfInstall` ve FileProvider authority yeni applicationId'yi kullanır; fiziksel cihazda kurulum testi henüz yapılmadı.
 - OmniDrive için ilk Release oluşturulmadığından otomatik güncelleme ve APK indirme akışı henüz uçtan uca doğrulanamaz.
 
 
@@ -121,3 +122,10 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Desteklenen PID sorgusu boş, hatalı veya ECU tarafından reddedilen yanıt döndürdüğünde önceki başarılı ölçüm artık ekranda tutulmuyor; ilgili StateFlow alanı `null` yapılıyor.
 - Bluetooth taşıma katmanı istisna verirse OBD bağlantı durumu kapatılıyor, tüm OBD ölçümleri temizleniyor, bağlantı durumu `ERROR` oluyor ve polling döngüsü duruyor. Böylece kopmuş adaptörün son ölçümleri canlıymış gibi sunulmuyor.
 - Bu değişiklikler kaynak koduna işlendi; CI ve fiziksel ELM327/araç doğrulaması bekliyor.
+
+
+### 2026-11-15 — Çoklu ECU yanıt ayrıştırma düzeltmesi
+- Bazı ELM327 adaptörleri bir sorguda birden fazla ECU'nun CAN yanıtını art arda döndürebilir. Hız, soğutma suyu, yakıt ve motor yükü ayrıştırıcıları artık ilgili PID yanıtından sonra yalnızca ilk veri baytını okur; takip eden ECU çerçeveleri ilk değerin sayısal dönüşümünü bozmaz.
+- RPM ayrıştırıcısı zaten ilk iki veri baytını kullanıyordu; çoklu ECU örneği için regresyon testi eklendi.
+- Çoklu ECU örnekleri için test kapsamı genişletildi. Test dosyasında toplam 7 test metodu vardır.
+- Bu testler kaynak koduna eklendi ancak çalıştırılmadı. Gerçek ELM327/araç yanıtlarıyla doğrulama gereklidir.
