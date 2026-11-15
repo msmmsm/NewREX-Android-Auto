@@ -27,7 +27,7 @@ class ObdManagerTest {
     @Test
     fun decodesDtcCategoriesAccordingToTheTwoCategoryBits() {
         assertEquals(listOf("P0133"), ObdManager.parseDtc("4301330000"))
-        assertEquals(listOf("C1123"), ObdManager.parseDtc("4341230000"))
+        assertEquals(listOf("C1123"), ObdManager.parseDtc("4351230000"))
         assertEquals(listOf("B0123"), ObdManager.parseDtc("4381230000"))
         assertEquals(listOf("U0123"), ObdManager.parseDtc("43C1230000"))
     }
