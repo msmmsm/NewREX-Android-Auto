@@ -85,6 +85,14 @@ data class PlaybackQueueSnapshot(
             )
         }
 
+        /** Başka uygulamalara medya kataloğunda sunulabilecek, açık kimlik bilgisi taşımayan adres. */
+        fun isSafeExternalUrl(value: String?): Boolean {
+            if (value.isNullOrBlank() || value.length > 4096) return false
+            val uri = runCatching { java.net.URI(value) }.getOrNull() ?: return false
+            return (uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) &&
+                !uri.host.isNullOrBlank() && !containsCredentials(uri)
+        }
+
         private fun containsCredentials(uri: java.net.URI): Boolean {
             if (uri.rawUserInfo != null) return true
             val sensitiveKeys = setOf("user", "username", "password", "pass", "token", "access_token", "auth", "authorization", "api_key", "apikey", "signature", "sig", "jwt", "session")
