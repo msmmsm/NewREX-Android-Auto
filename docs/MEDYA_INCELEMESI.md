@@ -106,10 +106,14 @@ Dal: `master`
 - Arama önbelleği anahtarında arama metni açıkça tutulmaz; SHA-256 anahtarı kullanılır ve en fazla 20 arama kaydı saklanır.
 - Akış, logo ve ana sayfa adresleri yalnızca HTTP(S), geçerli host ve kullanıcı bilgisi içermeyen URL'lerden kabul edilir. Çözümlenmiş yayın adresi güvenli değilse güvenli özgün URL denenir; ikisi de geçersizse istasyon katalogdan çıkarılır.
 - İstasyon adı boşsa okunabilir varsayılan ad atanır; yinelenen akış adresleri tekilleştirilir.
-- Radyo alternatif istasyon araması da aynı kalıcı önbelleği kullanır. Arama anahtarları SHA-256 ile saklanır; arama önbelleği en fazla 20 kayıtla sınırlandırılır.
+- Radyo alternatif istasyon araması da aynı kalıcı önbelleği kullanır.
+- Radio Browser yanıtından codec, bitrate, ülke kodu, oy sayısı, tıklanma sayısı ve dizinin son kontrol sonucu alınır. Codec/bitrate/ülke ve son dizin kontrol sonucu istasyon kutucuğunun alt bilgisinde gösterilir. Bu değerler sağlayıcının bildirdiği katalog metaverisidir; canlı akışın şu anda erişilebilir olduğuna dair gerçek zamanlı garanti değildir.
+- Teknik metaveri `MediaEntry` JSON kaydında da saklanır; çevrimdışı katalogda gösterim için korunur.
+- API ülke kodları iki harfli biçime normalize edilir, arama metni 100 karakterle, sonuç sayısı 1–300 aralığıyla sınırlandırılır. Boş arama ağa gönderilmez.
+- Önbellek 6 saat taze kabul edilir; ağ hatasında en fazla 30 günlük son başarılı kayıt kullanılabilir. Daha eski kayıtlar atılır; ileri tarihli bozuk zaman damgaları da reddedilir. Arama anahtarları SHA-256 ile saklanır; arama önbelleği en fazla 20 kayıtla sınırlandırılır.
 - Oynatma hatalarında HTTP 401/403, 404/410, 429 ve 5xx yanıtları ile bozuk/desteklenmeyen medya biçimleri ayrı Türkçe hata mesajlarıyla raporlanır. Aynı istasyon için alternatif adres aranması sürdürülür.
 - Önbellekten okunan yayın, logo ve ana sayfa adresleri tekrar doğrulanır; bozuk veya değiştirilmiş kayıtlar oynatma listesine alınmaz.
-- [x] Radyo katalog önbelleği, güvenli adres ayrıştırma ve katalog tekilleştirme testleri eklendi.
+- [x] Radyo katalog önbelleği, güvenli adres ayrıştırma, katalog tekilleştirme, teknik metaveri, JSON kalıcılığı ve ülke kodu doğrulama testleri eklendi.
 - [ ] Radio Browser sunucu kesintisi, çevrimdışı açılış ve gerçek radyo akışlarının Android cihazda kabul testi yapılmalı.
 
 ## 5. YouTube ve genel WebView — `pages/WebPage.kt`, `pages/YouTubeAdBlocker.kt`
