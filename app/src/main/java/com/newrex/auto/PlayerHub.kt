@@ -12,12 +12,15 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.MediaSession
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.newrex.auto.data.Kind
 import com.newrex.auto.data.FmPresets
 import com.newrex.auto.data.MediaEntry
@@ -187,6 +190,24 @@ object PlayerHub {
         // Oturum servis oluşturulurken hazırlanır; etkinlik kapanınca bırakılmaz.
         session = MediaSession.Builder(context.applicationContext, sessionPlayer)
             .setId("omnidrive")
+            .setCallback(object : MediaSession.Callback {
+                @OptIn(UnstableApi::class)
+                override fun onPlaybackResumption(
+                    mediaSession: MediaSession,
+                    controller: MediaSession.ControllerInfo,
+                    isForPlayback: Boolean,
+                ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+                    val snapshot = Prefs.playbackQueue()
+                        ?: return Futures.immediateFailedFuture(IllegalStateException("Kayıtlı oynatma kuyruğu yok"))
+                    restoreQueue(snapshot)
+                    val items = if (isForPlayback) snapshot.entries else listOf(snapshot.entries[snapshot.index])
+                    val startIndex = if (isForPlayback) snapshot.index else 0
+                    val startPosition = if (isForPlayback && items[startIndex].kind == Kind.PODCAST) snapshot.positionMs else 0L
+                    return Futures.immediateFuture(
+                        MediaSession.MediaItemsWithStartPosition(items.map(::itemFor), startIndex, startPosition)
+                    )
+                }
+            })
             .build()
         handler.post(ticker)
     }
