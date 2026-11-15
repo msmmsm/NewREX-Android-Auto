@@ -9,7 +9,9 @@ import java.util.Locale
 internal object PodcastRss {
     private val dateFormats = listOf(
         "EEE, dd MMM yyyy HH:mm:ss Z",
+        "EEE, dd MMM yyyy HH:mm:ss z",
         "EEE, dd MMM yyyy HH:mm Z",
+        "EEE, dd MMM yyyy HH:mm z",
         "dd MMM yyyy HH:mm:ss Z",
         "dd MMM yyyy HH:mm Z",
         "yyyy-MM-dd'T'HH:mm:ssXXX",
