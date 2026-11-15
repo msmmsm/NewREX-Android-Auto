@@ -43,6 +43,14 @@ class PodcastRssTest {
         assertNull(PodcastRss.resolveEnclosureUrl("https://user:pass@pod.example.org/feed.xml", "episode.mp3"))
     }
 
+    @Test fun validatesFeedUrlsBeforeNetworkAccess() {
+        assertEquals(true, PodcastRss.isSafeFeedUrl("https://pod.example.org/feed.xml"))
+        assertEquals(true, PodcastRss.isSafeFeedUrl("http://192.168.1.20:8080/feed.xml"))
+        assertEquals(false, PodcastRss.isSafeFeedUrl("file:///tmp/feed.xml"))
+        assertEquals(false, PodcastRss.isSafeFeedUrl("https://user:pass@pod.example.org/feed.xml"))
+        assertEquals(false, PodcastRss.isSafeFeedUrl("https://pod.example.org/" + "a".repeat(4100)))
+    }
+
     @Test fun rejectsOversizedEnclosureAddress() {
         assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "https://cdn.example.org/" + "a".repeat(4100)))
     }
