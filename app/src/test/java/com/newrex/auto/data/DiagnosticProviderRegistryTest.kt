@@ -33,7 +33,17 @@ class DiagnosticProviderRegistryTest {
             ),
             elm.supportedServices
         )
-        assertFalse(elm.limitation.contains("Toyota Data List erişimi vardır"))
+        assertTrue(elm.limitation.contains("Toyota özel ECU Data List erişimi değildir"))
+    }
+
+
+    @Test fun connectedStateWithoutSelectedAdapterFailsClosed() {
+        val elm = Elm327DiagnosticProvider(
+            DiagnosticConnectionState.CONNECTED,
+            adapterSelected = false
+        ).snapshot()
+        assertEquals(DiagnosticProviderState.NOT_CONNECTED, elm.state)
+        assertTrue(elm.supportedServices.isEmpty())
     }
 
     @Test fun connectingAndErrorStatesNeverAppearAsConnected() {
