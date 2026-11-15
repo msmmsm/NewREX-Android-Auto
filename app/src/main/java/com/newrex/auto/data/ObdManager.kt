@@ -271,7 +271,7 @@ object ObdManager {
 
                 // Hibrit batarya kalan ömrü (%) - standart Mode 01 PID 5B.
                 // Bu PID "remaining life" değeridir; SOC veya batarya sağlık (SOH) testi değildir.
-                if (loopCount % 20 == 0 && isPidSupported(0x5B)) {
+                if (loopCount % 20 == 0 && supportedPids?.contains(0x5B) == true) {
                     val hybridRaw = sendCommand("015B")
                     val parsed = parseHybridBatteryRemainingLife(hybridRaw)
                     TelemetryHub.obdHybridBatteryRemainingLifePercent.value = parsed
