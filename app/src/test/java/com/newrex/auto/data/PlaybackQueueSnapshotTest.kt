@@ -34,6 +34,9 @@ class PlaybackQueueSnapshotTest {
         assertNull(PlaybackQueueSnapshot.create(
             listOf(radio.copy(url = "https://user:password@radio.example/stream")), 0, 0
         ))
+        assertNull(PlaybackQueueSnapshot.create(
+            listOf(radio.copy(url = "https://radio.example/stream?token=secret")), 0, 0
+        ))
     }
 
     @Test fun rejectsNonHttpSchemes() {
