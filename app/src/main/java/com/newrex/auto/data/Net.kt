@@ -11,6 +11,7 @@ import org.json.JSONArray
 import java.io.File
 import java.io.IOException
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 object Net {
@@ -63,7 +64,7 @@ object Playlists {
             val errors = ArrayList<String>()
             for (pl in lists) {
                 try {
-                    channels += parse(fetch(context, pl, forceRefresh), pl.name)
+                    channels += parse(fetch(context, pl, forceRefresh), pl.name, pl.url.takeIf { it.startsWith("http://") || it.startsWith("https://") })
                 } catch (e: Exception) {
                     errors += "${pl.name}: ${e.message ?: "açılamadı"}"
                 }
@@ -77,7 +78,7 @@ object Playlists {
                 ?.bufferedReader()?.use { it.readText() }
                 ?: throw IOException("dosya okunamadı")
         }
-        val cache = File(context.cacheDir, "pl_${pl.url.hashCode()}.m3u")
+        val cacheKey = MessageDigest.getInstance("SHA-256")\n            .digest(pl.url.toByteArray(Charsets.UTF_8))\n            .joinToString("") { "%02x".format(it) }\n        val cache = File(context.cacheDir, "pl_$cacheKey.m3u")
         val fresh = cache.exists() &&
             System.currentTimeMillis() - cache.lastModified() < CACHE_HOURS * 3_600_000L
         if (fresh && !forceRefresh) return cache.readText()
@@ -89,39 +90,9 @@ object Playlists {
         }
     }
 
-    fun parse(text: String, fallbackGroup: String): List<MediaEntry> {
-        val out = ArrayList<MediaEntry>()
-        var name: String? = null
-        var logo: String? = null
-        var group: String? = null
-        for (raw in text.lineSequence()) {
-            val line = raw.trim()
-            when {
-                line.startsWith("#EXTINF", ignoreCase = true) -> {
-                    logo = attr(line, "tvg-logo")
-                    group = attr(line, "group-title")
-                    name = line.substringAfterLast(",").trim()
-                }
-                line.isEmpty() || line.startsWith("#") -> Unit
-                else -> {
-                    if (hidden(name.orEmpty(), group)) { name = null; logo = null; group = null; continue }
-                    out += MediaEntry(
-                        kind = Kind.TV,
-                        title = name?.ifBlank { null } ?: line.substringAfterLast('/'),
-                        url = line,
-                        image = logo?.ifBlank { null },
-                        group = group?.split(';')?.firstOrNull()?.trim()?.ifBlank { null }
-                            ?.let { GROUP_NAMES[it.lowercase()] ?: it } ?: fallbackGroup,
-                    )
-                    name = null; logo = null; group = null
-                }
-            }
-        }
-        return out
-    }
+    fun parse(text: String, fallbackGroup: String, sourceUrl: String? = null): List<MediaEntry> =
+        PlaylistParser.parse(text, fallbackGroup, sourceUrl)
 
-    private fun attr(line: String, key: String): String? =
-        Regex("$key=\"([^\"]*)\"", RegexOption.IGNORE_CASE).find(line)?.groupValues?.get(1)
 }
 
 /** Ücretsiz ve açık Radio Browser servisi (radio-browser.info). */
