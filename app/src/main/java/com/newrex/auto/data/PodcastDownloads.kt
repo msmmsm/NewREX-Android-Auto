@@ -114,7 +114,10 @@ object PodcastDownloads {
             val existing = find(url)
             if (existing != null) {
                 val state = statusById(existing.id).state
-                if (state == State.PENDING || state == State.RUNNING || state == State.PAUSED || state == State.SUCCESSFUL)
+                val existingStatus = statusById(existing.id)
+                if (state == State.PENDING || state == State.RUNNING || state == State.PAUSED)
+                    return existing.id
+                if (state == State.SUCCESSFUL && isVerifiedDownload(existing.id, existingStatus))
                     return existing.id
                 runCatching { manager.remove(existing.id) }
                 statusCache.remove(existing.id)
@@ -160,7 +163,10 @@ object PodcastDownloads {
         }
     }
 
-    fun downloadedCount(): Int = readRecords().count { statusById(it.id).state == State.SUCCESSFUL }
+    fun downloadedCount(): Int = readRecords().count { record ->
+        val status = statusById(record.id)
+        status.state == State.SUCCESSFUL && isVerifiedDownload(record.id, status)
+    }
 
     /** RSS erişimi olmasa bile indirilmiş bölümleri DownloadManager kayıtlarından listeler. */
     fun downloadedEntries(): List<MediaEntry> {
