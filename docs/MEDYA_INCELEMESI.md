@@ -75,22 +75,23 @@ Dal: `master`
 
 ### Mevcut uygulama
 - YouTube, mobil web sitesi üzerinden Android WebView içinde açılıyor; resmî YouTube Data API veya yerel YouTube oynatıcı entegrasyonu görülmüyor.
-- YouTube sayfasında reklam isteklerini filtreleyen, bazı reklam katmanlarını gizleyen ve atlanabilir reklam düğmesine otomatik tıklamayı deneyen özel kod bulunuyor.
+- YouTube sayfası standart WebView gezinmesiyle açılır; uygulama reklam isteklerine müdahale etmez ve reklam atlama otomasyonu çalıştırmaz.
 - WebView JavaScript ve DOM storage kullanıyor; çerezler TV+, Netflix ve YouTube oturumlarının korunması için kabul ediliyor.
-- Uygulama açma bağlantıları engelleniyor; yalnızca HTTP/HTTPS gezinmeye izin veriliyor.
+- Uygulama açma bağlantıları engelleniyor; yalnızca HTTP/HTTPS gezinmeye izin veriliyor. TLS sertifika hataları açıkça iptal ediliyor; karma içerik (HTTPS sayfada HTTP alt kaynağı) engelleniyor.
 - Sürüşte görüntünün gizlenmesi için park koruması var.
 
 ### Riskler
-- YouTube arayüzü, reklam akışı ve istek uç noktaları değiştikçe özel filtre bozulabilir. Reklam engelleme/atlama davranışı kararlı veya desteklenen bir API sözleşmesi değildir.
+- Önceki sürümdeki özel reklam isteği filtresi, reklam katmanı gizleme ve otomatik atlama kodu kaldırıldı. Bu müdahaleler oynatıcı akışını bozabilir ve desteklenen YouTube API sözleşmesinin parçası değildir. YouTube artık standart web oynatımıyla çalışır; reklamlar YouTube tarafından sunulur.
 - WebView oturum çerezleri cihazda kalıcıdır. Kullanıcıya oturum/çerez temizleme kontrolü ve gizlilik açıklaması sunulduğu doğrulanmalı.
 - JavaScript açık olduğundan gezinme alanı, dosya erişimi, özel şema ve izin istekleri güvenlik açısından regresyon testine tabi tutulmalı.
 - WebView içindeki video oynatımı, Android Auto sürüş güvenliği ve park kilidi fiziksel araç ekranında test edilmelidir.
 
 ### Düzeltme ve test planı
 - [ ] YouTube işlevini “WebView ile YouTube web sitesi” olarak doğru tanımla; resmî API/yerel oynatma varmış gibi gösterme.
-- [ ] Reklam filtreleme kodunun bakım, uyumluluk ve hizmet koşulları etkisini ayrıca değerlendir; oynatma hatası yaratırsa varsayılan davranıştan çıkar.
+- [x] Reklam isteği filtresini, reklam katmanı gizleme ve otomatik atlama betiğini kaldır; standart YouTube WebView oynatımına dön.
 - [ ] Çerezleri ve web verisini kullanıcı kontrollü temizleme seçeneğini değerlendir.
-- [ ] HTTP dışı şema, yönlendirme, dosya erişimi, üçüncü taraf çerezleri ve DRM izinleri için WebView güvenlik testleri.
+- [x] HTTP dışı gezinme şemaları engelleniyor; dosya ve içerik URI erişimi kapalı; karma içerik engelli; TLS hataları iptal ediliyor; DRM izni yalnızca TV+ / Netflix alan adlarına sınırlı.
+- [ ] Ana çerçeve yönlendirme ve üçüncü taraf çerezleri için ek testler; oturum/çerez temizleme kontrolü değerlendirmesi.
 - [ ] Sürüş/park modu geçişleri ve tam ekran video için gerçek Android Auto testi.
 
 ## 5. Sonuç ve öncelik
@@ -100,7 +101,7 @@ Dal: `master`
 | P0 | HLS M3U8 manifestini kanal listesi gibi ayrıştırma riskini gider | Kod düzeltildi; test sonucu bekliyor |
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
-| P1 | WebView/YouTube oturum, reklam filtresi ve sürüş güvenliği risklerini doğrula | Açık |
+| P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
 | P1 | Player/MediaSession yaşam döngüsünü gerçek cihazda test et | Açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
 
