@@ -258,6 +258,8 @@ object ObdManager {
             val dtcs = parseDtc(response)
             TelemetryHub.obdDtcList.value = dtcs
             dtcs
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             if (e is java.io.IOException) markConnectionError()
             emptyList()
@@ -275,6 +277,8 @@ object ObdManager {
             val acknowledged = hasDtcClearAcknowledgement(res)
             if (acknowledged) TelemetryHub.obdDtcList.value = emptyList()
             acknowledged
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             if (e is java.io.IOException) markConnectionError()
             false
