@@ -23,11 +23,17 @@ import com.newrex.auto.ui.label
 import com.newrex.auto.ui.lp
 import com.newrex.auto.ui.margins
 import com.newrex.auto.ui.rounded
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Telefon ekranı: Kokpit Araç Modeli, Türk Plaka Özelleştirme, OBD-II ve 0-100 Performans Kartı
  */
 object PhoneCockpitHelper {
+    private val diagnosticsScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
 
     fun buildCockpitViews(
         context: Context,
@@ -187,6 +193,126 @@ object PhoneCockpitHelper {
             addView(statCell("YAKIT", fuelStr), lp(0, WRAP, 1f))
         }
         cockpitBox.addView(statsRow, lp(MATCH, WRAP).margins(b = dp(12)))
+
+        // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
+        cockpitBox.addView(label("🩺 Araç arıza tanılama", 15f, bold = true))
+        cockpitBox.addView(label(
+            "ECU'dan okunan arıza kodlarını ve destekleniyorsa arıza anındaki kayıtlı sensör verilerini gösterir. " +
+                "Açıklama kataloğunda bulunmayan kodlar tahmin edilmez.",
+            12f, Palette.TEXT_DIM, lines = 3
+        ), lp(MATCH, WRAP).margins(t = dp(3), b = dp(6)))
+
+        val diagnosticStatus = label(
+            if (obdState == ObdManager.ConnectionState.CONNECTED) "Tanılama için hazır." else "Tanılama için OBD-II adaptörünü bağla.",
+            12f, Palette.TEXT_DIM, lines = 3
+        )
+        val dtcListBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        fun renderDtcs(codes: List<String>) {
+            dtcListBox.removeAllViews()
+            if (codes.isEmpty()) {
+                dtcListBox.addView(label("Okunmuş arıza kodu yok.", 12f, Palette.TEXT_FAINT))
+            } else {
+                codes.distinct().forEach { code ->
+                    val description = com.newrex.auto.data.ObdDiagnostics.description(code)
+                    val row = LinearLayout(context).apply {
+                        orientation = LinearLayout.VERTICAL
+                        background = rounded(0x14FFFFFF, dpf(9))
+                        setPadding(dp(10), dp(7), dp(10), dp(7))
+                        addView(label(code, 14f, Palette.TEXT, bold = true))
+                        addView(label(description ?: "Bu kod için Türkçe açıklama kataloğunda kayıt bulunmuyor.",
+                            12f, Palette.TEXT_DIM, lines = 3), lp(MATCH, WRAP).margins(t = dp(2)))
+                    }
+                    dtcListBox.addView(row, lp(MATCH, WRAP).margins(b = dp(5)))
+                }
+            }
+        }
+        renderDtcs(TelemetryHub.obdDtcList.value)
+
+        fun diagnosticButton(title: String, action: () -> Unit) = Button(context).apply {
+            text = title
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            background = rounded(0x22FFFFFF, dpf(10))
+            setOnClickListener { action() }
+        }
+        fun connected(): Boolean {
+            if (ObdManager.state.value == ObdManager.ConnectionState.CONNECTED) return true
+            diagnosticStatus.text = "OBD-II bağlı değil. Önce ELM327 adaptörünü bağla."
+            diagnosticStatus.setTextColor(Palette.ORANGE)
+            return false
+        }
+        val readDtcButton = diagnosticButton("Arıza kodlarını oku") {
+            if (!connected()) return@diagnosticButton
+            diagnosticStatus.text = "ECU arıza kodları okunuyor…"
+            diagnosticStatus.setTextColor(Palette.TEXT_DIM)
+            diagnosticsScope.launch {
+                val codes = ObdManager.readDtcCodes()
+                renderDtcs(codes)
+                diagnosticStatus.text = if (ObdManager.state.value != ObdManager.ConnectionState.CONNECTED) {
+                    "Okuma tamamlanamadı: OBD-II bağlantısı kesildi."
+                } else if (codes.isEmpty()) {
+                    "ECU yanıtında arıza kodu bulunmadı. Bu sonuç, desteklenen ECU'ların tümünü kapsadığı anlamına gelmeyebilir."
+                } else {
+                    "${codes.size} arıza kodu okundu."
+                }
+            }
+        }
+        cockpitBox.addView(readDtcButton, lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(dtcListBox, lp(MATCH, WRAP).margins(b = dp(6)))
+
+        val freezeFrameButton = diagnosticButton("Dondurulmuş kareyi oku") {
+            if (!connected()) return@diagnosticButton
+            diagnosticStatus.text = "ECU dondurulmuş kare verisi okunuyor…"
+            diagnosticsScope.launch {
+                val frame = ObdManager.readFreezeFrame()
+                diagnosticStatus.text = when {
+                    ObdManager.state.value != ObdManager.ConnectionState.CONNECTED ->
+                        "Dondurulmuş kare okunamadı: OBD-II bağlantısı kesildi."
+                    frame == null -> "ECU desteklenen bir dondurulmuş kare döndürmedi veya yanıt ayrıştırılamadı."
+                    else -> buildString {
+                        append("Dondurulmuş kare #${frame.frameNumber} • Geçmiş arıza anı verisi")
+                        frame.rpm?.let { append("\\nMotor devri: $it dev/dk") }
+                        frame.speedKmh?.let { append("\\nAraç hızı: $it km/s") }
+                        frame.coolantTempC?.let { append("\\nSoğutma suyu: $it °C") }
+                        frame.intakeAirTempC?.let { append("\\nEmme havası: $it °C") }
+                        frame.engineLoadPercent?.let { append("\\nMotor yükü: $it%") }
+                        frame.throttlePercent?.let { append("\\nGaz kelebeği: $it%") }
+                    }
+                }
+                diagnosticStatus.setTextColor(Palette.TEXT)
+            }
+        }
+        cockpitBox.addView(freezeFrameButton, lp(MATCH, WRAP).margins(b = dp(6)))
+
+        val clearDtcButton = diagnosticButton("Arıza kodlarını sil…") {
+            if (!connected()) return@diagnosticButton
+            if (TelemetryHub.obdDtcList.value.isEmpty()) {
+                diagnosticStatus.text = "Önce arıza kodlarını oku. Silinecek kayıtlı kod görünmüyor."
+                return@diagnosticButton
+            }
+            AlertDialog.Builder(context)
+                .setTitle("Arıza kodları silinsin mi?")
+                .setMessage(
+                    "Mode 04 komutu ECU'nun arıza kayıtlarını ve ilgili dondurulmuş kare/veri kayıtlarını silebilir. " +
+                        "Bu işlem arızayı onarmaz; emisyon hazırlık monitörlerini sıfırlayabilir. Önce kodları ve araç belirtilerini kaydet. Devam edilsin mi?"
+                )
+                .setNegativeButton("Vazgeç", null)
+                .setPositiveButton("Kodları sil") { _, _ ->
+                    diagnosticStatus.text = "ECU'dan silme onayı bekleniyor…"
+                    diagnosticsScope.launch {
+                        val cleared = ObdManager.clearDtcCodes()
+                        if (cleared) {
+                            renderDtcs(emptyList())
+                            diagnosticStatus.text = "ECU, Mode 04 temizleme isteğini olumlu yanıtladı. Arıza giderilmiş sayılmaz; yeniden tarama yap."
+                        } else {
+                            diagnosticStatus.text = "ECU temizleme işlemini onaylamadı. Kodlar silinmiş kabul edilmedi."
+                        }
+                    }
+                }
+                .show()
+        }
+        cockpitBox.addView(clearDtcButton, lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(diagnosticStatus, lp(MATCH, WRAP).margins(t = dp(4), b = dp(12)))
 
         // 3. 0-100 km/s Performans & Rekorlar
         cockpitBox.addView(label("⚡ 0-100 km/s Performans Sayacı", 15f, bold = true))
