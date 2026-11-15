@@ -11,7 +11,9 @@ Dal: `master`
 
 ### Mevcut uygulama
 - TV, radyo ve podcast aynı Media3/ExoPlayer örneğini kullanıyor.
-- `OmniDriveMediaService`, Media3 `MediaSessionService` sınıfından türetildi; ExoPlayer ve tek `MediaSession` servis oluşturulurken başlatılıyor.
+- `OmniDriveMediaService`, Media3 `MediaLibraryService` sınıfından türetildi; ExoPlayer ve tek `MediaLibrarySession` servis oluşturulurken başlatılıyor.
+- Medya kütüphanesi kökünde TV favorileri, radyo favorileri, podcast favorileri ve son dinlenenler Türkçe kategoriler olarak sunuluyor. Kategori çocukları sayfalanıyor; kayıtlı medya başlığı/grubu üzerinden arama yapılabiliyor.
+- Android Auto/uyumlu medya tarayıcıları, favori ve son dinlenen öğelerin başlık, tür ve varsa kapak görseli metadata'sını alabiliyor. Tüm IPTV listeleri otomatik olarak dışarı açılmaz; yalnızca kullanıcının favorileri ve son dinlenenleri sunulur.
 - `CarActivity`, `SessionToken` ve asenkron `MediaController` bağlantısıyla servise bağlanıyor. Activity yok edilirken yalnızca controller bağlantısı bırakılıyor; oynatma sürerken servis/oynatıcı serbest bırakılmıyor.
 - Manifestte `FOREGROUND_SERVICE` ve `FOREGROUND_SERVICE_MEDIA_PLAYBACK` izinleri ile `mediaPlayback` türünde, Media3 oturum eylemi yayınlayan servis tanımlandı. Media3, oynatma sürerken foreground durumunu ve medya bildirimini yönetiyor.
 - `PlayerHub.stop()` artık MediaSession'ı bırakmıyor; oynatma listesini temizliyor. Oturum ve ExoPlayer yalnızca servis `onDestroy()` aşamasında serbest bırakılıyor.
@@ -26,6 +28,7 @@ Dal: `master`
 ### Açık riskler / doğrulama işleri
 - [x] Media3 `MediaSessionService` sınıfı, medya foreground service izinleri ve `mediaPlayback` manifest tanımı eklendi.
 - [x] `CarActivity` servis bağlantısını `MediaController` ile kuruyor; Activity artık `PlayerHub.release()` çağırmıyor.
+- [x] Medya oturumu `MediaLibraryService` / `MediaLibrarySession` olarak genişletildi; Türkçe favori/son dinlenen kütüphane ağacı ve arama callback'leri eklendi.
 - [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
 - [x] Kuyruğu, seçili öğeyi ve podcast konumunu kalıcı sakla; Media3 `onPlaybackResumption` ve `MediaButtonReceiver` ile servis yeniden oluşturulduğunda kurtarma akışını uygula.
 - [ ] Force-stop, cihaz yeniden başlatma, Android Auto bağlantı kesilmesi ve servis zaman aşımı senaryolarını fiziksel cihazlarda doğrula; sistem üreticisi kısıtlamaları nedeniyle otomatik başlatma garantisi verilmez.
@@ -115,7 +118,7 @@ Dal: `master`
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
-| P1 | Player/MediaSession arka plan dayanıklılığı | MediaSessionService + kalıcı kuyruk + playback resumption eklendi; gerçek cihaz/Android Auto testi açık |
+| P1 | Player/MediaSession arka plan dayanıklılığı | MediaLibraryService + Türkçe medya kütüphanesi + kalıcı kuyruk + playback resumption eklendi; gerçek cihaz/Android Auto testi açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
 
 ## Doğrulama sınırı
