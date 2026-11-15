@@ -51,7 +51,7 @@ Dal: `master`
 
 ### Mevcut uygulama
 - Kullanıcı URL'si veya `content://` belge URI'si üzerinden M3U metni okunabiliyor.
-- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor.
+- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor. Ağ ve `content://` liste okumaları 8 MiB sınırıyla yapılır; MIME türü M3U ve metin biçimleriyle sınırlandırılır; aşırı büyük eski önbellek silinir.
 - `#EXTINF` içinden kanal adı, `tvg-logo` ve `group-title` okunuyor.
 - Aynı URL'ye sahip kanallar tekilleştiriliyor.
 
@@ -70,6 +70,7 @@ Dal: `master`
 - [x] UTF-8 BOM, CRLF, HLS medya/ana manifesti, başlık virgülü ve göreli URI için JUnit regresyon testleri ekle.
 - [x] Önbellek dosya adını URL'nin SHA-256 özetiyle üret.
 - [x] Hatalı/desteklenmeyen URI şemalarını ve kimlik bilgili adresleri reddet; özel ağ HTTP ve RTSP akışlarını koru; liste kaynak boyutlarını sınırla.
+- [x] IPTV HTTP ve `content://` M3U kaynaklarını 8 MiB akış sınırıyla oku; uygun olmayan MIME türlerini ve aşırı büyük eski önbelleği reddet.
 
 > IPTV ve podcast için JUnit regresyon testleri kaynak koduna eklendi ancak bu ortamda Android Gradle derlemesi/testi çalıştırılamadığı için sonuçları henüz doğrulanmadı.
 
