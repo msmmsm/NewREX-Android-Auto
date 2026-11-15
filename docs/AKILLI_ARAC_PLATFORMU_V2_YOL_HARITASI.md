@@ -260,7 +260,7 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Freeze Frame verisi `ObdFreezeFrame` modeliyle döndürülür; canlı telemetri StateFlow alanlarına yazılmaz. Böylece geçmişteki arıza anı ölçümleri güncel değerlerle karıştırılmaz.
 - `ObdDiagnostics.description(code)` sınırlı Türkçe DTC kataloğunda bulunan kodlara açıklama verir. Katalogda bulunmayan kodlar için açıklama uydurulmaz; ham kod korunur.
 - Freeze Frame bitmap'i, CAN başlığı, kare numarası, eksik yanıt ve bilinen/bilinmeyen DTC açıklaması için birim testleri eklendi.
-- Bu aşama veri erişim katmanını sağlar. DTC/Freeze Frame kullanıcı ekranı, gerçek ECU uyumluluk doğrulaması ve araç üzerindeki kabul testi henüz tamamlanmamıştır.
+- Veri erişim katmanı ve telefon kokpitindeki temel DTC/Freeze Frame ekranı eklendi (arayüz ayrıntıları aşağıdaki bölümde). Gerçek ECU uyumluluk doğrulaması ve araç üzerindeki kabul testi henüz tamamlanmamıştır.
 
 
 ### Telefon kokpiti — OBD-II arıza tanılama arayüzü
