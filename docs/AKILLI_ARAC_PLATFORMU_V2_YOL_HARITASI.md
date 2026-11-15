@@ -243,3 +243,11 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Deneme sayacı aynı hata/yeniden bağlanma dizisi boyunca korunur; kısa süreli bağlantı kurulması sınırsız yeniden deneme döngüsü oluşturmaz.
 - Telemetri anlık görüntüsüne `obdLastUpdatedMs` eklendi. Bu zaman damgası yalnızca başarıyla ayrıştırılmış OBD yanıtlarında ilerler; bağlantı kesildiğinde temizlenir. Arayüz bu alanı kullanarak OBD verisinin yaşını gösterebilir.
 - Voltaj yanıtı sayısal biçim ve 0–30 V aralığı açısından doğrulanır; bozuk metin veya gerçek dışı değerler kabul edilmez.
+
+
+### OBD bağlantı yarış koşulu ve hatalı ölçüm temizliği
+
+- Her bağlantı oturumuna artan bir nesil kimliği atanır. Kullanıcı adaptör değiştirir veya bağlantıyı keserse eski coroutine geçersiz olur; geç gelen iptal/hata işleyicisi yeni oturumun soketini kapatamaz.
+- PID yanıtı bozuk veya eksikse ilgili sensör alanı eski değerde bırakılmaz, `null` yapılır. Son başarılı OBD yanıt zaman damgası yalnızca geçerli ayrıştırmada ilerler.
+- ELM voltajı yalnızca sayısal biçimde ve 0–30 V aralığında kabul edilir; negatif, aşırı veya ek metin içeren yanıtlar reddedilir.
+- Yeniden bağlanma politikası için 3 deneme sınırı ve 1/3/7 saniyelik bekleme dizisi birim testleriyle tanımlanmıştır. Gerçek bağlantı kopma/yeniden bağlanma doğrulaması Bluetooth adaptörü ve araç üzerinde beklemektedir.
