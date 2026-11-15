@@ -16,8 +16,8 @@ import org.json.JSONObject
  * yayın bilgisi okunur; telefondan hiçbir bilgi gönderilmez.
  */
 object Updates {
-    private const val API = "https://api.github.com/repos/NewREX1337/NewREX-Android-Auto/releases/latest"
-    private const val PAGE = "https://github.com/NewREX1337/NewREX-Android-Auto/releases/latest"
+    private const val API = "https://api.github.com/repos/msmmsm/NewREX-Android-Auto/releases/latest"
+    private const val PAGE = "https://github.com/msmmsm/NewREX-Android-Auto/releases/latest"
     private const val CHECK_EVERY_MS = 6 * 60 * 60 * 1000L
 
     data class Release(val version: String, val notes: String, val url: String)
