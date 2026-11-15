@@ -39,7 +39,7 @@ class AboutPage(ui: CarUi) : Page(ui) {
                     addView(icon(R.drawable.ic_car, 32, Palette.accent), lp(dp(32), dp(32)).margins(r = dp(12)))
                     addView(LinearLayout(this@with).apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(label("NewREX", 22f, Palette.accent, bold = true).apply { neonText() })
+                        addView(label("OmniDrive", 22f, Palette.accent, bold = true).apply { neonText() })
                         addView(label("Android Auto • v${BuildConfig.VERSION_NAME}", 13f, Palette.TEXT_DIM))
                     })
                 })
@@ -48,17 +48,19 @@ class AboutPage(ui: CarUi) : Page(ui) {
             addView(panel().apply {
                 setPadding(dp(20), dp(16), dp(20), dp(16))
                 addView(label(
-                    "NewREX; arabanızın ekranında canlı TV, YouTube, radyo ve podcast dinlemenizi sağlayan " +
-                        "ücretsiz ve reklamsız bir araç bilgi-eğlence merkezidir.\n\n" +
-                        "Hiçbir kişisel bilginizi toplamaz, sunuculara göndermez. Tüm ayarlarınız ve listeleriniz " +
-                        "yalnızca telefonunuzda saklanır.\n\n" +
-                        "GPL-3.0 lisanslı açık kaynaklı bir projedir.",
+                    "OmniDrive; araç ekranı için medya, araç bilgisi ve yolculuk yardımcılarını bir araya getiren " +
+                        "ücretsiz ve reklamsız bir uygulamadır.\n\n" +
+                        "Uygulamanın geliştiriciye ait veri toplama sunucusu veya analiz altyapısı yoktur. " +
+                        "Bağlanılan üçüncü taraf servisler IP adresinizi görebilir; hava durumu için yaklaşık " +
+                        "konum bilgisi ilgili servise iletilir. Ayrıntılar Gizlilik metnindedir.\n\n" +
+                        "GPL-3.0 lisanslı açık kaynaklı bir projedir.\n\n" +
+                        "Orijinal geliştirici: ${Brand.ORIGINAL_DEVELOPER}",
                     14f, Palette.TEXT, lines = 10,
                 ))
             }, lp(MATCH, WRAP).margins(b = dp(12)))
 
             addView(pill("GitHub'da İncele", R.drawable.ic_language) {
-                ui.toast("github.com/msmmsm/NewREX-Android-Auto")
+                ui.toast(Brand.PROJECT_URL.removePrefix("https://"))
             }, lp(WRAP, dp(44)))
         }
         ScrollView(this).apply { addView(col) }
