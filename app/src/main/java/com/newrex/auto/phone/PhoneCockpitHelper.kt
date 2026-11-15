@@ -371,6 +371,36 @@ object PhoneCockpitHelper {
         }
         cockpitBox.addView(freezeFrameButton, lp(MATCH, WRAP).margins(b = dp(6)))
 
+        val vehicleIdentityButton = diagnosticButton("ECU kimlik bilgilerini oku") {
+            if (!connected()) return@diagnosticButton
+            diagnosticStatus.text = "Standart OBD-II ECU kimlik bilgileri okunuyor…"
+            diagnosticsScope.launch {
+                val identity = ObdManager.readVehicleIdentity()
+                diagnosticStatus.text = when {
+                    ObdManager.state.value != ObdManager.ConnectionState.CONNECTED ->
+                        "ECU kimlik okuması tamamlanamadı: OBD-II bağlantısı kesildi."
+                    identity == null ->
+                        "ECU, desteklenen standart Mode 09 kimlik verisi döndürmedi. Toyota hibrit, radar ve kamera ECU'larının listesi değildir."
+                    else -> buildString {
+                        append("Standart OBD-II emisyon ECU bilgileri")
+                        identity.vin?.let { vin ->
+                            append("\\nŞasi no: ${vin.take(3)}•••••••••${vin.takeLast(5)}")
+                        }
+                        identity.ecuName?.let { append("\\nECU adı: $it") }
+                        if (identity.calibrationIds.isNotEmpty()) {
+                            append("\\nKalibrasyon kimliği: ${identity.calibrationIds.joinToString(", ")}")
+                        }
+                        if (identity.calibrationVerificationNumbers.isNotEmpty()) {
+                            append("\\nCVN: ${identity.calibrationVerificationNumbers.joinToString(", ")}")
+                        }
+                        append("\\nNot: VIN tam hâliyle ekranda gösterilmez; bu bilgiler yalnızca bağlı OBD adaptöründen geçici olarak okunur.")
+                    }
+                }
+                diagnosticStatus.setTextColor(Palette.TEXT)
+            }
+        }
+        cockpitBox.addView(vehicleIdentityButton, lp(MATCH, WRAP).margins(b = dp(6)))
+
         val clearDtcButton = diagnosticButton("Arıza kodlarını sil…") {
             if (!connected()) return@diagnosticButton
             if (TelemetryHub.obdDtcList.value.isEmpty()) {
