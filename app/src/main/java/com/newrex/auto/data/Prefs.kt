@@ -204,7 +204,7 @@ object Prefs {
                     firstSeenMs = item.optLong("firstSeenMs", 0L),
                     lastSeenMs = item.optLong("lastSeenMs", 0L),
                     scanCount = item.optInt("scanCount", 1).coerceAtLeast(1),
-                    active = item.optBoolean("active", false),
+                    presentInLastScan = item.optBoolean("presentInLastScan", false),
                     clearedAtMs = item.optLong("clearedAtMs", -1L).takeIf { it >= 0L }
                 )
             }.sortedByDescending { it.lastSeenMs }.take(DtcHistory.MAX_ENTRIES)
@@ -229,7 +229,7 @@ object Prefs {
                 .put("firstSeenMs", entry.firstSeenMs)
                 .put("lastSeenMs", entry.lastSeenMs)
                 .put("scanCount", entry.scanCount)
-                .put("active", entry.active)
+                .put("presentInLastScan", entry.presentInLastScan)
                 .put("clearedAtMs", entry.clearedAtMs ?: -1L))
         }
         sp.edit().putString("obd_dtc_history_v1", array.toString()).apply()
