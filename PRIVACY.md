@@ -1,7 +1,6 @@
 # Gizlilik — OmniDrive
 
-**Kısaca: OmniDrive'ın geliştiriciye ait bir veri toplama sunucusu, reklam veya analiz altyapısı yoktur.** Geliştiricinin bir sunucusu yoktur; uygulama hiçbir bilgiyi
-geliştiriciye veya başka bir şirkete göndermez.
+**Kısaca: OmniDrive geliştiriciye ait bir sunucuya kişisel veri göndermez; reklam, analiz veya takip altyapısı içermez.** Uygulama üçüncü taraf yayın, arama, hava durumu ve güncelleme servislerine doğrudan bağlanır. Bu servisler bağlantı sırasında IP adresinizi görebilir; hava durumu sorgusunda yaklaşık konum koordinatları Open-Meteo'ya iletilir.
 
 ## Uygulama ne saklar?
 
