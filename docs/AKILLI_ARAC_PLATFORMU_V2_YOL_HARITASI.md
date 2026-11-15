@@ -131,7 +131,8 @@
 **Kabul:** GPS/araç hızı kaynağı ayrıştırılır; konum ve yolculuk verileri izinler olmadan toplanmaz.
 
 ### Faz 3 — Araç sağlık ve bakım
-- [ ] DTC geçmişi, sensör grafikleri, bakım planı ve servis kayıtları
+- [x] Yerel DTC geçmişi: ilk/son görülme, doğrulanmış tarama sayısı ve ECU temizleme onayı
+- [ ] Sensör grafikleri, bakım planı ve servis kayıtları
 - [ ] Sağlık değerlendirmesi ve açıklanabilir uyarılar
 
 **Kabul:** Her uyarı ölçüm kaynağı, eşik, zaman ve güven seviyesiyle izlenebilir.
@@ -271,3 +272,11 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Mode 04 temizleme eylemi ayrı düğmede ve açık onay penceresi arkasındadır. Ekran yalnızca ECU'dan olumlu Mode 04 yanıtı geldiyse temizleme isteğinin onaylandığını bildirir. Arızanın onarıldığı iddia edilmez; hazırlık monitörlerinin sıfırlanabileceği uyarılır.
 - Boş/henüz taranmamış liste ile tarama sonrası görüntülenebilir kod alınamaması ayrı metinlerle gösterilir. ECU yanıtının tüm modülleri kapsadığı varsayılmaz.
 - DTC geçmişi, otomatik canlı yenileme ve gerçek araç/ELM327 kabul testi bu kapsamda tamamlanmış değildir. Android derlemesi ve JUnit testleri çalıştırılmadı; fiziksel araç doğrulaması bekliyor.
+
+### OBD-II DTC geçmişi ve tarama doğrulaması
+
+- Mode 03 yanıtı doğrulanmadan geçmiş güncellenmez. NO DATA geçerli boş tarama kabul edilir; eksik/bozuk yanıt geçmiş kayıtlarını değiştirmez.
+- Son 100 farklı DTC kaydı cihazın yerel SharedPreferences alanında saklanır. Her kayıtta ilk görülme, son görülme, kodun yer aldığı doğrulanmış tarama sayısı ve son taramada raporlanıp raporlanmadığı tutulur.
+- Kokpitte son 10 kayıt gösterilir; toplam kayıt sayısı ayrıca belirtilir. Son taramada raporlanmamak arızanın giderildiği anlamına gelmez.
+- ECU Mode 04 temizleme isteğini olumlu yanıtladığında geçmiş silinmez; temizleme onayı zamanı saklanır. Kod yeniden raporlanırsa son tarama durumu güncellenir.
+- Geçmiş birimi için tekrar tarama, boş tarama, zaman damgası, temizleme onayı ve 100 kayıt sınırı testleri eklendi. Android derlemesi ve JUnit testleri bu ortamda çalıştırılmadı.
