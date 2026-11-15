@@ -51,7 +51,7 @@ Dal: `master`
 
 ### Mevcut uygulama
 - Kullanıcı URL'si veya `content://` belge URI'si üzerinden M3U metni okunabiliyor.
-- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor. Ağ ve `content://` liste okumaları 8 MiB sınırıyla yapılır; MIME türü M3U ve metin biçimleriyle sınırlandırılır; aşırı büyük eski önbellek silinir.
+- Sınırlı akış okuyucusu, sıfır uzunlukta okuma döndüren `InputStream` uygulamalarında tek baytlık geri dönüş kullanır; böylece döngüde takılmaz.\n- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor. Ağ ve `content://` liste okumaları 8 MiB sınırıyla yapılır; MIME türü M3U ve metin biçimleriyle sınırlandırılır; aşırı büyük eski önbellek silinir.
 - `#EXTINF` içinden kanal adı, `tvg-logo` ve `group-title` okunuyor.
 - Aynı URL'ye sahip kanallar tekilleştiriliyor.
 
