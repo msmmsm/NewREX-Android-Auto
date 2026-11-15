@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
 import java.io.StringReader
+import java.net.URI
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -57,7 +58,7 @@ object PodcastApi {
             when (p.eventType) {
                 XmlPullParser.START_TAG -> when (p.name) {
                     "item" -> { inItem = true; title = ""; url = ""; image = null; date = ""; duration = "" }
-                    "enclosure" -> if (inItem) url = p.getAttributeValue(null, "url") ?: ""
+                    "enclosure" -> if (inItem) url = PodcastRss.resolveEnclosureUrl(feedUrl, p.getAttributeValue(null, "url") ?: "").orEmpty()
                     "itunes:image" -> (p.getAttributeValue(null, "href"))?.let { if (inItem) image = it else showImage = showImage ?: it }
                     "title" -> if (inItem) title = p.nextText().trim()
                     "pubDate" -> if (inItem) date = formatDate(p.nextText().trim())
@@ -72,10 +73,7 @@ object PodcastApi {
         out
     }
 
-    private fun formatDate(rfc: String): String = runCatching {
-        val d = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH).parse(rfc)!!
-        SimpleDateFormat("d MMMM yyyy", Locale("tr", "TR")).format(d)
-    }.getOrDefault("")
+    private fun formatDate(rfc: String): String = PodcastRss.formatDate(rfc)
 
     private fun formatDuration(raw: String): String {
         val secs = when {
