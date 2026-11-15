@@ -21,7 +21,9 @@ internal object PlaylistParser {
     )
 
     fun parse(text: String, fallbackGroup: String, sourceUrl: String? = null): List<MediaEntry> {
-        val lines = text.removePrefix("\uFEFF").lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
+        if (text.length > 8 * 1024 * 1024) return emptyList()
+        val lines = text.removePrefix("\uFEFF").lineSequence().take(100_001).map { it.trim() }.filter { it.isNotEmpty() }.toList()
+        if (lines.size > 100_000) return emptyList()
         // HLS playlistlerinde EXT-X-TARGETDURATION, EXT-X-MEDIA-SEQUENCE vb. bulunur.
         // Bunların altındaki segment URI'leri TV kanalı değildir.
         if (lines.any { it.startsWith("#EXT-X-", ignoreCase = true) }) return emptyList()
@@ -44,10 +46,10 @@ internal object PlaylistParser {
                         hiddenNames.any { channelName.contains(it, ignoreCase = true) }
                     if (!isHidden) {
                         val resolved = resolveUrl(line, sourceUrl)
-                        if (resolved != null) {
+                        if (resolved != null && out.size < 10_000) {
                             val groupName = group?.split(';')?.firstOrNull()?.trim()?.ifBlank { null }
                                 ?.let { groupNames[it.lowercase()] ?: it } ?: fallbackGroup
-                            out += MediaEntry(Kind.TV, channelName, resolved, logo?.ifBlank { null }, groupName)
+                            out += MediaEntry(Kind.TV, channelName.take(200), resolved, logo?.ifBlank { null }?.take(4096), groupName.take(80))
                         }
                     }
                     name = null
@@ -81,7 +83,9 @@ internal object PlaylistParser {
         if (uri.isAbsolute) return value.takeIf { uri.scheme?.lowercase() in setOf("http", "https", "rtsp") && !uri.host.isNullOrBlank() && uri.rawUserInfo == null && value.length <= 4096 }
         if (sourceUrl == null) return null
         val base = runCatching { URI(sourceUrl) }.getOrNull() ?: return null
-        if (base.scheme !in setOf("http", "https")) return value
-        return runCatching { base.resolve(uri).toString() }.getOrNull()
+        if (base.scheme?.lowercase() !in setOf("http", "https") || base.host.isNullOrBlank() || base.rawUserInfo != null) return null
+        return runCatching { base.resolve(uri) }.getOrNull()?.let { resolved ->
+            if (resolved.scheme?.lowercase() in setOf("http", "https") && !resolved.host.isNullOrBlank() && resolved.rawUserInfo == null && resolved.toASCIIString().length <= 4096) resolved.toASCIIString() else null
+        }
     }
 }
