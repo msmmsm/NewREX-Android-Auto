@@ -201,7 +201,7 @@ class MainActivity : Activity() {
 
         col.addView(label(
             "OmniDrive Android Auto ${BuildConfig.VERSION_NAME} • Orijinal geliştirici: ${Brand.ORIGINAL_DEVELOPER}\n" +
-                "Reklam yok, takip yok, hiçbir veri toplanmaz.\n\n${Brand.COPYRIGHT}\n${Brand.LICENSE_NOTICE}",
+                "Reklam ve analiz takibi yoktur. Bazı özellikler için üçüncü taraf servislere bağlantı kurulur; ayrıntılar Gizlilik açıklamasındadır.\n\n${Brand.COPYRIGHT}\n${Brand.LICENSE_NOTICE}",
             12f, Palette.TEXT_FAINT, lines = 10).apply { gravity = Gravity.CENTER }, lp(MATCH, WRAP).margins(t = dp(18)))
 
         wave = WaveBackground(this)
