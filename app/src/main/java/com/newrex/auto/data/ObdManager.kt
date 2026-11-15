@@ -133,7 +133,7 @@ object ObdManager {
                     throw e
                 } catch (e: Exception) {
                     if (isActive && generation == connectionGeneration) markConnectionError()
-                    else throw CancellationException("Eski OBD bağlantı denemesi geçersiz kılındı", e)
+                    else throw CancellationException("Eski OBD bağlantı denemesi geçersiz kılındı")
                 }
 
                 if (!isActive || generation != connectionGeneration || selectedDevice.value?.address != device.address) break
