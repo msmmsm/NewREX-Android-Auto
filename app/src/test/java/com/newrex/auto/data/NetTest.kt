@@ -28,6 +28,27 @@ class NetTest {
         }
     }
 
+    @Test fun zeroLengthReadFallsBackToSingleByteWithoutLosingData() {
+        val source = "abc".toByteArray()
+        val stream = object : java.io.InputStream() {
+            private var first = true
+            private var index = 0
+            override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                if (first) {
+                    first = false
+                    return 0
+                }
+                if (index >= source.size) return -1
+                val count = minOf(length, source.size - index)
+                source.copyInto(buffer, offset, index, index + count)
+                index += count
+                return count
+            }
+            override fun read(): Int = if (index < source.size) source[index++].toInt() and 0xff else -1
+        }
+        assertEquals("abc", Net.readBounded(stream, 3))
+    }
+
     @Test fun rejectsOversizedDeclaredContentLengthBeforeReading() {
         try {
             Net.readBounded(ByteArrayInputStream(ByteArray(0)), 5, 6)
