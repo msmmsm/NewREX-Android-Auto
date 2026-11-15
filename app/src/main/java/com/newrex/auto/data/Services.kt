@@ -44,10 +44,15 @@ object PodcastApi {
         }
     }
 
+    private const val MAX_RSS_BYTES = 4 * 1024 * 1024
+
     suspend fun episodes(feedUrl: String, limit: Int = 100): List<Episode> = withContext(Dispatchers.IO) {
+        require(PodcastRss.isSafeFeedUrl(feedUrl)) { "Geçersiz RSS adresi" }
+        require(limit in 1..500) { "Bölüm sayısı 1–500 arasında olmalı" }
+        val xml = Net.getLimited(feedUrl, MAX_RSS_BYTES)
         val p = Xml.newPullParser()
         p.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-        p.setInput(StringReader(Net.get(feedUrl)))
+        p.setInput(StringReader(xml))
         val out = ArrayList<Episode>()
         var showImage: String? = null
         var inItem = false
