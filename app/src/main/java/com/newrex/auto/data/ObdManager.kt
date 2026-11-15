@@ -168,11 +168,14 @@ object ObdManager {
     private fun isPidSupported(pid: Int): Boolean = supportedPids?.contains(pid) ?: true
 
     internal fun parseSupportedPids(raw: String, basePid: Int): Set<Int>? {
+        if (basePid !in listOf(0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0)) return null
         val prefix = "41" + basePid.toString(16).uppercase().padStart(2, '0')
-        val clean = raw.replace(" ", "").replace("\\r", "").replace("\\n", "").uppercase()
+        // ELM yanıtındaki CAN başlıklarını, boşlukları ve satır sonlarını ayıkla.
+        val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
         val index = clean.indexOf(prefix)
         if (index < 0) return null
-        val payload = clean.substring(index + prefix.length).take(8)
+        val payloadStart = index + prefix.length
+        val payload = clean.substring(payloadStart, (payloadStart + 8).coerceAtMost(clean.length))
         if (payload.length != 8) return null
         val mask = payload.toLongOrNull(16) ?: return null
         return (0 until 32).mapNotNull { bit ->
@@ -341,14 +344,22 @@ object ObdManager {
     }
 
     internal fun parseDtc(raw: String): List<String> {
-        val clean = raw.replace(" ", "").replace("\r", "").replace("\n", "")
-        if (!clean.contains("43")) return emptyList()
-        val hex = clean.substringAfter("43")
-        val result = mutableListOf<String>()
+        // Yalnızca hex karakterleri tut; "NO DATA", ELM komut yankısı ve satır sonları atılır.
+        val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
+        if (clean.isEmpty()) return emptyList()
 
-        for (i in 0 until hex.length step 4) {
-            if (i + 4 <= hex.length) {
-                val codeHex = hex.substring(i, i + 4)
+        val result = linkedSetOf<String>()
+        var cursor = 0
+        // ELM327 başlıklar açıkken yanıtlar 7E8/7E9... ECU kimliğiyle art arda gelebilir.
+        val ecuHeader = Regex("7E[89A-F][0-9A-F]")
+        while (cursor < clean.length) {
+            val response = clean.indexOf("43", cursor)
+            if (response < 0) break
+            val payloadStart = response + 2
+            val nextHeader = ecuHeader.find(clean, payloadStart)?.range?.first ?: clean.length
+            val payload = clean.substring(payloadStart, nextHeader)
+            for (offset in 0 until payload.length - 3 step 4) {
+                val codeHex = payload.substring(offset, offset + 4)
                 if (codeHex == "0000") continue
                 val first = codeHex[0].digitToIntOrNull(16) ?: continue
                 val category = when (first ushr 2) {
@@ -357,11 +368,11 @@ object ObdManager {
                     2 -> "B"
                     else -> "U"
                 }
-                val subtype = first and 0x03
-                result.add(category + subtype + codeHex.substring(1))
+                result += category + (first and 0x03) + codeHex.substring(1)
             }
+            cursor = if (nextHeader < clean.length) nextHeader else clean.length
         }
-        return result
+        return result.toList()
     }
 
     private fun cleanHex(raw: String, prefix: String): String? {
