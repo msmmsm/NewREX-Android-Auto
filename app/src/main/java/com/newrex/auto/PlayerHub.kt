@@ -386,7 +386,7 @@ object PlayerHub {
         ).setId("omnidrive").build()
         libraryObserver?.cancel()
         libraryObserver = scope.launch {
-            kotlinx.coroutines.flow.combine(now, Prefs.changes) { _, _ -> Unit }.collect {
+            kotlinx.coroutines.flow.combine(now, Prefs.changes, PodcastDownloads.changes) { _, _, _ -> Unit }.collect {
                 notifyLibraryChanges()
             }
         }
