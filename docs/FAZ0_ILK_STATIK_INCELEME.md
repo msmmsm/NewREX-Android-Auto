@@ -94,3 +94,14 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 ### Açık dağıtım blokajı
 - `applicationId` ve `namespace` hâlâ `com.newrex.auto`. `applicationId` değerini `com.omnidrive.auto` yapmak mevcut kurulumun üzerine normal güncelleme olarak kurulmayı engeller; yeni paket ayrı uygulama olur. Kullanıcı verilerinin taşınması ve self-install/kurulum aracı uyumu test edilmeden bu değişiklik yapılmadı.
 - OmniDrive için ilk Release oluşturulmadığından otomatik güncelleme ve APK indirme akışı henüz uçtan uca doğrulanamaz.
+
+
+### OBD veri keşfi — ek geliştirme
+- Bağlantı başlatılırken Mode 01 PID destek bitmap'leri (PID 00/20/40 blokları) okunmaya başlandı.
+- ECU'nun desteklemediği hız, RPM, motor yükü, soğutma suyu ve yakıt PID'leri bilindiğinde gereksiz yere sürekli sorgulanmıyor.
+- Motor yükü PID 04 ayrıştırması eklendi.
+- TelemetryHub artık motor yükü ve boost akışlarını da `combine` girdisi olarak dinliyor; yalnızca bu iki alan değiştiğinde ekranın güncellenmemesi sorunu giderildi.
+- PID bitmap ve motor yükü ayrıştırması için ek JUnit testleri eklendi.
+- Destek bitmap'i alınamazsa geriye dönük uyumluluk için temel PID sorguları denenmeye devam ediyor.
+
+**Sınırlama:** BLE desteği yoktur; ELM327 Bluetooth Classic SPP gerektirir. Toyota hibrit özel PID'leri henüz uygulanmış veya gerçek C-HR üzerinde doğrulanmış değildir.
