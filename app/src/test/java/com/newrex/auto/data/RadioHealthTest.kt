@@ -30,6 +30,11 @@ class RadioHealthTest {
         assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("10.0.0.8")))
         assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("192.168.1.1")))
         assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("100.64.0.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("192.0.0.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("192.0.2.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("192.88.99.1")))
+        assertEquals(true, RadioHealth.isPublicAddress(InetAddress.getByName("192.0.1.1")))
+        assertEquals(true, RadioHealth.isPublicAddress(InetAddress.getByName("192.88.98.1")))
         assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("fc00::1")))
         assertEquals(true, RadioHealth.isPublicAddress(InetAddress.getByName("8.8.8.8")))
     }
