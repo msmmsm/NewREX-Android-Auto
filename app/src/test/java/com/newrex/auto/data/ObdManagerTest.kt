@@ -16,6 +16,15 @@ class ObdManagerTest {
     }
 
     @Test
+    fun parsesFirstEcuPayloadWhenElmReturnsMultipleEcuResponses() {
+        // ELM327 may concatenate CAN responses from more than one ECU.
+        assertEquals(26f, ObdManager.parseSpeed("7E804410D1A7E904410D2A")!!, 0.001f)
+        assertEquals(83, ObdManager.parseCoolant("7E80341057B7E90341057C"))
+        assertEquals(50.196f, ObdManager.parseFuel("7E803412F807E903412F90")!!, 0.01f)
+        assertEquals(1726, ObdManager.parseRpm("7E804410C1AF87E904410C2000"))
+    }
+
+    @Test
     fun rejectsUnsupportedOrMalformedPidResponses() {
         assertNull(ObdManager.parseSpeed("NO DATA"))
         assertNull(ObdManager.parseRpm("410C1A"))
