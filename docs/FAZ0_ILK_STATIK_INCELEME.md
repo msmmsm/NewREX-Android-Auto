@@ -115,3 +115,9 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Eski ZIP kurulum aracı yeni paket kimliğini içermediğinden depodan kaldırıldı; yeni paket kimliğiyle yeniden paketlenip test edilmeden indirilebilir gösterilmeyecek.
 - `com.newrex.auto` ile kurulu eski sürüm ayrı uygulama olarak kalır. Uygulama verileri otomatik taşınmaz; eski uygulamayı kaldırmak kullanıcı tercihidir.
 - Henüz APK derlemesi, CI testi veya cihaz üzerinde yükleme doğrulaması yapılmadı. İlk OmniDrive APK'sı ve güncel kurulum paketi yayımlanmadan dağıtım tamamlanmış sayılmaz.
+
+
+### 2026-11-15 — OBD telemetri tazelik koruması
+- Desteklenen PID sorgusu boş, hatalı veya ECU tarafından reddedilen yanıt döndürdüğünde önceki başarılı ölçüm artık ekranda tutulmuyor; ilgili StateFlow alanı `null` yapılıyor.
+- Bluetooth taşıma katmanı istisna verirse OBD bağlantı durumu kapatılıyor, tüm OBD ölçümleri temizleniyor, bağlantı durumu `ERROR` oluyor ve polling döngüsü duruyor. Böylece kopmuş adaptörün son ölçümleri canlıymış gibi sunulmuyor.
+- Bu değişiklikler kaynak koduna işlendi; CI ve fiziksel ELM327/araç doğrulaması bekliyor.
