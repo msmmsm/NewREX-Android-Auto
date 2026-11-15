@@ -234,8 +234,13 @@ object ObdManager {
                 delay(80) // Sorgu sürelerine ek kısa bekleme; gerçek örnekleme hızı ECU/adaptöre bağlıdır.
             } catch (e: Exception) {
                 if (isActive) {
-                    delay(500)
+                    // Bağlantı/okuma hatasında son geçerli ölçümleri canlı veri gibi göstermeyi bırak.
+                    TelemetryHub.obdConnected.value = false
+                    TelemetryHub.clearObdData()
+                    state.value = ConnectionState.ERROR
+                    closeTransport()
                 }
+                break
             }
         }
     }
