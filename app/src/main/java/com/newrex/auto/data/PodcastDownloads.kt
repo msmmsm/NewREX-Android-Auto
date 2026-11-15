@@ -1,0 +1,155 @@
+// OmniDrive — Podcast çevrimdışı indirme yönetimi
+package com.newrex.auto.data
+
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.URI
+import java.security.MessageDigest
+
+/**
+ * Android DownloadManager ile uygulamaya özel alana podcast indirir.
+ * İndirme kayıtlarında açık yayın URL'si saklanmaz; yalnızca SHA-256 anahtarı ve sistem indirme kimliği tutulur.
+ */
+object PodcastDownloads {
+    enum class State { NONE, PENDING, RUNNING, PAUSED, SUCCESSFUL, FAILED }
+
+    data class Status(
+        val state: State,
+        val downloadedBytes: Long = 0,
+        val totalBytes: Long = -1,
+    ) {
+        val progress: Int
+            get() = if (totalBytes > 0) ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100) else 0
+    }
+
+    private data class Record(val key: String, val id: Long, val title: String)
+
+    private lateinit var context: Context
+    private lateinit var manager: DownloadManager
+    private val lock = Any()
+    private const val PREFS_NAME = "omnidrive_podcast_downloads"
+    private const val RECORDS_KEY = "records"
+
+    fun init(context: Context) {
+        if (::manager.isInitialized) return
+        synchronized(lock) {
+            if (::manager.isInitialized) return
+            this.context = context.applicationContext
+            manager = this.context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        }
+    }
+
+    /** Başarılı indirme varsa DownloadManager'ın uygulamaya verdiği içerik URI'sini döndürür. */
+    fun localUri(url: String): Uri? {
+        val record = find(url) ?: return null
+        if (statusById(record.id).state != State.SUCCESSFUL) return null
+        return runCatching { manager.getUriForDownloadedFile(record.id) }.getOrNull()
+    }
+
+    fun status(url: String): Status {
+        val record = find(url) ?: return Status(State.NONE)
+        return statusById(record.id)
+    }
+
+    /** Yalnızca HTTP(S) podcast enclosure adresleri indirilebilir. */
+    fun enqueue(url: String, title: String): Long? {
+        if (!isHttpUrl(url)) return null
+        synchronized(lock) {
+            val existing = find(url)
+            if (existing != null) {
+                val state = statusById(existing.id).state
+                if (state == State.PENDING || state == State.RUNNING || state == State.PAUSED || state == State.SUCCESSFUL)
+                    return existing.id
+            }
+            val request = runCatching {
+                DownloadManager.Request(Uri.parse(url))
+                    .setTitle(title.take(120).ifBlank { "Podcast bölümü" })
+                    .setDescription("OmniDrive • Podcast")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setAllowedOverMetered(true)
+                    .setAllowedOverRoaming(false)
+                    .setDestinationInExternalFilesDir(context, "Podcasts", fileName(url, title))
+            }.getOrNull() ?: return null
+            val id = runCatching { manager.enqueue(request) }.getOrNull() ?: return null
+            val records = readRecords().filterNot { it.key == key(url) }.toMutableList()
+            records += Record(key(url), id, title.take(120))
+            writeRecords(records)
+            return id
+        }
+    }
+
+    /** İndirmeyi veya indirilmiş dosyayı kaldırır. */
+    fun delete(url: String): Boolean {
+        synchronized(lock) {
+            val record = find(url) ?: return false
+            runCatching { manager.remove(record.id) }
+            writeRecords(readRecords().filterNot { it.key == record.key })
+            return true
+        }
+    }
+
+    fun downloadedCount(): Int = readRecords().count { statusById(it.id).state == State.SUCCESSFUL }
+
+    private fun statusById(id: Long): Status {
+        val cursor = runCatching { manager.query(DownloadManager.Query().setFilterById(id)) }.getOrNull()
+            ?: return Status(State.FAILED)
+        cursor.use {
+            if (!it.moveToFirst()) return Status(State.FAILED)
+            val state = when (it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                DownloadManager.STATUS_PENDING -> State.PENDING
+                DownloadManager.STATUS_RUNNING -> State.RUNNING
+                DownloadManager.STATUS_PAUSED -> State.PAUSED
+                DownloadManager.STATUS_SUCCESSFUL -> State.SUCCESSFUL
+                else -> State.FAILED
+            }
+            val downloaded = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+            val total = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+            return Status(state, downloaded.coerceAtLeast(0), total)
+        }
+    }
+
+    private fun find(url: String): Record? = readRecords().firstOrNull { it.key == key(url) }
+
+    private fun readRecords(): List<Record> {
+        val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(RECORDS_KEY, "[]")
+        return runCatching {
+            val array = JSONArray(raw)
+            (0 until array.length()).mapNotNull { index ->
+                val item = array.optJSONObject(index) ?: return@mapNotNull null
+                val key = item.optString("key")
+                val id = item.optLong("id", -1)
+                if (key.length != 64 || id <= 0) null
+                else Record(key, id, item.optString("title"))
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun writeRecords(records: List<Record>) {
+        val array = JSONArray()
+        records.forEach { array.put(JSONObject().put("key", it.key).put("id", it.id).put("title", it.title)) }
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putString(RECORDS_KEY, array.toString()).apply()
+    }
+
+    private fun isHttpUrl(value: String): Boolean {
+        val uri = runCatching { URI(value) }.getOrNull() ?: return false
+        return (uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) && !uri.host.isNullOrBlank()
+    }
+
+    private fun key(value: String): String = sha256(value)
+
+    private fun fileName(url: String, title: String): String {
+        val base = title.replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('_', '.').take(48).ifBlank { "podcast" }
+        val path = runCatching { URI(url).path.orEmpty() }.getOrDefault("")
+        val extension = path.substringAfterLast('.', "").lowercase()
+            .takeIf { it.matches(Regex("[a-z0-9]{2,5}")) } ?: "audio"
+        return "${base}_${sha256(url).take(12)}.$extension"
+    }
+
+    private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(value.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+}
