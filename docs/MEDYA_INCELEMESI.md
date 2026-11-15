@@ -88,7 +88,7 @@ Dal: `master`
 - Android 10 ve üzeri sürümlerde dosyalar ortak **İndirilenler** klasörüne `OmniDrive_Podcasts_` önekiyle yazılır; böylece DownloadManager'ın yalnızca uygulamaya özel alandaki görünmeyen dosyaları temizlik sırasında kaldırması riski azaltılır. Android 8/9'da uygulamaya özel Podcast klasörü kullanılır. Android 10+ ortak klasördeki dosyalar uygulama kaldırıldığında kullanıcı tarafından ayrıca silinene kadar kalabilir.
 - İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okur. Feed indirmesinde 4 MiB yanıt sınırı, XML MIME türü kontrolü, HTTP(S)/host/kullanıcı bilgisi doğrulaması ve en fazla 5 güvenli yönlendirme uygulanır; HTTPS→HTTP düşüşü ve güvenli olmayan yönlendirme hedefleri reddedilir.
-- Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
+- Tarih ayrıştırıcı saniyeli/saniyesiz RFC 822 ve yaygın ISO-8601 biçimlerini dener; tanınmayan tarih boş bırakılır.
 - **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
 - **RSS enclosure URL güvenliği güçlendirildi.** Bölüm adresleri yalnızca HTTP(S), geçerli host ve kimlik bilgisi içermeyen URL'lerden kabul edilir. `file:`, `ftp:`, `content:` gibi şemalar, kullanıcı/parola gömülü adresler, boşluk/kontrol karakterleri ve 4 KiB üzerindeki URL'ler reddedilir. Göreli adresler yalnızca güvenli HTTP(S) feed adresine göre çözümlenir; özel ağ adresleri bu aşamada ayrıca engellenmez.
 - **RSS tarih ayrıştırması güçlendirildi.** Saniyeli/saniyesiz RFC 822 tarihleri ve yaygın saat dilimi yazımları deneniyor; tanınmayan tarih boş bırakılıyor.
@@ -100,7 +100,7 @@ Dal: `master`
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [x] RSS enclosure şeması, kimlik bilgisi ve uzunluk doğrulaması için regresyon testleri eklendi.
 - [x] RSS feed URL doğrulaması ve 4 MiB indirme sınırı eklendi; sınır davranışı için birim testleri eklendi.
-- [x] RSS XML namespace yerel adları desteklenecek şekilde ayrıştırma ve harici belge bildirimi kapatma eklendi.\n- [ ] Uzun RSS, eksik alan ve bozuk XML testleri.
+- [x] RSS XML namespace yerel adları desteklenecek şekilde ayrıştırma ve harici belge bildirimi kapatma eklendi.\n- [ ] Uzun RSS, eksik alan ve bozuk XML testleri; XML namespace ayrıştırma kodu eklendi ancak farklı sağlayıcılarla saha doğrulaması yapılmadı.
 - [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
 
@@ -163,7 +163,7 @@ Dal: `master`
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL/tarih/feed boyut sınırı kodu ve regresyon testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
 | P1 | Player/MediaSession arka plan dayanıklılığı | MediaLibraryService + Türkçe medya kütüphanesi + kalıcı kuyruk + playback resumption eklendi; gerçek cihaz/Android Auto testi açık |
-| P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
+| P2 | Podcast çevrimdışı indirme ve dosya yönetimi | DownloadManager, indirme durumu, iptal/silme ve çevrimdışı liste eklendi; depolama kotası ve cihaz testi açık |
 
 ## Doğrulama sınırı
 
