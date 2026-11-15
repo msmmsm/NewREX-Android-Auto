@@ -333,6 +333,22 @@ Toyota servis dokümanları Data List'in ilgili ECU seçilerek üretici teşhis 
 
 **Güvenlik kapısı:** Şimdilik yalnızca katalog ve salt okunur teşhis araştırması vardır. Toyota protokolü, araç varyantı ve her parametrenin ölçeği doğrulanmadan Mode 21/22 PID, CAN ID, gateway yönlendirmesi veya komut gönderilmez. Aktif test, kalibrasyon, kodlama ve ECU yazma kapsam dışıdır.
 
+
+### Teşhis sağlayıcı katmanı — ELM327 / Toyota OEM ayrımı
+
+OmniDrive içinde sağlayıcı envanteri iki ayrı kanalı tanımlar:
+
+- **Standart OBD-II / ELM327:** Mevcut uygulamanın standart SAE servisleri (Mode 01, 02, 03, 04 ve 09) ile sınırlıdır. Adaptör bağlı değilse servis kabiliyeti de bağlı/aktif gösterilmez.
+- **Toyota OEM gelişmiş teşhis:** Ayrı sağlayıcı olarak tanımlıdır ancak durumu **uygulanmadı**; servis listesi boştur. Genel ELM327 bağlantısı Toyota HV Battery, Hybrid Control, PCS veya BSM Data List erişimi olarak yorumlanmaz.
+- Her iki sağlayıcı UI'da ayrı durum ve sınırlama ile gösterilir. `DiagnosticProvider` arayüzü yalnızca durum/kapasite envanteri verir; ham CAN çerçevesi oluşturma, ECU'ya keyfi komut gönderme veya OEM aktif test/yazma API'si içermez.
+- Ortak `DiagnosticReading` modeli bir ölçümün güvenilir sayılması için parametre kimliği, sonlu sayısal değer, birim, kaynak, ECU kimliği, pozitif zaman damgası ve `VALID` kalite durumunu zorunlu tutar. Bu doğrulama modeli kendi başına ölçüm üretmez.
+- Toyota OEM sağlayıcısı; araç varyantı, onaylı arayüz ve protokol doğrulanana kadar `NOT_IMPLEMENTED` kalır. J2534 cihaz uyumluluğu tek başına Toyota Data List teşhis desteği kanıtı değildir.
+
+Android Bluetooth Classic bağlantısı ve izinleri Android'in resmi Bluetooth kurulum/izin belgelerine göre yönetilir:
+- https://developer.android.com/develop/connectivity/bluetooth/setup
+- https://developer.android.com/develop/connectivity/bluetooth/bt-permissions
+
+
 Kaynaklar:
 - [Toyota TIS — J2534 yeniden programlama cihazları ve teşhis sınırlaması](https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_j2534_device)
 - [Toyota TIS — Techstream ve araç teşhis arayüzleri](https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_vehicle_reprog)
