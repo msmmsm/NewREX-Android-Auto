@@ -217,6 +217,7 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
             scope.launch {
                 while (true) {
                     delay(2500)
+                    PodcastDownloads.refresh()
                     adapter.notifyDataSetChanged()
                 }
             }
