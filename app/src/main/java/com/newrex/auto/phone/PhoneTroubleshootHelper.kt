@@ -1,4 +1,4 @@
-// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
+// OmniDrive Android Auto — Copyright (C) 2026 OmniDrive — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto.phone
 
 import android.annotation.SuppressLint
@@ -53,7 +53,7 @@ object PhoneTroubleshootHelper {
     fun fixInstall(activity: Activity) {
         fun toast(t: String) = Toast.makeText(activity, t, Toast.LENGTH_LONG).show()
         if (!SelfInstall.canRequestInstalls(activity)) {
-            toast("Önce NewREX'e \"bilinmeyen uygulamaları yükleme\" izni ver, sonra tekrar bas.")
+            toast("Önce OmniDrive'e \"bilinmeyen uygulamaları yükleme\" izni ver, sonra tekrar bas.")
             runCatching { activity.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${activity.packageName}"))) }
             return
         }
@@ -69,7 +69,7 @@ object PhoneTroubleshootHelper {
                 .show()
             return
         }
-        toast("Açılan ekranda \"Güncelle\" ya da \"Yükle\"ye bas. NewREX yeniden açılınca bu bölüme tekrar bak.")
+        toast("Açılan ekranda \"Güncelle\" ya da \"Yükle\"ye bas. OmniDrive yeniden açılınca bu bölüme tekrar bak.")
         if (!SelfInstall.start(activity, installer)) {
             toast("Yükleyici açılamadı. Bu bölümün ekran görüntüsünü geliştiriciye gönder.")
         } else {
@@ -85,8 +85,8 @@ object PhoneTroubleshootHelper {
         val installer = info?.installingPackageName ?: runCatching { activity.packageManager.getInstallerPackageName(activity.packageName) }.getOrNull()
         AlertDialog.Builder(activity)
             .setTitle("Kurulum bu telefonda tutmadı")
-            .setMessage("\"Güncelle\"ye bastın ama Android Auto NewREX'i hâlâ tanımıyor. Bu, bazı telefonlarda (özellikle " +
-                "Xiaomi, Redmi ve POCO) telefonun kendi yükleyicisi araya girdiğinde oluyor. Merak etme, NewREX arabada " +
+            .setMessage("\"Güncelle\"ye bastın ama Android Auto OmniDrive'i hâlâ tanımıyor. Bu, bazı telefonlarda (özellikle " +
+                "Xiaomi, Redmi ve POCO) telefonun kendi yükleyicisi araya girdiğinde oluyor. Merak etme, OmniDrive arabada " +
                 "park halindeyken çalışmaya devam eder.\n\n" +
                 "Bir kez daha denemek istersen:\n" +
                 "• Play Protect'in kapalı olduğundan emin ol.\n" +
@@ -101,7 +101,7 @@ object PhoneTroubleshootHelper {
     }
 
     fun buildEntryRow(activity: Activity): View {
-        if (BuildConfig.PARK_ONLY) return activity.label("Bu NewREX'in Park sürümü: arabada park halindeyken açılır, King Installer gerekmez. " +
+        if (BuildConfig.PARK_ONLY) return activity.label("Bu OmniDrive'in Park sürümü: arabada park halindeyken açılır, King Installer gerekmez. " +
             "Android Auto → Geliştirici ayarları → \"Bilinmeyen kaynaklar\" açık olmalı.", 13f, Palette.TEXT_DIM, lines = 4)
         val box = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         val info = activity.label("", 13f, Palette.TEXT_DIM, lines = 4)
@@ -163,7 +163,7 @@ object PhoneTroubleshootHelper {
             activity.packageManager.getPackageInfo("com.google.android.projection.gearhead", 0).versionName
         }.getOrElse { "bulunamadı" }
         return "Telefon: ${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n" +
-            "NewREX ${BuildConfig.VERSION_NAME} • $install\n" +
+            "OmniDrive ${BuildConfig.VERSION_NAME} • $install\n" +
             "Android Auto: $aa\n" +
             "Araç bağlanmayı denedi: ${time(Prefs.lastCarBind)}\n" +
             "Araç ekranı açıldı: ${time(Prefs.lastCarSession)}\n\n" +
