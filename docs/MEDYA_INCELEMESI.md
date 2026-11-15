@@ -14,7 +14,7 @@ Dal: `master`
 - `OmniDriveMediaService`, Media3 `MediaLibraryService` sınıfından türetildi; ExoPlayer ve tek `MediaLibrarySession` servis oluşturulurken başlatılıyor.
 - Medya kütüphanesi kökünde TV favorileri, radyo favorileri, podcast favorileri, son dinlenenler, geçerli çalma kuyruğu ve o anki öğe Türkçe kategoriler olarak sunuluyor. Kategori çocukları sayfalanıyor; kayıtlı medya başlığı/grubu üzerinden arama yapılabiliyor.
 - Dış medya tarayıcılarına yalnızca HTTP(S) sunucusu olan ve URL içinde kullanıcı/parola veya bilinen erişim anahtarı parametresi taşımayan medya adresleri verilir. Kimlik bilgisi içeren öğeler telefon uygulamasında oynatılabilir; harici katalogdan gizlenir.
-- Android Auto/uyumlu medya tarayıcıları, favori ve son dinlenen öğelerin başlık, tür ve varsa kapak görseli metadata'sını alabiliyor. Tüm IPTV listeleri otomatik olarak dışarı açılmaz; yalnızca kullanıcının favorileri ve son dinlenenleri sunulur.
+- Android Auto/uyumlu medya tarayıcıları, favori ve son dinlenen öğeleri, geçerli kuyruğu ve o anki öğeyi başlık/tür/kapak metadata'sıyla tarayabilir. Tüm IPTV listeleri otomatik olarak dışarı açılmaz; yalnızca kullanıcının kaydettiği favoriler, son dinlenenler ve etkin kuyruk sunulur.
 - `CarActivity`, `SessionToken` ve asenkron `MediaController` bağlantısıyla servise bağlanıyor. Activity yok edilirken yalnızca controller bağlantısı bırakılıyor; oynatma sürerken servis/oynatıcı serbest bırakılmıyor.
 - Manifestte `FOREGROUND_SERVICE` ve `FOREGROUND_SERVICE_MEDIA_PLAYBACK` izinleri ile `mediaPlayback` türünde, Media3 oturum eylemi yayınlayan servis tanımlandı. Media3, oynatma sürerken foreground durumunu ve medya bildirimini yönetiyor.
 - `PlayerHub.stop()` artık MediaSession'ı bırakmıyor; oynatma listesini temizliyor. Oturum ve ExoPlayer yalnızca servis `onDestroy()` aşamasında serbest bırakılıyor.
@@ -29,7 +29,7 @@ Dal: `master`
 ### Açık riskler / doğrulama işleri
 - [x] Media3 `MediaSessionService` sınıfı, medya foreground service izinleri ve `mediaPlayback` manifest tanımı eklendi.
 - [x] `CarActivity` servis bağlantısını `MediaController` ile kuruyor; Activity artık `PlayerHub.release()` çağırmıyor.
-- [x] Medya oturumu `MediaLibraryService` / `MediaLibrarySession` olarak genişletildi; Türkçe favori/son dinlenen/çalma kuyruğu/şimdi çalıyor kütüphane ağacı ve arama callback'leri eklendi.
+- [x] Medya oturumu `MediaLibraryService` / `MediaLibrarySession` olarak genişletildi; Türkçe favori/son dinlenen/çalma kuyruğu/şimdi çalıyor kütüphane ağacı, arama başlatma ve sayfalı arama sonuçları callback'leri eklendi.
 - [x] Harici katalog için URL güvenlik filtresi ve token/kullanıcı bilgisi sızıntısı regresyon testi eklendi.
 - [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
 - [x] Kuyruğu, seçili öğeyi ve podcast konumunu kalıcı sakla; Media3 `onPlaybackResumption` ve `MediaButtonReceiver` ile servis yeniden oluşturulduğunda kurtarma akışını uygula.
