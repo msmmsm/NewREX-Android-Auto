@@ -78,7 +78,14 @@ object Net {
         while (true) {
             val count = input.read(buffer, 0, minOf(buffer.size, maxBytes - total + 1))
             if (count < 0) break
-            if (count == 0) continue
+            if (count == 0) {
+                // Bazı InputStream uygulamaları sıfır döndürebilir; döngüde takılmamak için tek bayt oku.
+                val single = input.read()
+                if (single < 0) break
+                if (++total > maxBytes) throw IOException("Yanıt boyut sınırını aşıyor")
+                output.write(single)
+                continue
+            }
             total += count
             if (total > maxBytes) throw IOException("Yanıt boyut sınırını aşıyor")
             output.write(buffer, 0, count)
