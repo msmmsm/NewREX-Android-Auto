@@ -218,37 +218,49 @@ object ObdManager {
                 // Hız (km/s) - PID 010D
                 if (isPidSupported(0x0D)) {
                     val speedRaw = sendCommand("010D")
-                    parseSpeed(speedRaw)?.let { TelemetryHub.obdSpeed.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseSpeed(speedRaw)
+                    TelemetryHub.obdSpeed.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 // Motor Devri (RPM) - PID 010C
                 if (isPidSupported(0x0C)) {
                     val rpmRaw = sendCommand("010C")
-                    parseRpm(rpmRaw)?.let { TelemetryHub.obdRpm.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseRpm(rpmRaw)
+                    TelemetryHub.obdRpm.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 // Motor yükü - PID 0104
                 if (loopCount % 5 == 0 && isPidSupported(0x04)) {
                     val loadRaw = sendCommand("0104")
-                    parseEngineLoad(loadRaw)?.let { TelemetryHub.obdEngineLoad.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseEngineLoad(loadRaw)
+                    TelemetryHub.obdEngineLoad.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
                 if (loopCount % 5 == 0 && isPidSupported(0x05)) {
                     val tempRaw = sendCommand("0105")
-                    parseCoolant(tempRaw)?.let { TelemetryHub.obdCoolantTemp.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseCoolant(tempRaw)
+                    TelemetryHub.obdCoolantTemp.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 // Akü Voltajı (V) - "AT RV"
                 if (loopCount % 10 == 0) {
                     val voltRaw = sendCommand("ATRV")
-                    parseVoltage(voltRaw)?.let { TelemetryHub.obdBatteryVoltage.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseVoltage(voltRaw)
+                    TelemetryHub.obdBatteryVoltage.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
                 if (loopCount % 20 == 0 && isPidSupported(0x2F)) {
                     val fuelRaw = sendCommand("012F")
-                    parseFuel(fuelRaw)?.let { TelemetryHub.obdFuelLevel.value = it; TelemetryHub.markObdDataUpdated() }
+                    val parsed = parseFuel(fuelRaw)
+                    TelemetryHub.obdFuelLevel.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
                 loopCount++
