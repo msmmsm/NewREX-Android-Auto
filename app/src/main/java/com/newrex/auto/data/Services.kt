@@ -51,7 +51,8 @@ object PodcastApi {
         require(limit in 1..500) { "Bölüm sayısı 1–500 arasında olmalı" }
         val xml = Net.getLimited(feedUrl, MAX_RSS_BYTES)
         val p = Xml.newPullParser()
-        p.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
+        p.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
+        runCatching { p.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false) }
         p.setInput(StringReader(xml))
         val out = ArrayList<Episode>()
         var showImage: String? = null
@@ -59,15 +60,15 @@ object PodcastApi {
         var title = ""; var url = ""; var image: String? = null; var date = ""; var duration = ""
         while (p.next() != XmlPullParser.END_DOCUMENT && out.size < limit) {
             when (p.eventType) {
-                XmlPullParser.START_TAG -> when (p.name) {
+                XmlPullParser.START_TAG -> when (p.name.substringAfter(':')) {
                     "item" -> { inItem = true; title = ""; url = ""; image = null; date = ""; duration = "" }
                     "enclosure" -> if (inItem) url = PodcastRss.resolveEnclosureUrl(feedUrl, p.getAttributeValue(null, "url") ?: "").orEmpty()
-                    "itunes:image" -> (p.getAttributeValue(null, "href"))?.let { if (inItem) image = it else showImage = showImage ?: it }
+                    "image" -> (p.getAttributeValue("http://www.itunes.com/dtds/podcast-1.0.dtd", "href") ?: p.getAttributeValue(null, "href"))?.let { raw -> PodcastRss.resolveEnclosureUrl(feedUrl, raw)?.let { if (inItem) image = it else showImage = showImage ?: it } }
                     "title" -> if (inItem) title = p.nextText().trim()
                     "pubDate" -> if (inItem) date = formatDate(p.nextText().trim())
                     "itunes:duration" -> if (inItem) duration = formatDuration(p.nextText().trim())
                 }
-                XmlPullParser.END_TAG -> if (p.name == "item") {
+                XmlPullParser.END_TAG -> if (p.name.substringAfter(':') == "item") {
                     inItem = false
                     if (url.isNotBlank()) out += Episode(title.ifBlank { "Bölüm" }, url, image ?: showImage, date, duration)
                 }
