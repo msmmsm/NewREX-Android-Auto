@@ -213,6 +213,14 @@ object ObdManager {
         return ((value * 100f) / 255f).toInt()
     }
 
+    /** SAE J1979 Mode 01 PID 5B: hibrit/EV batarya paketi kalan ömrü. */
+    internal fun parseHybridBatteryRemainingLife(raw: String): Float? {
+        val clean = cleanHex(raw, "415B") ?: return null
+        if (clean.length < 2) return null
+        val value = clean.take(2).toIntOrNull(16) ?: return null
+        return (value * 100f) / 255f
+    }
+
     /**
      * OBD-II PID Polling Döngüsü
      */
@@ -258,6 +266,15 @@ object ObdManager {
                     val voltRaw = sendCommand("ATRV")
                     val parsed = parseVoltage(voltRaw)
                     TelemetryHub.obdBatteryVoltage.value = parsed
+                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                }
+
+                // Hibrit batarya kalan ömrü (%) - standart Mode 01 PID 5B.
+                // Bu PID "remaining life" değeridir; SOC veya batarya sağlık (SOH) testi değildir.
+                if (loopCount % 20 == 0 && isPidSupported(0x5B)) {
+                    val hybridRaw = sendCommand("015B")
+                    val parsed = parseHybridBatteryRemainingLife(hybridRaw)
+                    TelemetryHub.obdHybridBatteryRemainingLifePercent.value = parsed
                     if (parsed != null) TelemetryHub.markObdDataUpdated()
                 }
 
