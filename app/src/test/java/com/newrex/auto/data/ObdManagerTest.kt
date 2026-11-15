@@ -53,6 +53,32 @@ class ObdManagerTest {
     }
 
     @Test
+    fun parsesDtcResponsesFromMultipleCanEcusWithoutMixingHeadersIntoCodes() {
+        assertEquals(
+            listOf("P0133", "P0456"),
+            ObdManager.parseDtc("7E8044301337E904430456")
+        )
+        assertEquals(
+            listOf("P0133", "P0456"),
+            ObdManager.parseDtc("7e8 04 43 01 33\\r\\n7e9 04 43 04 56")
+        )
+    }
+
+    @Test
+    fun ignoresIncompleteDtcBytesAndDeduplicatesRepeatedEcuCodes() {
+        assertEquals(listOf("P0133"), ObdManager.parseDtc("4301330"))
+        assertEquals(listOf("P0133"), ObdManager.parseDtc("7E8044301337E904430133"))
+    }
+
+    @Test
+    fun parsesPidBitmapWithCanHeaderAndLineBreaks() {
+        assertEquals(
+            setOf(0x0C, 0x0D, 0x20),
+            ObdManager.parseSupportedPids("7E806410000180001\\r\\n>", 0x00)
+        )
+    }
+
+    @Test
     fun parsesEngineLoadPercentage() {
         assertEquals(50, ObdManager.parseEngineLoad("410480"))
         assertNull(ObdManager.parseEngineLoad("NO DATA"))
