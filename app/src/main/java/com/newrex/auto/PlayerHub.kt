@@ -38,6 +38,7 @@ import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.PlaybackQueueSnapshot
 import com.newrex.auto.data.PodcastDownloads
 import com.newrex.auto.data.RadioApi
+import com.newrex.auto.data.RadioRecovery
 import com.newrex.auto.data.normName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -165,6 +166,7 @@ object PlayerHub {
         audioSources = sources(AUDIO_USER_AGENT)
         PodcastDownloads.init(context)
         RadioApi.init(context)
+        RadioRecovery.init(context)
         registerNetworkMonitor(context)
         val p = ExoPlayer.Builder(context)
             .setMediaSourceFactory(audioSources)
@@ -197,6 +199,7 @@ object PlayerHub {
             override fun onPlaybackStateChanged(state: Int) {
                 buffering.value = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_READY) {
+                    now.value?.takeIf { it.kind == Kind.RADIO }?.let { RadioRecovery.record(it, success = true) }
                     error.value = null
                     lastRadioFailureMessage = null
                     playedOk = true
@@ -220,7 +223,10 @@ object PlayerHub {
                 }
                 val cur = now.value
                 val radioMessage = if (cur?.kind == Kind.RADIO) radioFailureMessage(e) else null
-                if (radioMessage != null) lastRadioFailureMessage = radioMessage
+                if (radioMessage != null) {
+                    lastRadioFailureMessage = radioMessage
+                    RadioRecovery.record(cur!!, success = false, state = "HATA_${e.errorCode}")
+                }
                 // Adres ölmüşse (404, 501…) beklemeden yedek yayına geç; diğer hatalarda önce yeniden bağlan
                 // (bozuk yayın listesi, çözülemeyen ses gibi 3000+ hatalar da tekrar denemekle düzelmez)
                 val gone = e.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ||
@@ -560,9 +566,12 @@ object PlayerHub {
         if (name.isEmpty()) return false
         buffering.value = true
         healJob = scope.launch {
-            val alt = runCatching { RadioApi.search(e.title, country = "TR", limit = 20) }.getOrNull().orEmpty()
-                .filter { it.url !in dead }
-                .firstOrNull { val n = it.title.normName(); n == name || n.startsWith("$name ") }
+            val candidates = runCatching { RadioApi.search(e.title, country = e.countryCode ?: "TR", limit = 30) }
+                .getOrNull().orEmpty()
+                .filter { it.url !in dead && !RadioRecovery.isCoolingDown(it.url) }
+                .filter { val n = it.title.normName(); n == name || n.startsWith("$name ") || name.startsWith("$n ") }
+                .sortedByDescending { RadioRecovery.rank(e, it) }
+            val alt = candidates.firstOrNull()
             if (now.value?.key != e.key) return@launch
             if (alt == null) {
                 buffering.value = false
