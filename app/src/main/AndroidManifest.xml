@@ -21,12 +21,11 @@
     <!-- "Arabada görünür yap": NewREX kendini Google'ın paket yükleyicisiyle yeniden kurar (King Installer gerekmez) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- OBD-II (ELM327 Bluetooth / BLE adaptörleri) -->
+    <!-- OBD-II: yalnızca önceden eşleştirilmiş Bluetooth Classic SPP ELM327 adaptörleri -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 
     <!-- Sorun giderme kartında Android Auto sürümünü gösterebilmek için -->
     <queries>
