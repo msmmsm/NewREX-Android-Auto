@@ -22,9 +22,12 @@ object DtcHistory {
         val found = codes.map { it.trim().uppercase() }
             .filter { it.matches(Regex("[PCBU][0-3][0-9A-F]{3}")) }
             .toSet()
-        if (scannedAtMs <= 0L) return history.take(MAX_ENTRIES)
-
-        val previous = history.associateBy { it.code }
+        val previous = history
+            .filter { it.code.matches(Regex("[PCBU][0-3][0-9A-F]{3}")) }
+            .associateBy { it.code }
+        if (scannedAtMs <= 0L) {
+            return previous.values.sortedByDescending { it.lastSeenMs }.take(MAX_ENTRIES)
+        }
         val updated = (previous.keys + found).map { code ->
             val old = previous[code]
             when {
