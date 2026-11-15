@@ -176,6 +176,7 @@ object RadioApi {
             val items = (0 until rows.length()).mapNotNull { i ->
                 runCatching { MediaEntry.fromJson(rows.getJSONObject(i)) }.getOrNull()
             }.filter { it.kind == Kind.RADIO && isSafeStreamUrl(it.url) }
+                .map { it.copy(image = safeWebUrl(it.image.orEmpty()), home = safeWebUrl(it.home.orEmpty())) }
             if (savedAt <= 0 || items.isEmpty()) null else savedAt to items
         }.getOrNull()
     }
