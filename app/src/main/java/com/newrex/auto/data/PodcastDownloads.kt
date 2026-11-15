@@ -101,6 +101,8 @@ object PodcastDownloads {
                 val state = statusById(existing.id).state
                 if (state == State.PENDING || state == State.RUNNING || state == State.PAUSED || state == State.SUCCESSFUL)
                     return existing.id
+                runCatching { manager.remove(existing.id) }
+                statusCache.remove(existing.id)
             }
             val request = runCatching {
                 DownloadManager.Request(Uri.parse(url))
