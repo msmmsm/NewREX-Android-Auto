@@ -244,8 +244,8 @@ object PhoneCockpitHelper {
                 return
             }
             history.forEach { entry ->
-                val stateText = if (entry.active) "Son doğrulanmış taramada bulundu" else "Son taramada etkin değil"
-                val stateColor = if (entry.active) Palette.ORANGE else Palette.TEXT_DIM
+                val stateText = if (entry.presentInLastScan) "Son doğrulanmış taramada bulundu" else "Son taramada raporlanmadı (arıza giderildiği anlamına gelmez)"
+                val stateColor = if (entry.presentInLastScan) Palette.ORANGE else Palette.TEXT_DIM
                 val clearedText = entry.clearedAtMs?.let { " • ECU temizleme onayı: ${historyDateFormat.format(Date(it))}" } ?: ""
                 val row = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
