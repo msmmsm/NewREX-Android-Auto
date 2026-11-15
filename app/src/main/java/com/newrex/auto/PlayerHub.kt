@@ -312,6 +312,24 @@ object PlayerHub {
             }
 
             @OptIn(UnstableApi::class)
+            override fun onSearch(
+                session: MediaLibraryService.MediaLibrarySession,
+                browser: MediaSession.ControllerInfo,
+                query: String,
+                params: MediaLibraryService.LibraryParams?,
+            ): ListenableFuture<LibraryResult<Void>> {
+                val normalized = query.trim().normName()
+                if (normalized.isEmpty()) {
+                    return Futures.immediateFuture(
+                        LibraryResult.ofError(SessionError(SessionError.ERROR_BAD_VALUE, "Arama metni boş"))
+                    )
+                }
+                val count = searchableEntries(normalized).size
+                session.notifySearchResultChanged(browser, query, count, params)
+                return Futures.immediateFuture(LibraryResult.ofVoid(params))
+            }
+
+            @OptIn(UnstableApi::class)
             override fun onGetSearchResult(
                 session: MediaLibraryService.MediaLibrarySession,
                 browser: MediaSession.ControllerInfo,
@@ -320,14 +338,8 @@ object PlayerHub {
                 pageSize: Int,
                 params: MediaLibraryService.LibraryParams?,
             ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-                val normalized = query.trim().lowercase(java.util.Locale.ROOT)
-                val matches = externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
-                    .distinctBy { it.key }
-                    .filter { normalized.isNotEmpty() && (
-                        it.title.lowercase(java.util.Locale.ROOT).contains(normalized) ||
-                        it.group.lowercase(java.util.Locale.ROOT).contains(normalized)
-                    ) }
-                    .map(::itemFor)
+                val normalized = query.trim().normName()
+                val matches = searchableEntries(normalized).map(::itemFor)
                 val safePage = page.coerceAtLeast(0)
                 val safePageSize = pageSize.coerceAtLeast(1)
                 val from = (safePage.toLong() * safePageSize).coerceAtMost(matches.size.toLong()).toInt()
@@ -494,6 +506,15 @@ object PlayerHub {
         .setMediaMetadata(MediaMetadata.Builder().setTitle(title)
             .setIsBrowsable(true).setIsPlayable(false).build())
         .build()
+
+    private fun searchableEntries(normalizedQuery: String): List<MediaEntry> =
+        if (normalizedQuery.isBlank()) emptyList()
+        else externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
+            .distinctBy { it.key }
+            .filter {
+                it.title.normName().contains(normalizedQuery) ||
+                    it.group.normName().contains(normalizedQuery)
+            }
 
     private fun externalEntries(entries: List<MediaEntry>): List<MediaEntry> =
         entries.filter { PlaybackQueueSnapshot.isSafeExternalUrl(it.url) }
