@@ -152,6 +152,13 @@ object RadioApi {
                 image = safeWebUrl(o.optString("favicon")),
                 group = o.optString("tags").split(',').firstOrNull()?.trim()?.take(80).orEmpty(),
                 home = safeWebUrl(o.optString("homepage")),
+                codec = o.optString("codec").trim().takeIf { it.isNotBlank() && it.length <= 24 },
+                bitrateKbps = o.optInt("bitrate").takeIf { it in 1..10000 },
+                countryCode = o.optString("countrycode").trim().takeIf { it.matches(Regex("[A-Za-z]{2}")) }?.uppercase(),
+                votes = o.optInt("votes").takeIf { it >= 0 },
+                clickCount = o.optInt("clickcount").takeIf { it >= 0 },
+                directoryReportsHealthy = if (o.has("lastcheckok") && !o.isNull("lastcheckok"))
+                    o.optBoolean("lastcheckok") else null,
             )
         }.distinctBy { it.url }
     }
