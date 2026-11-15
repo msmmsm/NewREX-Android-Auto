@@ -60,7 +60,7 @@ class AboutPage(ui: CarUi) : Page(ui) {
             }, lp(MATCH, WRAP).margins(b = dp(12)))
 
             addView(pill("GitHub'da İncele", R.drawable.ic_language) {
-                ui.toast(Brand.PROJECT_URL.removePrefix("https://"))
+                ui.toast(Brand.REPOSITORY_URL.removePrefix("https://"))
             }, lp(WRAP, dp(44)))
         }
         ScrollView(this).apply { addView(col) }
