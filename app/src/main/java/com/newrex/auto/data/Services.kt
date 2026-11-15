@@ -7,9 +7,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
 import java.io.StringReader
-import java.net.URI
 import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.Locale
 
 /** Apple Podcasts dizini (hesap gerektirmez) ve programların kendi RSS akışları. */
