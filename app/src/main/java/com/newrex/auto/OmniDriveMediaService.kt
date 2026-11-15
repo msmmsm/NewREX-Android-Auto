@@ -18,7 +18,7 @@ class OmniDriveMediaService : MediaLibraryService() {
         PlayerHub.init(applicationContext)
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibraryService.MediaLibrarySession? =
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibraryService.MediaLibraryService.MediaLibrarySession? =
         PlayerHub.mediaSession
 
     override fun onDestroy() {
