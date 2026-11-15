@@ -42,7 +42,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew --no-daemon testFullDebugUnitTest testParkDebugUnitTest || true
+        run: ./gradlew --no-daemon testFullDebugUnitTest testParkDebugUnitTest
 
       - name: Build Full & Park APKs
         run: |
@@ -55,7 +55,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: NewREX-Android-Auto-APKs
+          name: OmniDrive-APKs
           path: |
             app/build/outputs/apk/full/debug/*.apk
             app/build/outputs/apk/park/debug/*.apk
