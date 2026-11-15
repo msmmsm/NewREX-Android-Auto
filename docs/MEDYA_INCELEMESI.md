@@ -115,7 +115,7 @@ Dal: `master`
 - Radyo ekranındaki hız/teşhis eylemi, yalnızca kullanıcının o anda çaldığı istasyonu elle sınar; katalogdaki tüm istasyonlara arka planda toplu istek göndermez.
 - Sağlık testi HTTP Range isteğiyle en fazla ilk veri baytını okumayı dener; bağlantı/okuma zaman aşımı sınırlıdır ve tam ses akışı indirilmez. İlk yanıt süresi 2 saniyeyi aşarsa yavaş olarak sınıflandırılır.
 - Test otomatik HTTP yönlendirmelerini izlemez; 3xx ayrı raporlanır. 401/403, 404/410, 429, 5xx, HTML sayfası, boş gövde, TLS ve DNS sorunları ayrı sonuçlara ayrılır.
-- Testten önce host DNS üzerinden çözülür; localhost, .local, loopback, link-local, özel ağ ve multicast adresleri sınanmaz. Böylece katalogdan gelen bir adresin yerel ağa istek göndermesi engellenir. Bu nedenle özel ağdaki yerel radyo akışları bu teşhis aracıyla sınanamaz.
+- Testten önce host DNS üzerinden çözülür; localhost, .local, loopback, link-local, özel ağ, paylaşımlı adres blokları, IPv6 ULA ve multicast adresleri sınanmaz. Kontrol edilmiş DNS yanıtı istek sırasında sabitlenir; ikinci DNS çözümlemesiyle adres değiştirme (DNS rebinding) engellenir. Böylece katalogdan gelen bir adresin yerel ağa istek göndermesi engellenir. Bu nedenle özel ağdaki yerel radyo akışları bu teşhis aracıyla sınanamaz.
 - Bu test yalnızca ilk HTTP yanıtı ve ilk baytın alınmasını doğrular; codec çözümleme, uzun süreli kararlılık, ses duyulabilirliği veya gerçek oynatıcı uyumluluğu garantisi vermez.
 - [x] HTTP durum sınıflandırması, HTML yanıtı ve gecikme eşiği için birim testleri eklendi.
 - Önbellekten okunan yayın, logo ve ana sayfa adresleri tekrar doğrulanır; bozuk veya değiştirilmiş kayıtlar oynatma listesine alınmaz.
