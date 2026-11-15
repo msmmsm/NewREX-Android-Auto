@@ -14,6 +14,7 @@ class OmniDriveMediaService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        com.newrex.auto.data.Prefs.init(applicationContext)
         PlayerHub.init(applicationContext)
     }
 
