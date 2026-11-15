@@ -5,6 +5,8 @@ package com.newrex.auto.data
 import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
@@ -116,7 +118,17 @@ object PodcastDownloads {
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setAllowedOverMetered(true)
                     .setAllowedOverRoaming(false)
-                    .setDestinationInExternalFilesDir(context, "Podcasts", fileNameFor(url, title))
+                    .apply {
+                        val fileName = fileNameFor(url, title)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            // Android 10+: genel İndirilenler klasörü; uygulama dışı oynatıcılar da dosyaya erişebilir.
+                            setDestinationInExternalPublicDir(
+                                Environment.DIRECTORY_DOWNLOADS, "OmniDrive Podcasts/$fileName"
+                            )
+                        } else {
+                            setDestinationInExternalFilesDir(context, "Podcasts", fileName)
+                        }
+                    }
             }.getOrNull() ?: return null
             val id = runCatching { manager.enqueue(request) }.getOrNull() ?: return null
             val records = readRecords().filterNot { it.key == key(url) }.toMutableList()
