@@ -64,7 +64,6 @@ object PlayerHub {
     private var exo: ExoPlayer? = null
     private var session: MediaSession? = null
     private var sessionPlayer: Player? = null
-    private var appContext: Context? = null
     private var queue: List<MediaEntry> = emptyList()
     private var index = 0
 
@@ -93,7 +92,10 @@ object PlayerHub {
         }
     }
 
-    val player: ExoPlayer get() = exo ?: error("PlayerHub.init çağrılmadı")
+    val player: ExoPlayer get() = exo ?: error("OmniDriveMediaService henüz başlatılmadı")
+
+    /** MediaSessionService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
+    internal val mediaSession: MediaSession? get() = session
 
     fun init(context: Context) {
         if (exo != null) return
@@ -182,7 +184,10 @@ object PlayerHub {
         exo = p
         applyQuality()
         this.sessionPlayer = sessionPlayer
-        appContext = context.applicationContext
+        // Oturum servis oluşturulurken hazırlanır; etkinlik kapanınca bırakılmaz.
+        session = MediaSession.Builder(context.applicationContext, sessionPlayer)
+            .setId("omnidrive")
+            .build()
         handler.post(ticker)
     }
 
@@ -242,9 +247,7 @@ object PlayerHub {
         exo?.clearMediaItems()
         now.value = null
         error.value = null
-        // Biz çalmıyorken direksiyon tuşları ve bildirim diğer uygulamada (Spotify vb.) kalsın
-        session?.release()
-        session = null
+        // Oturum servis yaşamı boyunca açık kalır; boş oynatma listesi medya bildirimini sonlandırır.
     }
 
     fun release() {
@@ -254,6 +257,7 @@ object PlayerHub {
         session?.release()
         exo?.release()
         session = null
+        sessionPlayer = null
         exo = null
         now.value = null
         playing.value = false
@@ -354,12 +358,6 @@ object PlayerHub {
         if (e.kind == Kind.PODCAST) player.setMediaSource(sourceFor(e), Prefs.position(e.url)) else player.setMediaSource(sourceFor(e))
         position.value = 0
         duration.value = 0
-        // Medya oturumu sadece biz bir şey çalınca açılır; yoksa açılışta Spotify'ın tuşlarını üstleniyorduk
-        if (session == null) {
-            val c = appContext
-            val sp = sessionPlayer
-            if (c != null && sp != null) session = MediaSession.Builder(c, sp).setId("newrex").build()
-        }
         player.prepare()
         player.play()
     }
