@@ -203,6 +203,7 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
                     val eps = PodcastApi.episodes(feed)
                     adapter.meta = eps.associate { it.url to (it.date + if (it.duration.isNotBlank()) "  •  ${it.duration}" else "") }
                     episodes = eps.map { MediaEntry(Kind.PODCAST, it.title, it.url, it.image ?: show.image, show.name) }
+                    PodcastDownloads.refresh()
                     adapter.notifyDataSetChanged()
                     status.visibility = if (episodes.isEmpty()) View.VISIBLE else View.GONE
                     status.text = "Bu programda bölüm bulunamadı."
