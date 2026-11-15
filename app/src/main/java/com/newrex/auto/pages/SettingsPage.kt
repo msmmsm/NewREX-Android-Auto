@@ -1,4 +1,4 @@
-// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
+// OmniDrive Android Auto — Copyright (C) 2026 OmniDrive — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto.pages
 
 import android.view.Gravity
@@ -322,7 +322,7 @@ class SettingsPage(ui: CarUi) : Page(ui) {
                     "Hız, araçtan alınamazsa telefonun GPS'inden ölçülür (telefonda konum izni gerekir).",
                     13f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(6)))
             }))
-            addView(pill("NewREX hakkında", R.drawable.ic_info) { ui.push(AboutPage(ui)) }, lp(WRAP, dp(44)))
+            addView(pill("OmniDrive hakkında", R.drawable.ic_info) { ui.push(AboutPage(ui)) }, lp(WRAP, dp(44)))
         }
         ScrollView(this).apply { addView(content) }
     }
