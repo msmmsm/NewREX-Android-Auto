@@ -243,7 +243,8 @@ object PhoneCockpitHelper {
                 historyBox.addView(label("Henüz doğrulanmış DTC geçmişi yok.", 12f, Palette.TEXT_FAINT))
                 return
             }
-            history.forEach { entry ->
+            historyBox.addView(label("Son 10 kayıt / toplam ${history.size}", 10f, Palette.TEXT_FAINT), lp(MATCH, WRAP).margins(b = dp(4)))
+            history.take(10).forEach { entry ->
                 val stateText = if (entry.presentInLastScan) "Son doğrulanmış taramada bulundu" else "Son taramada raporlanmadı (arıza giderildiği anlamına gelmez)"
                 val stateColor = if (entry.presentInLastScan) Palette.ORANGE else Palette.TEXT_DIM
                 val clearedText = entry.clearedAtMs?.let { " • ECU temizleme onayı: ${historyDateFormat.format(Date(it))}" } ?: ""
