@@ -140,6 +140,18 @@ object TelemetryHub {
         initialValue = TelemetrySnapshot()
     )
 
+    /** Adaptör bağlantısı kesilince eski araca ait ölçümlerin ekranda kalmasını önler. */
+    fun clearObdData() {
+        obdSpeed.value = null
+        obdRpm.value = null
+        obdCoolantTemp.value = null
+        obdBatteryVoltage.value = null
+        obdFuelLevel.value = null
+        obdEngineLoad.value = null
+        obdBoost.value = null
+        obdDtcList.value = emptyList()
+    }
+
     /**
      * OBD simülasyonu veya harici veri beslemesi için yardımcı fonksiyon
      */
