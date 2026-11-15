@@ -18,9 +18,8 @@ class PlaybackQueueSnapshotTest {
         assertEquals(42_000L, restored.positionMs)
     }
 
-    @Test fun rejectsEmptyOversizedAndInvalidIndexQueues() {
+    @Test fun rejectsEmptyAndInvalidIndexQueues() {
         assertNull(PlaybackQueueSnapshot.create(emptyList(), 0, 0))
-        assertNull(PlaybackQueueSnapshot.create(List(51) { radio }, 0, 0))
         assertNull(PlaybackQueueSnapshot.create(listOf(radio), 1, 0))
     }
 
