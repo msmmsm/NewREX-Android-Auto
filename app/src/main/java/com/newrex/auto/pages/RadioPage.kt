@@ -15,6 +15,7 @@ import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.RadioApi
 import com.newrex.auto.data.RadioHealth
+import com.newrex.auto.data.RadioRecovery
 import com.newrex.auto.ui.CarUi
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Page
@@ -87,6 +88,7 @@ class RadioPage(ui: CarUi, private val onPick: ((MediaEntry) -> Unit)? = null) :
                 status.visibility = View.VISIBLE
                 scope.launch {
                     val result = RadioHealth.check(station)
+                    RadioRecovery.record(station, success = result.state == RadioHealth.State.HEALTHY || result.state == RadioHealth.State.SLOW, state = result.state.name)
                     val http = result.httpCode?.let { " · HTTP $it" }.orEmpty()
                     val latency = result.latencyMs?.let { " · ${it} ms" }.orEmpty()
                     val type = result.contentType?.let { " · $it" }.orEmpty()
