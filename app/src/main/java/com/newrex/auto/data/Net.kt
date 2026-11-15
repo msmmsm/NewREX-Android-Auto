@@ -35,13 +35,39 @@ object Net {
     /** RSS gibi dış kaynak yanıtlarını belleğe almadan önce kesin boyut sınırı uygular. */
     fun getLimited(url: String, maxBytes: Int): String {
         require(maxBytes > 0) { "Yanıt boyutu sınırı pozitif olmalı" }
-        val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
-        client.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) throw IOException("HTTP ${resp.code}")
-            val body = resp.body ?: return ""
-            return readBounded(body.byteStream(), maxBytes, body.contentLength())
+        var current = okhttp3.HttpUrl.get(url)
+        val redirectClient = client.newBuilder().followRedirects(false).followSslRedirects(false).build()
+        repeat(6) { hop ->
+            if (!isSafeHttpUrl(current.toString())) throw IOException("Güvensiz yönlendirme adresi")
+            val req = Request.Builder().url(current).header("User-Agent", USER_AGENT).build()
+            redirectClient.newCall(req).execute().use { resp ->
+                if (resp.code in setOf(301, 302, 303, 307, 308)) {
+                    if (hop == 5) throw IOException("Çok fazla RSS yönlendirmesi")
+                    val location = resp.header("Location") ?: throw IOException("Yönlendirme adresi eksik")
+                    val next = current.resolve(location) ?: throw IOException("Yönlendirme adresi geçersiz")
+                    if (current.isHttps && !next.isHttps) throw IOException("HTTPS bağlantısı HTTP'ye düşürülemez")
+                    if (!isSafeHttpUrl(next.toString())) throw IOException("Güvensiz RSS yönlendirmesi")
+                    current = next
+                    return@use
+                }
+                if (!resp.isSuccessful) throw IOException("HTTP ${resp.code}")
+                val body = resp.body ?: return ""
+                val mime = body.contentType()?.let { "${it.type}/${it.subtype}".lowercase() }.orEmpty()
+                if (mime.isNotBlank() && mime !in setOf("application/rss+xml", "application/atom+xml", "application/xml", "text/xml", "text/plain", "application/octet-stream")) {
+                    throw IOException("RSS için desteklenmeyen içerik türü")
+                }
+                return readBounded(body.byteStream(), maxBytes, body.contentLength())
+            }
         }
+        throw IOException("RSS yönlendirmesi tamamlanamadı")
     }
+
+    internal fun isSafeHttpUrl(value: String): Boolean = runCatching {
+        val uri = java.net.URI(value)
+        uri.scheme?.lowercase() in setOf("http", "https") && !uri.host.isNullOrBlank() &&
+            uri.rawUserInfo == null && value.length <= 4096 &&
+            value.none { it.isWhitespace() || it.isISOControl() }
+    }.getOrDefault(false)
 
     internal fun readBounded(input: InputStream, maxBytes: Int, declaredLength: Long = -1L): String {
         require(maxBytes > 0) { "Yanıt boyutu sınırı pozitif olmalı" }
