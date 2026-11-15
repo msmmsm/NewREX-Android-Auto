@@ -55,6 +55,13 @@ class PlaybackQueueSnapshotTest {
         }
     }
 
+    @Test fun externalLibraryPolicyRejectsCredentialAndTokenUrls() {
+        assertEquals(true, PlaybackQueueSnapshot.isSafeExternalUrl("https://radio.example/live"))
+        assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("file:///private/live"))
+        assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("https://user:pass@radio.example/live"))
+        assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("https://radio.example/live?access_token=secret"))
+    }
+
     @Test fun clampsUnreasonablyLongPosition() {
         val saved = PlaybackQueueSnapshot.create(
             listOf(radio), 0, PlaybackQueueSnapshot.MAX_POSITION_MS + 10_000
