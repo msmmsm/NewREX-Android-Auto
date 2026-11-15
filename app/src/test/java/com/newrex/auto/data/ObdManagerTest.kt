@@ -87,7 +87,7 @@ class ObdManagerTest {
     @Test
     fun acceptsOnlyPositiveMode04Acknowledgement() {
         assertTrue(ObdManager.hasDtcClearAcknowledgement("44"))
-        assertTrue(ObdManager.hasDtcClearAcknowledgement("7E80444"))
+        assertTrue(ObdManager.hasDtcClearAcknowledgement("7E80144"))\n        assertTrue(ObdManager.hasDtcClearAcknowledgement("7E8 01 44"))
         assertTrue(ObdManager.hasDtcClearAcknowledgement("7E8 01 44\\r\\n"))
         assertTrue(!ObdManager.hasDtcClearAcknowledgement("NO DATA"))
         assertTrue(!ObdManager.hasDtcClearAcknowledgement("ERROR"))
