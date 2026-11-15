@@ -309,6 +309,7 @@ object PlayerHub {
                     LIBRARY_RECENTS -> externalEntries(Prefs.recents()).map(::itemFor)
                     LIBRARY_QUEUE -> externalEntries(libraryQueue()).map(::itemFor)
                     LIBRARY_NOW_PLAYING -> externalEntries(listOfNotNull(now.value)).map(::itemFor)
+                    LIBRARY_DOWNLOADS -> externalEntries(PodcastDownloads.downloadedEntries()).map(::itemFor)
                     else -> emptyList()
                 }
                 val safePage = page.coerceAtLeast(0)
@@ -334,7 +335,8 @@ object PlayerHub {
                     LIBRARY_RECENTS -> categoryItem(mediaId, "Son Dinlenenler")
                     LIBRARY_QUEUE -> categoryItem(mediaId, "Çalma Kuyruğu")
                     LIBRARY_NOW_PLAYING -> categoryItem(mediaId, "Şimdi Çalıyor")
-                    else -> externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
+                    LIBRARY_DOWNLOADS -> categoryItem(mediaId, "İndirilen Podcastler")
+                    else -> externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue() + PodcastDownloads.downloadedEntries())
                         .firstOrNull { it.key == mediaId }?.let(::itemFor)
                 }
                 return if (item != null) Futures.immediateFuture(LibraryResult.ofItem(item, null))
@@ -546,6 +548,7 @@ object PlayerHub {
     private const val LIBRARY_RECENTS = "omnidrive:recents"
     private const val LIBRARY_QUEUE = "omnidrive:queue"
     private const val LIBRARY_NOW_PLAYING = "omnidrive:now-playing"
+    private const val LIBRARY_DOWNLOADS = "omnidrive:downloads"
 
     /** Favori, son dinlenen, kuyruk veya geçerli öğe değiştiğinde bağlı araç tarayıcılarını yenile. */
     private fun notifyLibraryChanges() {
@@ -557,6 +560,7 @@ object PlayerHub {
         activeSession.notifyChildrenChanged(LIBRARY_RECENTS, externalEntries(Prefs.recents()).size, null)
         activeSession.notifyChildrenChanged(LIBRARY_QUEUE, externalEntries(libraryQueue()).size, null)
         activeSession.notifyChildrenChanged(LIBRARY_NOW_PLAYING, if (externalEntries(listOfNotNull(now.value)).isEmpty()) 0 else 1, null)
+        activeSession.notifyChildrenChanged(LIBRARY_DOWNLOADS, externalEntries(PodcastDownloads.downloadedEntries()).size, null)
     }
 
     private fun libraryRootItem() = MediaItem.Builder()
@@ -573,7 +577,7 @@ object PlayerHub {
 
     private fun searchableEntries(normalizedQuery: String): List<MediaEntry> =
         if (normalizedQuery.isBlank()) emptyList()
-        else externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
+        else externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue() + PodcastDownloads.downloadedEntries())
             .distinctBy { it.key }
             .filter {
                 it.title.normName().contains(normalizedQuery) ||
@@ -590,6 +594,7 @@ object PlayerHub {
         categoryItem(LIBRARY_RECENTS, "Son Dinlenenler"),
         categoryItem(LIBRARY_QUEUE, "Çalma Kuyruğu"),
         categoryItem(LIBRARY_NOW_PLAYING, "Şimdi Çalıyor"),
+        categoryItem(LIBRARY_DOWNLOADS, "İndirilen Podcastler"),
     )
 
     private fun itemFor(e: MediaEntry) = MediaItem.Builder()
