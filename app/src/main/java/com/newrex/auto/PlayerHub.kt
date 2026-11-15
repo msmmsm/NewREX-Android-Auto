@@ -162,6 +162,7 @@ object PlayerHub {
         tvSources = sources(STREAM_USER_AGENT)
         audioSources = sources(AUDIO_USER_AGENT)
         PodcastDownloads.init(context)
+        RadioApi.init(context)
         registerNetworkMonitor(context)
         val p = ExoPlayer.Builder(context)
             .setMediaSourceFactory(audioSources)
