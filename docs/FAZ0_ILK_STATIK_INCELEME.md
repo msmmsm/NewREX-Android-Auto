@@ -46,7 +46,7 @@ README; 3D C-HR modeli, OBD-II, DTC, performans sayacı, hız uyarısı, araç t
 - [ ] Manifest izinleri için özellik-izin eşleştirmesi
 - [ ] Kaynak kodu özellik envanteri ve README iddia matrisi
 - [ ] Gradle bağımlılıkları, lisanslar ve kullanılmayan bağımlılıklar denetimi
-- [ ] Temiz checkout derleme, lint ve test raporu (otomatik testler eklendi; CI henüz çalıştırılmadı)
+- [ ] Temiz checkout yerel derleme, lint ve test raporu (Android SDK/Gradle ortamı sağlandığında)
 - [x] Marka/paket kimliği teknik değişikliği ve Hakkında atfı
 - [ ] NOTICE/GPL koşullarının hukuki incelemesi
 - [ ] PRIVACY.md veri akışı doğrulaması
@@ -115,13 +115,13 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Windows kurulum betiği yeni paket kimliğini ve bu fork'un GitHub deposunu kullanacak şekilde güncellendi.
 - Eski ZIP kurulum aracı yeni paket kimliğini içermediğinden depodan kaldırıldı; yeni paket kimliğiyle yeniden paketlenip test edilmeden indirilebilir gösterilmeyecek.
 - `com.newrex.auto` ile kurulu eski sürüm ayrı uygulama olarak kalır. Uygulama verileri otomatik taşınmaz; eski uygulamayı kaldırmak kullanıcı tercihidir.
-- Henüz APK derlemesi, CI testi veya cihaz üzerinde yükleme doğrulaması yapılmadı. İlk OmniDrive APK'sı ve güncel kurulum paketi yayımlanmadan dağıtım tamamlanmış sayılmaz.
+- Henüz APK derlemesi, yerel test veya cihaz üzerinde yükleme doğrulaması yapılmadı. İlk OmniDrive APK'sı ve güncel kurulum paketi yayımlanmadan dağıtım tamamlanmış sayılmaz.
 
 
 ### 2026-11-15 — OBD telemetri tazelik koruması
 - Desteklenen PID sorgusu boş, hatalı veya ECU tarafından reddedilen yanıt döndürdüğünde önceki başarılı ölçüm artık ekranda tutulmuyor; ilgili StateFlow alanı `null` yapılıyor.
 - Bluetooth taşıma katmanı istisna verirse OBD bağlantı durumu kapatılıyor, tüm OBD ölçümleri temizleniyor, bağlantı durumu `ERROR` oluyor ve polling döngüsü duruyor. Böylece kopmuş adaptörün son ölçümleri canlıymış gibi sunulmuyor.
-- Bu değişiklikler kaynak koduna işlendi; CI ve fiziksel ELM327/araç doğrulaması bekliyor.
+- Bu değişiklikler kaynak koduna işlendi; yerel test ve fiziksel ELM327/araç doğrulaması bekliyor.
 
 
 ### 2026-11-15 — Çoklu ECU yanıt ayrıştırma düzeltmesi
@@ -129,3 +129,9 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - RPM ayrıştırıcısı zaten ilk iki veri baytını kullanıyordu; çoklu ECU örneği için regresyon testi eklendi.
 - Çoklu ECU örnekleri için test kapsamı genişletildi. Test dosyasında toplam 7 test metodu vardır.
 - Bu testler kaynak koduna eklendi ancak çalıştırılmadı. Gerçek ELM327/araç yanıtlarıyla doğrulama gereklidir.
+
+
+### GitHub Actions kullanım kararı
+- Kullanıcı talimatıyla GitHub Actions iş akışı depodan kaldırıldı; otomatik APK derleme/yayın akışı kullanılmayacak.
+- Bu ortamda Java 21 var; ancak Gradle ve Android SDK/ADB bulunmadığından burada Android APK derlemesi yapılamadı.
+- APK üretimi için geliştirici bilgisayarında Android SDK ve Gradle Wrapper ile yerel derleme yapılması gerekir. Bu raporda derleme başarılı olarak işaretlenmemiştir.
