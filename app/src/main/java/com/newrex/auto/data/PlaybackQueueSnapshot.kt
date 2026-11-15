@@ -52,7 +52,7 @@ data class PlaybackQueueSnapshot(
                 require(uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) {
                     "Yalnızca HTTP(S) adresleri geri yüklenebilir"
                 }
-                require(!uri.host.isNullOrBlank() && uri.rawUserInfo == null) {
+                require(!uri.host.isNullOrBlank() && !containsCredentials(uri)) {
                     "Kimlik bilgisi içeren veya sunucusu olmayan adres geri yüklenemez"
                 }
                 require(url.length <= 4096 && !item.optString("title").isBlank()) { "Medya alanı geçersiz" }
@@ -76,13 +76,30 @@ data class PlaybackQueueSnapshot(
             if (entry.title.isBlank() || entry.url.length > 4096) return null
             val uri = runCatching { java.net.URI(entry.url) }.getOrNull() ?: return null
             if (!uri.scheme.equals("http", true) && !uri.scheme.equals("https", true)) return null
-            if (uri.host.isNullOrBlank() || uri.rawUserInfo != null) return null
+            if (uri.host.isNullOrBlank() || containsCredentials(uri)) return null
             return entry.copy(
                 title = entry.title.take(300),
-                image = entry.image?.take(4096),
+                image = safeOptionalUrl(entry.image),
                 group = entry.group.take(300),
-                home = entry.home?.take(4096),
+                home = safeOptionalUrl(entry.home),
             )
+        }
+
+        private fun containsCredentials(uri: java.net.URI): Boolean {
+            if (uri.rawUserInfo != null) return true
+            val sensitiveKeys = setOf("user", "username", "password", "pass", "token", "access_token", "auth", "authorization", "api_key", "apikey", "signature", "sig", "jwt", "session")
+            return uri.rawQuery.orEmpty().split("&").any { part ->
+                val key = part.substringBefore("=").lowercase(java.util.Locale.ROOT)
+                key in sensitiveKeys
+            }
+        }
+
+        private fun safeOptionalUrl(value: String?): String? {
+            if (value.isNullOrBlank() || value.length > 4096) return null
+            val uri = runCatching { java.net.URI(value) }.getOrNull() ?: return null
+            if (!uri.scheme.equals("http", true) && !uri.scheme.equals("https", true)) return null
+            if (uri.host.isNullOrBlank() || containsCredentials(uri)) return null
+            return value
         }
     }
 }
