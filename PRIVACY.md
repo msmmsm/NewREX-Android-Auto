@@ -1,6 +1,6 @@
-# Gizlilik — NewREX Android Auto
+# Gizlilik — OmniDrive
 
-**Kısaca: NewREX hiçbir veri toplamaz.** Geliştiricinin bir sunucusu yoktur; uygulama hiçbir bilgiyi
+**Kısaca: OmniDrive'ın geliştiriciye ait bir veri toplama sunucusu, reklam veya analiz altyapısı yoktur.** Geliştiricinin bir sunucusu yoktur; uygulama hiçbir bilgiyi
 geliştiriciye veya başka bir şirkete göndermez.
 
 ## Uygulama ne saklar?
@@ -18,8 +18,7 @@ Aşağıdakiler **yalnızca senin telefonunda** saklanır ve uygulamayı silince
 - Yakıt defteri, kilometre, yağ değişimi bilgileri ve son 30 yolculuğun özeti (tarih, km, süre, hız, sürüş puanı)
 - Otopark süresi hatırlatıcısının bitiş saati
 
-Uygulamada **reklam, analiz (analytics), hata raporlama veya takip kütüphanesi yoktur.** Kaynak kod açık
-olduğu için bunu herkes doğrulayabilir (`app/build.gradle.kts` içindeki bağımlılık listesine bakabilirsin).
+Uygulamada **reklam, analiz (analytics), hata raporlama veya takip kütüphanesi yoktur.** Bununla birlikte, uygulama üçüncü taraf yayın, arama, hava durumu ve güncelleme servislerine doğrudan bağlanır. Bu servisler bağlantı sırasında IP adresinizi görebilir. Hava durumu sorgusunda yaklaşık konum koordinatları Open-Meteo'ya iletilir. Bu nedenle "hiçbir veri hiçbir yere gönderilmez" şeklinde yorumlanmamalıdır.
 
 ## İzinler ne için?
 
@@ -34,7 +33,7 @@ olduğu için bunu herkes doğrulayabilir (`app/build.gradle.kts` içindeki bağ
 ## Hangi servislere bağlanılır?
 
 Bir şey açtığında telefonun doğrudan o servise bağlanır. Bu servisler, herhangi bir web sitesinde olduğu
-gibi, IP adresini görebilir. NewREX bu bağlantılara aracılık etmez ve içeriklerini görmez.
+gibi, IP adresini görebilir. OmniDrive bu bağlantılara aracılık etmez ve içeriklerini görmez.
 
 - **YouTube / Google**: YouTube veya Web sayfasını açtığında
 - **Radio Browser** (radio-browser.info): radyo listesi ve arama
@@ -50,4 +49,4 @@ gibi, IP adresini görebilir. NewREX bu bağlantılara aracılık etmez ve içer
 ## Hesap girişleri
 
 YouTube veya web sitelerine giriş yaparsan oturum bilgileri (çerezler) yalnızca telefonundaki uygulama
-içi tarayıcıda saklanır. NewREX şifreni görmez, saklamaz ve hiçbir yere göndermez.
+içi tarayıcıda saklanır. OmniDrive şifreni görmez, saklamaz ve hiçbir yere göndermez.
