@@ -3,6 +3,7 @@ package com.newrex.auto.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.net.InetAddress
 
 class RadioHealthTest {
     @Test fun classifiesCommonHttpFailures() {
@@ -22,6 +23,15 @@ class RadioHealthTest {
             RadioHealth.State.HEALTHY,
             RadioHealth.classifyStatus(206, "audio/mpeg").first
         )
+    }
+
+    @Test fun refusesPrivateAndReservedNetworkAddresses() {
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("127.0.0.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("10.0.0.8")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("192.168.1.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("100.64.0.1")))
+        assertEquals(false, RadioHealth.isPublicAddress(InetAddress.getByName("fc00::1")))
+        assertEquals(true, RadioHealth.isPublicAddress(InetAddress.getByName("8.8.8.8")))
     }
 
     @Test fun distinguishesSlowAndFastFirstByteLatency() {
