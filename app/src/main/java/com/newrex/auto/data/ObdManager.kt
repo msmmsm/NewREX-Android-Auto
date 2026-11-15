@@ -406,7 +406,7 @@ object ObdManager {
         val result = linkedSetOf<String>()
         var cursor = 0
         // ELM327 başlıklar açıkken yanıtlar 7E8/7E9... ECU kimliğiyle art arda gelebilir.
-        val ecuHeader = Regex("7E[89A-F][0-9A-F]")
+        val ecuHeader = Regex("7E[89A-F]")
         while (cursor < clean.length) {
             val response = clean.indexOf("43", cursor)
             if (response < 0) break
