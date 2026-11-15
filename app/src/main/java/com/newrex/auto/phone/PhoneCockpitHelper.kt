@@ -9,6 +9,9 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.newrex.auto.data.CarLog
 import com.newrex.auto.data.ObdManager
 import com.newrex.auto.data.PerformanceTimer
@@ -231,6 +234,35 @@ object PhoneCockpitHelper {
         }
         renderDtcs(TelemetryHub.obdDtcList.value, scanCompleted = TelemetryHub.obdDtcList.value.isNotEmpty())
 
+        val historyBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        val historyDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr", "TR"))
+        fun renderHistory() {
+            historyBox.removeAllViews()
+            val history = Prefs.dtcHistory
+            if (history.isEmpty()) {
+                historyBox.addView(label("Henüz doğrulanmış DTC geçmişi yok.", 12f, Palette.TEXT_FAINT))
+                return
+            }
+            history.forEach { entry ->
+                val stateText = if (entry.active) "Son doğrulanmış taramada bulundu" else "Son taramada etkin değil"
+                val stateColor = if (entry.active) Palette.ORANGE else Palette.TEXT_DIM
+                val clearedText = entry.clearedAtMs?.let { " • ECU temizleme onayı: ${historyDateFormat.format(Date(it))}" } ?: ""
+                val row = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    background = rounded(0x14FFFFFF, dpf(9))
+                    setPadding(dp(10), dp(7), dp(10), dp(7))
+                    addView(label(entry.code, 13f, Palette.TEXT, bold = true))
+                    addView(label(stateText, 11f, stateColor, bold = true), lp(MATCH, WRAP).margins(t = dp(2)))
+                    addView(label(
+                        "İlk: ${historyDateFormat.format(Date(entry.firstSeenMs))} • Son: ${historyDateFormat.format(Date(entry.lastSeenMs))} • Görüldüğü tarama: ${entry.scanCount}$clearedText",
+                        10f, Palette.TEXT_FAINT, lines = 3
+                    ), lp(MATCH, WRAP).margins(t = dp(2)))
+                }
+                historyBox.addView(row, lp(MATCH, WRAP).margins(b = dp(5)))
+            }
+        }
+        renderHistory()
+
         fun diagnosticButton(title: String, action: () -> Unit) = Button(context).apply {
             text = title
             isAllCaps = false
@@ -262,6 +294,8 @@ object PhoneCockpitHelper {
         }
         cockpitBox.addView(readDtcButton, lp(MATCH, WRAP).margins(b = dp(6)))
         cockpitBox.addView(dtcListBox, lp(MATCH, WRAP).margins(b = dp(6)))
+        cockpitBox.addView(label("Kayıtlı arıza geçmişi", 13f, bold = true), lp(MATCH, WRAP).margins(b = dp(4)))
+        cockpitBox.addView(historyBox, lp(MATCH, WRAP).margins(b = dp(6)))
 
         val freezeFrameButton = diagnosticButton("Dondurulmuş kareyi oku") {
             if (!connected()) return@diagnosticButton
@@ -305,8 +339,10 @@ object PhoneCockpitHelper {
                     diagnosticsScope.launch {
                         val cleared = ObdManager.clearDtcCodes()
                         if (cleared) {
+                            Prefs.markDtcHistoryCleared()
                             renderDtcs(emptyList(), scanCompleted = true)
-                            diagnosticStatus.text = "ECU, Mode 04 temizleme isteğini olumlu yanıtladı. Arıza giderilmiş sayılmaz; yeniden tarama yap."
+                            renderHistory()
+                            diagnosticStatus.text = "ECU, Mode 04 temizleme isteğini olumlu yanıtladı. Geçmiş korundu; arıza giderilmiş sayılmaz. Yeniden tarama yap."
                         } else {
                             diagnosticStatus.text = "ECU temizleme işlemini onaylamadı. Kodlar silinmiş kabul edilmedi."
                         }
