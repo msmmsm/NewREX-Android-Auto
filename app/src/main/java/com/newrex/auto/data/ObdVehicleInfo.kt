@@ -64,7 +64,6 @@ object ObdVehicleInfo {
         if (parsed.isEmpty()) return null
         // İlk bayt, Mode 09 CAN yanıtında veri sıra numarasıdır (VIN için 01).
         val start = if (parsed.first() in 0x01..0x05) 1 else 0
-        return parsed.drop(start).takeWhile { it !in 0x21..0x2F }
-            .ifEmpty { parsed.drop(start) }
+        return parsed.drop(start).filterNot { it in 0x21..0x2F }
     }
 }
