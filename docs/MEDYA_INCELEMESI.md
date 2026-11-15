@@ -33,6 +33,7 @@ Dal: `master`
 - [x] Harici katalog için URL güvenlik filtresi ve token/kullanıcı bilgisi sızıntısı regresyon testi eklendi.
 - [x] Araç arayüzü denetimleri MediaController üzerinden MediaLibrarySession'a yönlendirildi; ileri/geri komutları döngüsel medya kuyruğuna bağlandı.
 - [x] Ağ durumu izleme, çevrimdışı bekleme ve bağlantı geri geldiğinde kontrollü yeniden bağlanma eklendi.
+- [x] Podcast çevrimdışı indirme ve indirilen dosyayı aynı bölüm URL'siyle otomatik oynatma eklendi.
 - [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
 - [x] Kuyruğu, seçili öğeyi ve podcast konumunu kalıcı sakla; Media3 `onPlaybackResumption` ve `MediaButtonReceiver` ile servis yeniden oluşturulduğunda kurtarma akışını uygula.
 - [ ] Force-stop, cihaz yeniden başlatma, Android Auto bağlantı kesilmesi ve servis zaman aşımı senaryolarını fiziksel cihazlarda doğrula; sistem üreticisi kısıtlamaları nedeniyle otomatik başlatma garantisi verilmez.
@@ -77,7 +78,8 @@ Dal: `master`
 - Podcast ilerlemesi URL anahtarıyla yerel olarak kaydediliyor ve bölüm yeniden açıldığında kaldığı yerden başlatılıyor.
 
 ### Statik bulgular / ürün kapsamı
-- **Bölüm indirme ve çevrimdışı dinleme akışı görünmüyor.** Mevcut davranış akış üzerinden oynatma ve konum saklama. Uygulama çevrimdışı indirme destekliyor şeklinde tanıtılmamalı.
+- **Podcast çevrimdışı indirme eklendi.** Android DownloadManager, bölümleri uygulamaya özel Podcasts klasörüne indirir; Android sistem bildirimi indirme durumunu gösterir. İndirme kaydı URL'nin kendisini değil SHA-256 anahtarını ve DownloadManager kimliğini saklar. İndirilen dosya oynatma sırasında otomatik seçilir; indirme düğmesi araç hareket halindeyken engellenir.
+- İndirme hedefi uygulamaya özel harici depolamadır; uygulama kaldırılırsa dosyalar da kaldırılabilir. İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
 - **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
@@ -89,7 +91,8 @@ Dal: `master`
 - [ ] Enclosure MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [ ] Uzun RSS, eksik alan, XML namespace ve bozuk XML testleri.
-- [ ] Çevrimdışı indirme isteniyorsa indirme kuyruğu, depolama kotası, iptal/devam, dosya temizliği ve çevrimdışı oynatma ayrı bir özellik olarak tasarlanmalı; şu an varmış gibi gösterilmemeli.
+- [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme ve indirilmiş dosyayı otomatik oynatma eklendi.
+- [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
 
 ## 4. YouTube ve genel WebView — `pages/WebPage.kt`, `pages/YouTubeAdBlocker.kt`
 
