@@ -92,41 +92,57 @@ object ObdManager {
         selectedDevice.value = device
 
         workerJob = scope.launch {
-            state.value = ConnectionState.CONNECTING
-            TelemetryHub.obdConnected.value = false
-
-            try {
-                val sock = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                sock.connect()
-                socket = sock
-                inStream = sock.inputStream
-                outStream = sock.outputStream
-
-                state.value = ConnectionState.INITIALIZING
-
-                // ELM327 Başlatma Sekansı
-                sendCommand("ATZ")     // Reset
-                delay(400)
-                sendCommand("ATE0")    // Echo Off
-                sendCommand("ATL0")    // Linefeeds Off
-                sendCommand("ATS0")    // Spaces Off
-                sendCommand("ATSP0")   // Otomatik Protokol (CAN/KWP vb.)
-                delay(200)
-
-                // ECU'nun desteklediği PID'leri keşfet; desteklenmeyen PID'ler her döngüde sorgulanmasın.
-                supportedPids = discoverSupportedPids()
-
-                state.value = ConnectionState.CONNECTED
-                TelemetryHub.obdConnected.value = true
-
-                // Telemetri Sorgulama Döngüsü
-                startPollingLoop()
-
-            } catch (e: CancellationException) {
+            var retriesUsed = 0
+            while (isActive && selectedDevice.value?.address == device.address) {
+                state.value = ConnectionState.CONNECTING
+                TelemetryHub.obdConnected.value = false
+                TelemetryHub.clearObdData()
                 closeTransport()
-                throw e
-            } catch (e: Exception) {
-                markConnectionError()
+
+                try {
+                    val sock = device.createRfcommSocketToServiceRecord(SPP_UUID)
+                    sock.connect()
+                    socket = sock
+                    inStream = sock.inputStream
+                    outStream = sock.outputStream
+
+                    state.value = ConnectionState.INITIALIZING
+
+                    // ELM327 başlatma; her yeni bağlantıda adaptör durumu yeniden kurulur.
+                    sendCommand("ATZ")
+                    delay(400)
+                    sendCommand("ATE0")
+                    sendCommand("ATL0")
+                    sendCommand("ATS0")
+                    sendCommand("ATSP0")
+                    delay(200)
+
+                    supportedPids = discoverSupportedPids()
+                    state.value = ConnectionState.CONNECTED
+                    TelemetryHub.obdConnected.value = true
+                    retriesUsed = 0
+
+                    // Bağlantı kaybolursa polling döngüsü döner; aşağıdaki politika yeniden dener.
+                    startPollingLoop()
+                    if (!isActive || selectedDevice.value?.address != device.address) break
+                    if (state.value != ConnectionState.ERROR) markConnectionError()
+                } catch (e: CancellationException) {
+                    closeTransport()
+                    throw e
+                } catch (e: Exception) {
+                    markConnectionError()
+                }
+
+                if (!isActive || selectedDevice.value?.address != device.address) break
+                if (!ObdReconnectPolicy.shouldRetry(retriesUsed)) break
+                delay(ObdReconnectPolicy.delayMs(retriesUsed))
+                retriesUsed++
+            }
+            if (isActive && selectedDevice.value?.address == device.address &&
+                state.value == ConnectionState.ERROR
+            ) {
+                // Otomatik denemeler tükendi; kullanıcı aynı adaptörü manuel yeniden seçebilir.
+                selectedDevice.value = device
             }
         }
     }
