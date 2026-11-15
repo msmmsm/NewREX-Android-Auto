@@ -15,7 +15,10 @@ Dal: `master`
 - `CarActivity`, `SessionToken` ve asenkron `MediaController` bağlantısıyla servise bağlanıyor. Activity yok edilirken yalnızca controller bağlantısı bırakılıyor; oynatma sürerken servis/oynatıcı serbest bırakılmıyor.
 - Manifestte `FOREGROUND_SERVICE` ve `FOREGROUND_SERVICE_MEDIA_PLAYBACK` izinleri ile `mediaPlayback` türünde, Media3 oturum eylemi yayınlayan servis tanımlandı. Media3, oynatma sürerken foreground durumunu ve medya bildirimini yönetiyor.
 - `PlayerHub.stop()` artık MediaSession'ı bırakmıyor; oynatma listesini temizliyor. Oturum ve ExoPlayer yalnızca servis `onDestroy()` aşamasında serbest bırakılıyor.
-- Oynatma kuyruğu ve seçili indeks hâlâ `PlayerHub` belleğinde tutuluyor. Media3 `onPlaybackResumption` geri yükleme akışı ve kalıcı kuyruk kaydı henüz uygulanmadı; süreç sonlandırılırsa otomatik devam garanti edilmez.
+- Kuyruk, seçili indeks ve podcast konumu sürüm 1 şemasıyla SharedPreferences içinde kalıcılaştırılıyor. Büyük listelerde seçili öğeyi koruyan en fazla 50 öğelik pencere saklanıyor.
+- MediaSession `onPlaybackResumption` callback'i kayıtlı kuyruğu ve podcast konumunu geri veriyor; MediaButtonReceiver sistem medya düğmesi/yeniden başlatma talebini servise iletiyor.
+- Geri yükleme yalnızca HTTP(S), sunucu adı bulunan ve açık kullanıcı/parola veya bilinen token parametresi taşımayan URL'lerde yapılır. Kimlik doğrulama başlıkları/çerezleri saklanmaz. Özel kimlik doğrulamalı yayınlar otomatik geri yüklenmeyebilir.
+- Kullanıcı `Durdur` komutunu verdiğinde kuyruk kaydı silinir; beklenmedik servis/süreç kapanışında son kuyruk korunur.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
@@ -24,7 +27,9 @@ Dal: `master`
 - [x] Media3 `MediaSessionService` sınıfı, medya foreground service izinleri ve `mediaPlayback` manifest tanımı eklendi.
 - [x] `CarActivity` servis bağlantısını `MediaController` ile kuruyor; Activity artık `PlayerHub.release()` çağırmıyor.
 - [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
-- [ ] Kuyruğu ve mevcut öğeyi kalıcı sakla; Media3 `onPlaybackResumption` ile süreç yeniden oluşturulduğunda oynatma devamını uygula. Bu yapılana kadar süreç sonlandırması/force-stop sonrası otomatik devam desteklenmiyor.
+- [x] Kuyruğu, seçili öğeyi ve podcast konumunu kalıcı sakla; Media3 `onPlaybackResumption` ve `MediaButtonReceiver` ile servis yeniden oluşturulduğunda kurtarma akışını uygula.
+- [ ] Force-stop, cihaz yeniden başlatma, Android Auto bağlantı kesilmesi ve servis zaman aşımı senaryolarını fiziksel cihazlarda doğrula; sistem üreticisi kısıtlamaları nedeniyle otomatik başlatma garantisi verilmez.
+- [ ] Kimlik doğrulamalı IPTV/radyo adresleri geri yükleme dışında kalır; güvenli kimlik bilgisi deposu tasarlanmadan bu kısıt kaldırılmamalı.
 - [ ] Android 14/15 ve farklı üretici pil yönetimi davranışları fiziksel cihazlarda test edilmeli; servis uygulama davranışı bu testler tamamlanmadan doğrulanmış sayılmaz.
 - [ ] Ağ kopması, DNS hatası, HTTP 404/5xx, hatalı MIME türü, bozuk HLS manifesti ve canlı pencerenin gerisinde kalma senaryoları test edilmeli.
 - [ ] Podcast konumu için 10 saniyelik kayıt aralığında beklenmedik süreç sonlandırmasındaki olası ilerleme kaybı ölçülmeli.
@@ -110,9 +115,9 @@ Dal: `master`
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
-| P1 | Player/MediaSession arka plan dayanıklılığı | MediaSessionService mimarisi eklendi; gerçek cihaz/Android Auto testi açık |
+| P1 | Player/MediaSession arka plan dayanıklılığı | MediaSessionService + kalıcı kuyruk + playback resumption eklendi; gerçek cihaz/Android Auto testi açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
 
 ## Doğrulama sınırı
 
-Bu belge statik kod incelemesine dayanır. Bu çalışma kapsamında APK derlenmedi, JUnit testleri çalıştırılmadı, GitHub Actions kullanılmadı, sunucuya erişilmedi ve fiziksel cihaz/araç testi yapılmadı. Hiçbir medya özelliği saha testinden geçmiş olarak işaretlenmemiştir.
+Bu belge statik kod incelemesine dayanır. Bu çalışma kapsamında APK derlenmedi, JUnit testleri çalıştırılmadı, GitHub Actions kullanılmadı, sunucuya erişilmedi ve fiziksel cihaz/araç testi yapılmadı. Playback resumption kodunun Android sürümleri ve üretici güç yönetimi davranışlarıyla uyumu cihaz testleri tamamlanana kadar doğrulanmış kabul edilmez. Hiçbir medya özelliği saha testinden geçmiş olarak işaretlenmemiştir.
