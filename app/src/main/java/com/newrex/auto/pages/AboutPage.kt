@@ -1,6 +1,8 @@
 // NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto.pages
 
+import android.content.Intent
+import android.net.Uri
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -54,13 +56,19 @@ class AboutPage(ui: CarUi) : Page(ui) {
                         "Bağlanılan üçüncü taraf servisler IP adresinizi görebilir; hava durumu için yaklaşık " +
                         "konum bilgisi ilgili servise iletilir. Ayrıntılar Gizlilik metnindedir.\n\n" +
                         "GPL-3.0 lisanslı açık kaynaklı bir projedir.\n\n" +
-                        "Orijinal geliştirici: ${Brand.ORIGINAL_DEVELOPER}",
+                        "Original developer: ${Brand.ORIGINAL_DEVELOPER}",
                     14f, Palette.TEXT, lines = 10,
                 ))
             }, lp(MATCH, WRAP).margins(b = dp(12)))
 
-            addView(pill("GitHub'da İncele", R.drawable.ic_language) {
-                ui.toast(Brand.REPOSITORY_URL.removePrefix("https://"))
+            addView(pill("OmniDrive GitHub deposu", R.drawable.ic_language) {
+                runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Brand.REPOSITORY_URL))) }
+                    .onFailure { ui.toast("GitHub bağlantısı açılamadı") }
+            }, lp(WRAP, dp(44)).margins(b = dp(8)))
+
+            addView(pill("Özgün NewREX projesi", R.drawable.ic_language) {
+                runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Brand.PROJECT_URL))) }
+                    .onFailure { ui.toast("Özgün proje bağlantısı açılamadı") }
             }, lp(WRAP, dp(44)))
         }
         ScrollView(this).apply { addView(col) }
