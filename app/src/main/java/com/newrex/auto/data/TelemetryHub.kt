@@ -79,6 +79,8 @@ object TelemetryHub {
         obdCoolantTemp,
         obdBatteryVoltage,
         obdFuelLevel,
+        obdEngineLoad,
+        obdBoost,
         DriveState.speedKmh,
         DriveState.speedFromCar,
         DriveState.driving,
@@ -93,14 +95,16 @@ object TelemetryHub {
         val oCoolant = values[3] as Int?
         val oVolt = values[4] as Float?
         val oFuel = values[5] as Float?
-        val driveSpeed = values[6] as Float?
-        val driveFromCar = values[7] as Boolean
-        val isDriving = values[8] as Boolean
-        val carFuel = values[9] as Float?
-        val carRange = values[10] as Float?
-        val carOdo = values[11] as Float?
+        val oEngineLoad = values[6] as Int?
+        val oBoost = values[7] as Float?
+        val driveSpeed = values[8] as Float?
+        val driveFromCar = values[9] as Boolean
+        val isDriving = values[10] as Boolean
+        val carFuel = values[11] as Float?
+        val carRange = values[12] as Float?
+        val carOdo = values[13] as Float?
         @Suppress("UNCHECKED_CAST")
-        val dtcs = values[12] as List<String>
+        val dtcs = values[14] as List<String>
 
         // 1. Hız Belirleme
         val (finalSpeed, speedSrc) = when {
@@ -125,8 +129,8 @@ object TelemetryHub {
             batteryVoltage = if (isObd) oVolt else null,
             fuelLevelPercent = finalFuel,
             fuelSource = fuelSrc,
-            engineLoadPercent = if (isObd) obdEngineLoad.value else null,
-            boostKpa = if (isObd) obdBoost.value else null,
+            engineLoadPercent = if (isObd) oEngineLoad else null,
+            boostKpa = if (isObd) oBoost else null,
             odometerKm = carOdo,
             rangeKm = carRange,
             isDriving = isDriving,
