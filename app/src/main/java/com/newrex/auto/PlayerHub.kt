@@ -481,8 +481,14 @@ object PlayerHub {
         sessionPlayer = null
         mediaController = null
         exo = null
+        queue = emptyList()
+        index = 0
         now.value = null
         playing.value = false
+        buffering.value = false
+        error.value = null
+        position.value = 0
+        duration.value = 0
     }
 
     /** TV görüntü kalitesi seçimi (Prefs.tvQuality): Otomatik en iyisini seçer, diğerleri üst sınırdır. */
