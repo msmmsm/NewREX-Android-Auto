@@ -16,7 +16,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.newrex.auto"
+        applicationId = "com.omnidrive.auto"
         minSdk = 26
         targetSdk = 35
         versionCode = 16

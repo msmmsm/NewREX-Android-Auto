@@ -4,5 +4,5 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
-rootProject.name = "NewREX"
+rootProject.name = "OmniDrive"
 include(":app")

@@ -105,3 +105,13 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Destek bitmap'i alınamazsa geriye dönük uyumluluk için temel PID sorguları denenmeye devam ediyor.
 
 **Sınırlama:** BLE desteği yoktur; ELM327 Bluetooth Classic SPP gerektirir. Toyota hibrit özel PID'leri henüz uygulanmış veya gerçek C-HR üzerinde doğrulanmış değildir.
+
+
+### 2026-11-15 — OmniDrive dağıtım paket kimliği değişikliği
+- Android dağıtım kimliği `applicationId`, `com.newrex.auto` yerine `com.omnidrive.auto` olarak değiştirildi.
+- Kotlin kaynaklarının `namespace` değeri `com.newrex.auto` olarak korundu. Bu, kaynak paketlerinin gereksiz taşınmasını önler; Android'e kurulan uygulamanın benzersiz kimliği ise yeni applicationId'dir.
+- FileProvider authority manifestte `${applicationId}.files` üzerinden üretildiğinden yeni kimliğe otomatik uyum sağlar. Self-install akışı `context.packageName` kullandığından yeni kimlikle çalışacak şekilde kalır.
+- Windows kurulum betiği yeni paket kimliğini ve bu fork'un GitHub deposunu kullanacak şekilde güncellendi.
+- Eski ZIP kurulum aracı yeni paket kimliğini içermediğinden depodan kaldırıldı; yeni paket kimliğiyle yeniden paketlenip test edilmeden indirilebilir gösterilmeyecek.
+- `com.newrex.auto` ile kurulu eski sürüm ayrı uygulama olarak kalır. Uygulama verileri otomatik taşınmaz; eski uygulamayı kaldırmak kullanıcı tercihidir.
+- Henüz APK derlemesi, CI testi veya cihaz üzerinde yükleme doğrulaması yapılmadı. İlk OmniDrive APK'sı ve güncel kurulum paketi yayımlanmadan dağıtım tamamlanmış sayılmaz.

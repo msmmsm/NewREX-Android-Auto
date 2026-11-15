@@ -1,19 +1,19 @@
-﻿# NewREX Android Auto - Kurulum aracı
-# Copyright (C) 2026 NewREX - GPL-3.0-or-later (bkz. NOTICE.md)
-# NewREX'i bilgisayardan telefona, Android Auto'nun sürüşte de kabul ettiği kayıtla
+﻿# OmniDrive - Kurulum aracı
+# Copyright (C) 2026 OmniDrive - GPL-3.0-or-later (bkz. NOTICE.md)
+# OmniDrive'ı bilgisayardan telefona, Android Auto'nun sürüşte de kabul ettiği kayıtla
 # ("Play Store kurdu") kurar. Hiçbir veri toplamaz; sadece bu bilgisayar ile kabloyla
 # bağlı telefon arasında çalışır. Yaptığı her şeyi ekrana ve sonuc.txt dosyasına yazar.
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
-try { $Host.UI.RawUI.WindowTitle = 'NewREX Kurulum Aracı' } catch {}
-$PKG = 'com.newrex.auto'
+try { $Host.UI.RawUI.WindowTitle = 'OmniDrive Kurulum Aracı' } catch {}
+$PKG = 'com.omnidrive.auto'
 $PLAY = 'com.android.vending'
-$REPO = 'NewREX1337/NewREX-Android-Auto'
+$REPO = 'OmniDrive1337/OmniDrive-Android-Auto'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $adb = Join-Path $here 'platform-tools\adb.exe'
 $log = Join-Path $here 'sonuc.txt'
-$REMOTE = '/sdcard/Download/NewREX-kurulum.apk'
-Set-Content $log "NewREX Kurulum Aracı - $(Get-Date -Format 'dd.MM.yyyy HH:mm')" -Encoding UTF8
+$REMOTE = '/sdcard/Download/OmniDrive-kurulum.apk'
+Set-Content $log "OmniDrive Kurulum Aracı - $(Get-Date -Format 'dd.MM.yyyy HH:mm')" -Encoding UTF8
 
 function Say($t = '', $c = 'White') { Write-Host $t -ForegroundColor $c; Add-Content $log $t -Encoding UTF8 }
 function Note($t) { Add-Content $log "    [ayrıntı] $t" -Encoding UTF8 }
@@ -22,7 +22,7 @@ function Ask($t) { Say ''; $r = Read-Host "  >> $t"; Add-Content $log "  >> $t :
 function Header($n, $title) {
     Clear-Host
     Write-Host '  ==================================================' -ForegroundColor DarkCyan
-    Write-Host '           NewREX Android Auto - Kurulum Aracı' -ForegroundColor Cyan
+    Write-Host '           OmniDrive - Kurulum Aracı' -ForegroundColor Cyan
     Write-Host '  ==================================================' -ForegroundColor DarkCyan
     Write-Host ''
     Say "  ADIM $n / 6 :  $title" Yellow
@@ -68,7 +68,7 @@ function Focus { if ((Sh 'dumpsys window') -match 'mCurrentFocus=Window\{\S+ \S+
 try {
 # ================================================================ 1) Hoş geldin
 Header 1 'Başlamadan önce'
-Say '  Merhaba! Bu araç NewREX Android Auto''yu telefonuna, arabada sürüş'
+Say '  Merhaba! Bu araç OmniDrive''yu telefonuna, arabada sürüş'
 Say '  sırasında da açılacak şekilde kurar. Android Auto''nun istediği'
 Say '  "Play Store kurdu" kaydını (imzayı) atmaya çalışır ve sonunda'
 Say '  başarılı olup olmadığını açıkça yazar.'
@@ -141,9 +141,9 @@ $apk = Get-ChildItem $here -Filter *.apk -ErrorAction SilentlyContinue | Sort-Ob
 if ($apk) {
     Say "  Klasördeki uygulama dosyası kullanılacak: $($apk.Name)" Green
 } else {
-    Doing 'NewREX''in en son sürümü GitHub''dan indiriliyor'
+    Doing 'OmniDrive''ın en son sürümü GitHub''dan indiriliyor'
     try {
-        $rel = Invoke-RestMethod "https://api.github.com/repos/$REPO/releases/latest" -UseBasicParsing -Headers @{ 'User-Agent' = 'NewREX-Kurulum' }
+        $rel = Invoke-RestMethod "https://api.github.com/repos/$REPO/releases/latest" -UseBasicParsing -Headers @{ 'User-Agent' = 'OmniDrive-Kurulum' }
         $asset = $rel.assets | Where-Object { $_.name -like '*.apk' } | Select-Object -First 1
         if (-not $asset) { throw 'Son sürümde APK dosyası yok' }
         $apkPath = Join-Path $here $asset.name
@@ -188,8 +188,8 @@ Say ''
 Say "  Telefon bağlandı: $model (Android $andr)" Green
 Note "Yükleyiciler: $(Sh 'pm list packages packageinstaller')"
 $before = Info
-if ($before.Kurulu) { Say "  Telefonda NewREX $($before.Surum) kurulu. Kayıt: yükleyen=$($before.Yukleyen), başlatan=$($before.Baslatan)" }
-else { Say '  Telefonda NewREX kurulu değil, sıfırdan kurulacak.' }
+if ($before.Kurulu) { Say "  Telefonda OmniDrive $($before.Surum) kurulu. Kayıt: yükleyen=$($before.Yukleyen), başlatan=$($before.Baslatan)" }
+else { Say '  Telefonda OmniDrive kurulu değil, sıfırdan kurulacak.' }
 if (Signed $before) {
     Say ''
     Say '  Bu telefonda imza ZATEN ATILMIŞ, kurulum düzgün!' Green
@@ -217,7 +217,7 @@ function Attempt($n) {
     [void](Sh "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://$REMOTE")
     $id = $null
     for ($i = 0; $i -lt 20 -and -not $id; $i++) {
-        $q = Sh "content query --uri content://media/external/file --projection _id --where _data\ LIKE\ \'%NewREX-kurulum.apk\'"
+        $q = Sh "content query --uri content://media/external/file --projection _id --where _data\ LIKE\ \'%OmniDrive-kurulum.apk\'"
         if ($q -match '_id=(\d+)') { $id = $Matches[1] } else { Start-Sleep 1 }
     }
     if (-not $id) { Stop-Here 'Dosya telefonda hazırlanamadı (medya kaydı oluşmadı).' }
@@ -268,18 +268,18 @@ function Attempt($n) {
 }
 
 function AppMethod {
-    Header 5 'İkinci yöntem: NewREX''in kendi düğmesi'
+    Header 5 'İkinci yöntem: OmniDrive''ın kendi düğmesi'
     Say '  Bu telefonun kurulum ekranı bilgisayardan gelen imzayı kabul etmedi.' Yellow
-    Say '  Ama aynı imzayı NewREX''in kendi içinden gelirse kabul ediyor. Onu deniyoruz.'
+    Say '  Ama aynı imzayı OmniDrive''ın kendi içinden gelirse kabul ediyor. Onu deniyoruz.'
     Say ''
     $pre = Info
     [void](Sh 'input keyevent KEYCODE_WAKEUP')
     [void](Sh "am start -n $PKG/.MainActivity")
-    Say '  Telefonda NewREX açıldı. Şimdi telefonda:' Cyan
+    Say '  Telefonda OmniDrive açıldı. Şimdi telefonda:' Cyan
     Say ''
     Say '   1. Bir pencere çıktıysa "Şimdi yap"a bas.'
     Say '      Pencere çıkmadıysa: aşağı kaydır > "Yardım" > "Arabada görünür yap"a bas.'
-    Say '      İzin ekranı açılırsa: NewREX''e izni ver, geri dön ve AYNI DÜĞMEYE BİR DAHA bas.' Yellow
+    Say '      İzin ekranı açılırsa: OmniDrive''e izni ver, geri dön ve AYNI DÜĞMEYE BİR DAHA bas.' Yellow
     Say '   2. Açılan kurulum ekranında "GÜNCELLE"ye bas.' Yellow
     Say '   3. Play Protect sorarsa: "Yine de yükle" ve "Gönderme".' Gray
     Say ''
@@ -310,9 +310,9 @@ while ($true) {
         Say "  Kayıt: yükleyen=$($res.After.Yukleyen), başlatan=$($res.After.Baslatan)" Gray
     } else {
         switch ($res.Why) {
-            'imza' { Say '  Telefondaki NewREX başka bir dosyadan kurulmuş; üstüne kurulamıyor.' Red
+            'imza' { Say '  Telefondaki OmniDrive başka bir dosyadan kurulmuş; üstüne kurulamıyor.' Red
                      Say '  Çözüm: silip baştan kurmak (aşağıda 2).' Yellow }
-            'eski' { Say '  Telefondaki NewREX bu dosyadan daha yeni; eski sürüm üstüne kurulamaz.' Red
+            'eski' { Say '  Telefondaki OmniDrive bu dosyadan daha yeni; eski sürüm üstüne kurulamaz.' Red
                      Say '  Çözüm: silip baştan kurmak (aşağıda 2).' Yellow }
             'usb'  { Say '  Telefon bilgisayardan kurulumu engelledi.' Red
                      if ($brand -eq '2') { Say '  Xiaomi: Geliştirici seçeneklerinde "USB üzerinden yükle"yi aç.' Yellow } }
@@ -322,13 +322,13 @@ while ($true) {
     Say ''
     Say '  Ne yapalım?'
     Say '    1) Tekrar dene'
-    Say '    2) Telefondaki NewREX''i silip baştan kur (uygulama ayarları silinir)'
+    Say '    2) Telefondaki OmniDrive''ı silip baştan kur (uygulama ayarları silinir)'
     Say '    3) Bırak, sonucu göster'
     $c = ''
     while ($c -notmatch '^[1-3]$') { $c = Ask 'Numara' }
     if ($c -eq '3') { break }
     if ($c -eq '2') {
-        Doing 'Telefondaki NewREX siliniyor'
+        Doing 'Telefondaki OmniDrive siliniyor'
         Note "uninstall: $(Adb uninstall $PKG)"
         Start-Sleep 2
     }
@@ -340,7 +340,7 @@ if ($final.Kurulu) { [void](Sh "am start -n $PKG/.MainActivity") }
 Header 6 'Sonuç'
 Say "  Telefon : $model (Android $andr)" Gray
 $b = if ($before.Kurulu) { "yükleyen=$($before.Yukleyen)  başlatan=$($before.Baslatan)" } else { 'kurulu değildi' }
-$a = if ($final.Kurulu) { "NewREX $($final.Surum)  yükleyen=$($final.Yukleyen)  başlatan=$($final.Baslatan)" } else { 'kurulu değil' }
+$a = if ($final.Kurulu) { "OmniDrive $($final.Surum)  yükleyen=$($final.Yukleyen)  başlatan=$($final.Baslatan)" } else { 'kurulu değil' }
 Say "  Önce    : $b" Gray
 Say "  Şimdi   : $a" Gray
 Say ''
@@ -350,18 +350,18 @@ if (Signed $final) {
     Say '  ################################################' Green
     Say ''
     Say '  Son olarak:'
-    Say '   1. NewREX telefonda açıldı; bir kez kapat.'
+    Say '   1. OmniDrive telefonda açıldı; bir kez kapat.'
     Say '   2. Play Protect''i (ve Samsung''da Otomatik Engelleyici''yi) geri aç.'
     Say '      "Uygulamayı göndermek ister misin?" diye sorarsa: "Gönderme".'
-    Say '   3. Telefonu kablodan çıkar, arabaya bağla. NewREX sürüşte de açılmalı.'
+    Say '   3. Telefonu kablodan çıkar, arabaya bağla. OmniDrive sürüşte de açılmalı.'
     Say ''
-    Say '  NewREX''i her güncellediğinde bu aracı bir kez daha çalıştır.' Gray
+    Say '  OmniDrive''ı her güncellediğinde bu aracı bir kez daha çalıştır.' Gray
 } else {
     Say '  ################################################' Red
     Say '  #   İMZA ATILAMADI                                #' Red
     Say '  ################################################' Red
     Say ''
-    if ($final.Kurulu) { Say '  NewREX telefonda kurulu ama "Play Store" kaydı yok; arabada park modunda kalır.' }
+    if ($final.Kurulu) { Say '  OmniDrive telefonda kurulu ama "Play Store" kaydı yok; arabada park modunda kalır.' }
     Say '  Bu telefon "Play Store kurdu" kaydını engelliyor olabilir.'
 }
 Say ''

@@ -3,9 +3,7 @@
 Arabanın ekranında **TV, YouTube, radyo ve podcast**. Ücretsiz ve reklamsız; kişisel ayarlarını ve kayıtlarını cihazında saklar.
 
 > ### 🚗 OmniDrive arabada görünmüyor ya da vitese takınca kapanıyor mu?
-> Bilgisayarın varsa **[Kurulum Aracı'nı indir](https://github.com/msmmsm/NewREX-Android-Auto/raw/master/kurulum-araci/NewREX-Kurulum-Araci.zip)** → zip'i aç → **`BASLAT.bat`**'a çift tıkla.
-> Araç seni adım adım götürür, OmniDrive'ı telefonuna sürüşte de açılacak şekilde kurar ve sonunda **"İMZA ATILDI"** ya da **"İMZA ATILAMADI"** diye yazar.
-> Telefonu USB kablosuyla bilgisayara takman yeterli. Kurulum aracının cihaz/Android sürümü uyumluluğunu kontrol et. Uygulamada reklam veya analiz SDK'sı yoktur; üçüncü taraf servislere yapılan bağlantılar ve veri akışları [Gizlilik](PRIVACY.md) belgesinde açıklanır.
+> Kurulum aracı, yeni paket kimliğiyle uyumlu sürümü hazırlanıp doğrulanana kadar geçici olarak kullanıma kapatıldı. Güncel APK yayımlandığında [Sürümler](https://github.com/msmmsm/NewREX-Android-Auto/releases) sayfasından edinilebilir.
 
 ## ✨ Özellikler
 
@@ -34,7 +32,7 @@ Araç hareket hâlindeyken medya davranışı Android Auto ve araç güvenliği 
 ## 📲 Kurulum
 
 **1. APK'yı edin**
-OmniDrive için henüz bu depoda yayımlanmış bir APK sürümü yok. Derleme doğrulandıktan ve ilk sürüm yayımlandıktan sonra [Sürümler](https://github.com/msmmsm/NewREX-Android-Auto/releases) sayfasından APK indirilebilir.
+OmniDrive için henüz bu depoda yayımlanmış bir APK sürümü yok. Derleme doğrulandıktan ve ilk sürüm yayımlandıktan sonra [Sürümler](https://github.com/msmmsm/NewREX-Android-Auto/releases) sayfasından APK indirilebilir. Yeni paket kimliği `com.omnidrive.auto` olduğundan mevcut `com.newrex.auto` kurulumu ayrı kalır; ayarlar ve kayıtlar otomatik aktarılmaz. Yeni sürümü doğrulamadan eski uygulamayı kaldırmayın.
 
 **2. Kur**
 İndirdiğin dosyaya dokun → **Yükle**.
