@@ -384,16 +384,16 @@ object PhoneCockpitHelper {
                     else -> buildString {
                         append("Standart OBD-II emisyon ECU bilgileri")
                         identity.vin?.let { vin ->
-                            append("\\nŞasi no: ${vin.take(3)}•••••••••${vin.takeLast(5)}")
+                            append("\nŞasi no: ${vin.take(3)}•••••••••${vin.takeLast(5)}")
                         }
-                        identity.ecuName?.let { append("\\nECU adı: $it") }
+                        identity.ecuName?.let { append("\nECU adı: $it") }
                         if (identity.calibrationIds.isNotEmpty()) {
-                            append("\\nKalibrasyon kimliği: ${identity.calibrationIds.joinToString(", ")}")
+                            append("\nKalibrasyon kimliği: ${identity.calibrationIds.joinToString(", ")}")
                         }
                         if (identity.calibrationVerificationNumbers.isNotEmpty()) {
-                            append("\\nCVN: ${identity.calibrationVerificationNumbers.joinToString(", ")}")
+                            append("\nCVN: ${identity.calibrationVerificationNumbers.joinToString(", ")}")
                         }
-                        append("\\nNot: VIN tam hâliyle ekranda gösterilmez; bu bilgiler yalnızca bağlı OBD adaptöründen geçici olarak okunur.")
+                        append("\nNot: VIN tam hâliyle ekranda gösterilmez; bu bilgiler yalnızca bağlı OBD adaptöründen geçici olarak okunur.")
                     }
                 }
                 diagnosticStatus.setTextColor(Palette.TEXT)
