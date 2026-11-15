@@ -333,7 +333,7 @@ object ObdManager {
                 coolantTempC = bytes(0x05)?.firstOrNull()?.minus(40),
                 intakeAirTempC = bytes(0x0F)?.firstOrNull()?.minus(40),
                 engineLoadPercent = bytes(0x04)?.firstOrNull()?.let { ObdDiagnostics.percent(it) },
-                throttlePercent = bytes(0x11)?.firstOrNull()?.let(ObdDiagnostics::percent)
+                throttlePercent = bytes(0x11)?.firstOrNull()?.let { ObdDiagnostics.percent(it) }
             )
         } catch (e: CancellationException) {
             throw e
