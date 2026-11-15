@@ -154,10 +154,21 @@ class RadioPage(ui: CarUi, private val onPick: ((MediaEntry) -> Unit)? = null) :
         }
     }
 
+    private fun stationDetails(st: MediaEntry): String? = buildList {
+        st.group.takeIf { it.isNotBlank() }?.let(::add)
+        st.codec?.let { codec ->
+            add(if (st.bitrateKbps != null) "${codec} • ${st.bitrateKbps} kb/sn" else codec)
+        } ?: st.bitrateKbps?.let { add("${it} kb/sn") }
+        st.countryCode?.let(::add)
+        st.directoryReportsHealthy?.let {
+            add(if (it) "Dizin kontrolü: olumlu" else "Dizin kontrolü: olumsuz")
+        }
+    }.joinToString(" · ").takeIf { it.isNotBlank() }
+
     private fun refreshTiles(list: List<MediaEntry>) {
         val favKeys = Prefs.favorites(Kind.RADIO).map { it.key }.toSet()
         tiles.items = list.mapIndexed { i, st ->
-            Tile(st.key, st.title, st.group.ifBlank { null }, Logos.best(st), R.drawable.ic_radio,
+            Tile(st.key, st.title, stationDetails(st), Logos.best(st), R.drawable.ic_radio,
                 favorite = st.key in favKeys, letters = true) {
                 val pick = onPick
                 if (pick != null) { ui.pop(); pick(st) } else PlayerHub.play(list, i)
