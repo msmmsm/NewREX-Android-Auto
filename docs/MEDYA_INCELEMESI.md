@@ -11,13 +11,15 @@ Dal: `master`
 
 ### Mevcut uygulama
 - TV, radyo ve podcast aynı Media3/ExoPlayer örneğini kullanıyor.
-- Medya oturumu oynatma başlayınca oluşturuluyor; durdurmada oturum bırakılıyor.
+- Medya oturumu oynatma başlayınca `PlayerHub` içinde oluşturuluyor; durdurmada oturum bırakılıyor.
+- `PlayerHub`, `CarActivity` tarafından başlatılıyor ve etkinlik kalıcı olarak kapatılırken serbest bırakılıyor. Manifestte `MediaSessionService` veya medya oynatma türünde bir foreground service tanımı bulunmuyor. Bu nedenle uygulama arka plana alındığında ve Android süreci sonlandırdığında kesintisiz oynatma garantisi kaynak kodundan doğrulanamıyor.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
 
 ### Açık riskler / doğrulama işleri
 - [ ] Uygulama arka plana alındığında, ekran kilitlendiğinde ve süreç Android tarafından sonlandırıldığında oynatma/MediaSession yaşam döngüsü gerçek cihazda doğrulanmalı.
+- [ ] Uzun süreli arka plan oynatımı ürün gereksinimiyse `MediaSessionService` tabanlı servis mimarisi değerlendirilmeli; foreground service türü/izinleri, bildirim ve Android 14/15 davranışı birlikte tasarlanmalı.
 - [ ] Ağ kopması, DNS hatası, HTTP 404/5xx, hatalı MIME türü, bozuk HLS manifesti ve canlı pencerenin gerisinde kalma senaryoları test edilmeli.
 - [ ] Podcast konumu için 10 saniyelik kayıt aralığında beklenmedik süreç sonlandırmasındaki olası ilerleme kaybı ölçülmeli.
 - [ ] `stop()`, `release()`, parça değiştirme ve sayfa yok edilmesi sırasında durum akışlarının (playing/buffering/error) tutarlılığı test edilmeli.
@@ -87,7 +89,7 @@ Dal: `master`
 - WebView içindeki video oynatımı, Android Auto sürüş güvenliği ve park kilidi fiziksel araç ekranında test edilmelidir.
 
 ### Düzeltme ve test planı
-- [ ] YouTube işlevini “WebView ile YouTube web sitesi” olarak doğru tanımla; resmî API/yerel oynatma varmış gibi gösterme.
+- [x] YouTube işlevinin WebView ile YouTube web sitesi olduğu netleştirildi; resmî API/yerel oynatma iddiası yok.
 - [x] Reklam isteği filtresini, reklam katmanı gizleme ve otomatik atlama betiğini kaldır; standart YouTube WebView oynatımına dön.
 - [ ] Çerezleri ve web verisini kullanıcı kontrollü temizleme seçeneğini değerlendir.
 - [x] HTTP dışı gezinme şemaları engelleniyor; dosya ve içerik URI erişimi kapalı; karma içerik engelli; TLS hataları iptal ediliyor; DRM izni yalnızca TV+ / Netflix alan adlarına sınırlı.
@@ -102,7 +104,7 @@ Dal: `master`
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
 | P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
-| P1 | Player/MediaSession yaşam döngüsünü gerçek cihazda test et | Açık |
+| P1 | Player/MediaSession arka plan dayanıklılığı | Kaynakta MediaSessionService/medya foreground service yok; gerçek cihaz testi ve servis mimarisi kararı açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
 
 ## Doğrulama sınırı
