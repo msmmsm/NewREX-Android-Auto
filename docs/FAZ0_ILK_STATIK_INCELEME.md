@@ -54,3 +54,30 @@ README; 3D C-HR modeli, OBD-II, DTC, performans sayacı, hız uyarısı, araç t
 ## Test ve tamamlanma kuralı
 
 Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulunduğu için "çalışıyor" sayılmaz. Otomatik test, gerçek cihaz testi ve donanım gerektiren maddelerde araç/adaptör doğrulaması gerekir. Test edilemeyen maddeler açıkça "test edilmedi" olarak kalır.
+
+
+## 2026-11-15 — İlk düzeltmeler ve yeni doğrulama bulguları
+
+### OmniDrive marka adı
+- Uygulama kaynaklarındaki `app_name` zaten `OmniDrive` olarak tanımlıydı; Hakkında ekranı hâlâ NewREX gösteriyordu. Hakkında ekranı OmniDrive olarak düzeltildi.
+- Özgün geliştirici atfı NewREX olarak korundu; atıf bağlantısı özgün projeye, uygulama içi GitHub bağlantısı ise msmmsm deposuna ayrıldı.
+- README ve gizlilik belgesinin ürün adı OmniDrive olarak güncellendi.
+- Paket kimliği `com.newrex.auto` henüz değiştirilmedi. NOTICE.md ek koşulu nedeniyle dağıtım öncesi ayrı paket kimliği kararı ve mevcut kurulumdan geçiş testi zorunlu.
+
+### OBD-II kaynak kodu bulguları
+- Mevcut `ObdManager` yalnızca Bluetooth Classic RFCOMM/SPP kullanıyor; BLE tarama/bağlantı kodu yok. README'deki BLE iddiası düzeltilerek desteklenmediği belirtildi.
+- Polling döngüsü ile DTC okuma/silme işlemleri aynı Bluetooth akışını kullanıyordu. Komut/yanıt çiftlerinin karışmasını önlemek için Mutex ile seri hâle getirildi.
+- DTC silme işlemi, ECU'nun Mode 04 olumlu yanıtı (`44`) alınmadan yerel hata listesini temizleyebiliyordu. Yerel liste artık yalnızca olumlu yanıt sonrası temizleniyor.
+- DTC kategori kodlamasında C/B/U ailelerinin bazı alt kategorileri yanlış oluşturulabiliyordu. SAE iki kategori biti çözümlemesi düzeltildi.
+- Adaptör bağlantısı kesilince önceki bağlantıdan kalan RPM, hız, sıcaklık, voltaj, yakıt ve DTC değerleri temizleniyor.
+- Bu davranışlar için JUnit testleri eklendi; GitHub Actions test adımında başarısızlıkları gizleyen `|| true` kaldırıldı.
+
+### Uygulama yapılandırması
+- Manifest uygulama kategorisi `game` yerine `productivity` yapıldı.
+- Cleartext HTTP izni henüz daraltılmadı. Kullanıcı tanımlı IPTV/radyo akışları ve yerel ağ kaynakları HTTP kullanabildiğinden, gerçek URL envanteri ve uyumluluk testi olmadan genel izni kapatmak medya işlevlerini bozabilir. Bu konu açık güvenlik işi olarak kalıyor.
+- Depoda önceden `app/src/test` ve `app/src/androidTest` test dosyası bulunmuyordu. Yeni OBD parser testleri ilk otomatik test katmanıdır.
+
+### Doğrulama durumu
+- Kaynak değişiklikleri GitHub `master` dalına işlendi.
+- Bu güncelleme için GitHub Actions çalışması henüz görünmüyor; commit durumlarında da raporlanmış kontrol yok. Dolayısıyla derleme ve testlerin başarılı olduğu iddia edilmiyor.
+- Gerçek ELM327 adaptörü, araç ECU'su ve Toyota C-HR üzerinde fiziksel test yapılmadı.
