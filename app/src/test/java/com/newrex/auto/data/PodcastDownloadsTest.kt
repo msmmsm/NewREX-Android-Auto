@@ -38,6 +38,7 @@ class PodcastDownloadsTest {
     @Test fun rejectsNonMediaMimeTypesAndMissingMime() {
         assertFalse(PodcastDownloads.isAllowedDownloadedMime("text/html"))
         assertFalse(PodcastDownloads.isAllowedDownloadedMime("application/json"))
+        assertFalse(PodcastDownloads.isAllowedDownloadedMime("audio/x-mpegurl"))
         assertFalse(PodcastDownloads.isAllowedDownloadedMime(null))
     }
 
