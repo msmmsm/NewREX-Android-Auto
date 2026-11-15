@@ -188,6 +188,27 @@ object Prefs {
         get() = sp.getLong("diag_session", 0)
         set(v) = sp.edit().putLong("diag_session", v).apply()
 
+    // ---- Medya oynatma kuyruğu ----
+
+    /** Uygulama süreci yeniden oluşturulursa son medya kuyruğunu geri yüklemek için saklanır. */
+    fun savePlaybackQueue(entries: List<MediaEntry>, index: Int, positionMs: Long) {
+        val snapshot = PlaybackQueueSnapshot.create(entries, index, positionMs) ?: run {
+            clearPlaybackQueue()
+            return
+        }
+        sp.edit().putString("playback_queue_v1", snapshot.toJson().toString()).apply()
+    }
+
+    /** Bozuk/eski kayıtlar oynatmayı engellemez; güvenli biçimde yok sayılır. */
+    fun playbackQueue(): PlaybackQueueSnapshot? {
+        val raw = sp.getString("playback_queue_v1", null) ?: return null
+        return runCatching { PlaybackQueueSnapshot.fromJson(JSONObject(raw)) }.getOrNull()
+    }
+
+    fun clearPlaybackQueue() {
+        sp.edit().remove("playback_queue_v1").apply()
+    }
+
     // ---- Podcast ----
 
     var podcastSubs: List<PodcastShow>
