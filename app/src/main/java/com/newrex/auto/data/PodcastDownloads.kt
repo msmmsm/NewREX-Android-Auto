@@ -30,6 +30,7 @@ object PodcastDownloads {
     private lateinit var context: Context
     private lateinit var manager: DownloadManager
     private val lock = Any()
+    private val statusCache = HashMap<Long, Status>()
     private const val PREFS_NAME = "omnidrive_podcast_downloads"
     private const val RECORDS_KEY = "records"
 
@@ -51,7 +52,45 @@ object PodcastDownloads {
 
     fun status(url: String): Status {
         val record = find(url) ?: return Status(State.NONE)
-        return statusById(record.id)
+        return statusCache[record.id] ?: statusById(record.id)
+    }
+
+    /** Ekran açıkken tüm OmniDrive indirmelerinin durumunu tek DownloadManager sorgusuyla yeniler. */
+    fun refresh() {
+        val records = readRecords()
+        if (records.isEmpty()) {
+            statusCache.clear()
+            return
+        }
+        val ids = records.map { it.id }.toLongArray()
+        val cursor = runCatching { manager.query(DownloadManager.Query().setFilterById(*ids)) }.getOrNull()
+            ?: return
+        val refreshed = HashMap<Long, Status>()
+        cursor.use {
+            val idColumn = it.getColumnIndexOrThrow(DownloadManager.COLUMN_ID)
+            val stateColumn = it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)
+            val downloadedColumn = it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+            val totalColumn = it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+            while (it.moveToNext()) {
+                val state = when (it.getInt(stateColumn)) {
+                    DownloadManager.STATUS_PENDING -> State.PENDING
+                    DownloadManager.STATUS_RUNNING -> State.RUNNING
+                    DownloadManager.STATUS_PAUSED -> State.PAUSED
+                    DownloadManager.STATUS_SUCCESSFUL -> State.SUCCESSFUL
+                    else -> State.FAILED
+                }
+                refreshed[it.getLong(idColumn)] = Status(
+                    state,
+                    it.getLong(downloadedColumn).coerceAtLeast(0),
+                    it.getLong(totalColumn),
+                )
+            }
+        }
+        records.forEach { refreshed.putIfAbsent(it.id, Status(State.FAILED)) }
+        synchronized(statusCache) {
+            statusCache.clear()
+            statusCache.putAll(refreshed)
+        }
     }
 
     /** Yalnızca HTTP(S) podcast enclosure adresleri indirilebilir. */
@@ -71,12 +110,13 @@ object PodcastDownloads {
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setAllowedOverMetered(true)
                     .setAllowedOverRoaming(false)
-                    .setDestinationInExternalFilesDir(context, "Podcasts", fileName(url, title))
+                    .setDestinationInExternalFilesDir(context, "Podcasts", fileNameFor(url, title))
             }.getOrNull() ?: return null
             val id = runCatching { manager.enqueue(request) }.getOrNull() ?: return null
             val records = readRecords().filterNot { it.key == key(url) }.toMutableList()
             records += Record(key(url), id, title.take(120))
             writeRecords(records)
+            statusCache[id] = Status(State.PENDING)
             return id
         }
     }
@@ -86,6 +126,7 @@ object PodcastDownloads {
         synchronized(lock) {
             val record = find(url) ?: return false
             runCatching { manager.remove(record.id) }
+            statusCache.remove(record.id)
             writeRecords(readRecords().filterNot { it.key == record.key })
             return true
         }
@@ -139,9 +180,11 @@ object PodcastDownloads {
         return (uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) && !uri.host.isNullOrBlank()
     }
 
-    private fun key(value: String): String = sha256(value)
+    internal fun keyForUrl(value: String): String = sha256(value)
 
-    private fun fileName(url: String, title: String): String {
+    private fun key(value: String): String = keyForUrl(value)
+
+    internal fun fileNameFor(url: String, title: String): String {
         val base = title.replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('_', '.').take(48).ifBlank { "podcast" }
         val path = runCatching { URI(url).path.orEmpty() }.getOrDefault("")
         val extension = path.substringAfterLast('.', "").lowercase()
