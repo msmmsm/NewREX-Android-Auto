@@ -85,6 +85,17 @@ class ObdManagerTest {
     }
 
     @Test
+    fun acceptsOnlyPositiveMode04Acknowledgement() {
+        assertTrue(ObdManager.hasDtcClearAcknowledgement("44"))
+        assertTrue(ObdManager.hasDtcClearAcknowledgement("7E80444"))
+        assertTrue(ObdManager.hasDtcClearAcknowledgement("7E8 01 44\\r\\n"))
+        assertTrue(!ObdManager.hasDtcClearAcknowledgement("NO DATA"))
+        assertTrue(!ObdManager.hasDtcClearAcknowledgement("ERROR"))
+        assertTrue(!ObdManager.hasDtcClearAcknowledgement("04"))
+        assertTrue(!ObdManager.hasDtcClearAcknowledgement("7E803410044"))
+    }
+
+    @Test
     fun ignoresEmptyDtcSlotsAndNonDtcResponses() {
         assertTrue(ObdManager.parseDtc("430000").isEmpty())
         assertTrue(ObdManager.parseDtc("NO DATA").isEmpty())
