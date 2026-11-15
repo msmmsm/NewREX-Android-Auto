@@ -104,7 +104,7 @@ object PlayerHub {
 
     val player: ExoPlayer get() = exo ?: error("OmniDriveMediaService henüz başlatılmadı")
 
-    /** MediaSessionService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
+    /** MediaLibraryService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
     internal val mediaSession: MediaLibraryService.MediaLibrarySession? get() = session
 
     /** Media library için oturumun anlık kuyruğunun güvenli kopyası. */
