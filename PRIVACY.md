@@ -27,6 +27,7 @@ Uygulamada **reklam, analiz (analytics), hata raporlama veya takip kütüphanesi
 | Konum | Park modu (araç hız vermezse GPS hızı), park yerini kaydetme, hava durumu ve yolculuk mesafesi. Konum geçmişi tutulmaz; sadece son park yeri telefonda saklanır. |
 | Araç hızı, yakıt, kilometre | Park modu ve araç paneli. Her araç bu bilgileri paylaşmaz. Telefondan dışarı çıkmaz. |
 | Bildirim | Ekran yansıtma sürerken Android'in zorunlu tuttuğu "yansıtılıyor" bildirimi ve otopark süresi hatırlatıcısı |
+| Bluetooth bağlantısı | Yalnızca önceden eşleştirilmiş ELM327/OBD-II adaptörüne Bluetooth Classic SPP bağlantısı. Yakındaki cihazları tarama izni istenmez. |
 | Ekran paylaşımı | **Sadece sen başlatırsan**: telefon ekranını araç ekranında göstermek. Her seferinde telefonda onay istenir. Görüntü yalnızca araç ekranına çizilir; kaydedilmez, hiçbir yere gönderilmez. |
 
 ## Hangi servislere bağlanılır?
