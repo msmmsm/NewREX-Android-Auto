@@ -195,7 +195,19 @@ object PhoneCockpitHelper {
             addView(statCell("HARARET", tempStr), lp(0, WRAP, 1f).margins(r = dp(4)))
             addView(statCell("YAKIT", fuelStr), lp(0, WRAP, 1f))
         }
-        cockpitBox.addView(statsRow, lp(MATCH, WRAP).margins(b = dp(12)))
+        cockpitBox.addView(statsRow, lp(MATCH, WRAP).margins(b = dp(6)))
+
+        // Standart hibrit PID 5B: yalnızca ECU destek bildirirse gerçek değer gösterilir.
+        val hybridRemainingLife = TelemetryHub.obdHybridBatteryRemainingLifePercent.value
+        val hybridBatteryText = hybridRemainingLife?.let { "%.1f%%".format(it) } ?: "Desteklenmiyor / veri yok"
+        cockpitBox.addView(label("Hibrit batarya paketi kalan ömrü (SAE PID 5B)", 12f, Palette.TEXT_DIM, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(2)))
+        cockpitBox.addView(label(hybridBatteryText, 14f, Palette.TEXT, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(2), b = dp(10)))
+        cockpitBox.addView(label(
+            "Bu standart değer SOC (şarj seviyesi) veya batarya sağlık testi (SOH) değildir. Hücre/blok gerilimi ve sıcaklık gibi Toyota'ya özel veriler bu ekranda henüz okunmaz.",
+            10f, Palette.TEXT_FAINT, lines = 3
+        ), lp(MATCH, WRAP).margins(b = dp(12)))
 
         // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
         cockpitBox.addView(label("🩺 Araç arıza tanılama", 15f, bold = true))
