@@ -68,7 +68,7 @@ function Focus { if ((Sh 'dumpsys window') -match 'mCurrentFocus=Window\{\S+ \S+
 try {
 # ================================================================ 1) Hoş geldin
 Header 1 'Başlamadan önce'
-Say '  Merhaba! Bu araç OmniDrive''yu telefonuna, arabada sürüş'
+Say '  Merhaba! Bu araç OmniDrive''ı telefonuna, arabada sürüş'
 Say '  sırasında da açılacak şekilde kurar. Android Auto''nun istediği'
 Say '  "Play Store kurdu" kaydını (imzayı) atmaya çalışır ve sonunda'
 Say '  başarılı olup olmadığını açıkça yazar.'
