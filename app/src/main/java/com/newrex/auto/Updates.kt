@@ -33,7 +33,7 @@ object Updates {
             if (release != null) {
                 edit.putString("version", release.optString("tag_name").removePrefix("v"))
                     .putString("notes", release.optString("body"))
-                    .putString("url", release.optString("html_url").ifBlank { PAGE })
+                    .putString("url", PAGE)
             } else {
                 // Eski NewREX sürümünden kalmış önbellek OmniDrive güncellemesi gibi sunulmasın.
                 edit.remove("version").remove("notes").remove("url")
@@ -42,7 +42,7 @@ object Updates {
         }
         val version = sp.getString("version", null) ?: return@withContext null
         if (!newer(version, BuildConfig.VERSION_NAME)) return@withContext null
-        Release(version, sp.getString("notes", "").orEmpty(), sp.getString("url", PAGE) ?: PAGE)
+        Release(version, sp.getString("notes", "").orEmpty(), PAGE)
     }
 
     fun show(activity: Activity, r: Release) {
