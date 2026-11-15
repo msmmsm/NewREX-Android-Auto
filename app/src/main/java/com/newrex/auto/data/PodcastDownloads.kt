@@ -123,7 +123,7 @@ object PodcastDownloads {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             // Android 10+: genel İndirilenler klasörü; uygulama dışı oynatıcılar da dosyaya erişebilir.
                             setDestinationInExternalPublicDir(
-                                Environment.DIRECTORY_DOWNLOADS, "OmniDrive Podcasts/$fileName"
+                                Environment.DIRECTORY_DOWNLOADS, "OmniDrive_Podcasts_$fileName"
                             )
                         } else {
                             setDestinationInExternalFilesDir(context, "Podcasts", fileName)
