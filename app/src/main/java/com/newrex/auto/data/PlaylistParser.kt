@@ -78,7 +78,8 @@ internal object PlaylistParser {
     /** Yalnızca HTTP(S) kaynak listelerinin göreli adresleri çözümlenir. */
     private fun resolveUrl(value: String, sourceUrl: String?): String? {
         val uri = runCatching { URI(value) }.getOrNull() ?: return null
-        if (uri.isAbsolute || sourceUrl == null) return value
+        if (uri.isAbsolute) return value.takeIf { uri.scheme?.lowercase() in setOf("http", "https", "rtsp") && !uri.host.isNullOrBlank() && uri.rawUserInfo == null && value.length <= 4096 }
+        if (sourceUrl == null) return null
         val base = runCatching { URI(sourceUrl) }.getOrNull() ?: return null
         if (base.scheme !in setOf("http", "https")) return value
         return runCatching { base.resolve(uri).toString() }.getOrNull()
