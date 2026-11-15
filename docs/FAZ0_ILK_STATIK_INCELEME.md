@@ -20,8 +20,8 @@ README ve son commit uygulama markasının OmniDrive yönünde değiştiğini g�
 
 ### F0-03 — Gizlilik beyanının doğrulanması
 **Dosya:** PRIVACY.md  
-**Durum:** Kod ve bağımlılık denetimi gerekli  
-Gizlilik metni verilerin geliştiriciye veya başka bir şirkete gönderilmediğini belirtiyor. Yeni yol haritasındaki bulut tabanlı AI, aile paylaşımı veya uzaktan takip gibi özellikler bu beyanı değiştirebilir. Her ağ isteği, konum aktarımı, ses işleme ve saklama davranışı veri akışı envanterine eklenmeli; metin yalnızca fiilî davranışla uyumlu olacak şekilde güncellenmeli.
+**Durum:** Kısmen düzeltildi  
+Gizlilik metni, üçüncü taraf servislerin IP adresini görebildiğini ve hava durumu için yaklaşık konum gönderildiğini açıkça belirtecek şekilde güncellendi. Yeni yol haritasındaki bulut tabanlı AI, aile paylaşımı veya uzaktan takip gibi özellikler uygulanırsa veri akışı ve izinler yeniden değerlendirilmeli.
 
 ### F0-04 — Uygulama kategorisi
 **Dosya:** app/src/main/AndroidManifest.xml  
@@ -46,7 +46,7 @@ README; 3D C-HR modeli, OBD-II, DTC, performans sayacı, hız uyarısı, araç t
 - [ ] Manifest izinleri için özellik-izin eşleştirmesi
 - [ ] Kaynak kodu özellik envanteri ve README iddia matrisi
 - [ ] Gradle bağımlılıkları, lisanslar ve kullanılmayan bağımlılıklar denetimi
-- [ ] Temiz checkout derleme, lint ve test raporu
+- [ ] Temiz checkout derleme, lint ve test raporu (otomatik testler eklendi; CI henüz çalıştırılmadı)
 - [ ] Marka/paket kimliği kararı ve NOTICE/GPL uyum incelemesi
 - [ ] PRIVACY.md veri akışı doğrulaması
 - [ ] Gerçek OBD adaptörü ve araç test planı
