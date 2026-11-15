@@ -322,9 +322,9 @@ object PlayerHub {
             MediaMetadata.Builder()
                 .setTitle(e.title)
                 .setArtist(when (e.kind) {
-                    Kind.TV -> "NewREX TV"
-                    Kind.RADIO -> "NewREX Radyo"
-                    Kind.PODCAST -> e.group.ifBlank { "NewREX Podcast" }
+                    Kind.TV -> "OmniDrive TV"
+                    Kind.RADIO -> "OmniDrive Radyo"
+                    Kind.PODCAST -> e.group.ifBlank { "OmniDrive Podcast" }
                 })
                 .build()
         )
