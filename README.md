@@ -1,6 +1,6 @@
 # OmniDrive
 
-Arabanın ekranında **TV, YouTube, radyo ve podcast**. Ücretsiz, reklamsız, hiçbir bilgini toplamaz.
+Arabanın ekranında **TV, YouTube, radyo ve podcast**. Ücretsiz ve reklamsız; kişisel ayarlarını ve kayıtlarını cihazında saklar.
 
 > ### 🚗 OmniDrive arabada görünmüyor ya da vitese takınca kapanıyor mu?
 > Bilgisayarın varsa **[Kurulum Aracı'nı indir](https://github.com/msmmsm/NewREX-Android-Auto/raw/master/kurulum-araci/NewREX-Kurulum-Araci.zip)** → zip'i aç → **`BASLAT.bat`**'a çift tıkla.
@@ -11,7 +11,7 @@ Arabanın ekranında **TV, YouTube, radyo ve podcast**. Ücretsiz, reklamsız, h
 
 - 🏎️ **Next-Gen Otomobil Kokpiti**: MBUX / Tesla ilhamlı modern dijital kokpit ve HUD göstergesi
 - 🚘 **Toyota C-HR 2025 3D/2.5D Etkileşimli Model**: Hammerhead LED far tasarımı, Bi-Tone tavan, dokunmatik 360° döndürme ve özelleştirilebilir Türk plaka standardı (`[TR | 34 REX 1337]`)
-- 🔌 **OBD-II CAN-Bus Entegrasyonu**: ELM327 Bluetooth Classic (SPP) adaptör desteği; BLE desteği henüz mevcut değil, gerçek devir (RPM), hararet (°C), akü voltajı (V), depo seviyesi (%) ve Arıza Teşhis Kodları (DTC) tarama/silme
+- 🔌 **OBD-II CAN-Bus Entegrasyonu**: ELM327 Bluetooth Classic (SPP) üzerinden gerçek ECU verisi: devir (RPM), hararet (°C), adaptörün bildirdiği voltaj, desteklenen yakıt seviyesi PID'i ve DTC okuma/silme; BLE desteği henüz yok
 - ⚡ **0-100 km/s Performans & Drag Sayacı**: Otomatik hazır bekleme ve hassas ivmelenme kronometresi
 - 🔊 **Hıza Duyarlı Akıllı Ses Dengeleme**: Hızlandıkça artan yol ve rüzgar gürültüsünü otomatik telafi eden ses yönetimi
 - 📺 **Canlı TV**: Türk kanalları hazır gelir, kendi IPTV listeni de ekleyebilirsin
