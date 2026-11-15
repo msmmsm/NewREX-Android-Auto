@@ -247,12 +247,12 @@ object ObdManager {
 
     // ---- PID Ayrıştırıcı Fonksiyonlar ----
 
-    private fun parseSpeed(raw: String): Float? {
+    internal fun parseSpeed(raw: String): Float? {
         val clean = cleanHex(raw, "410D") ?: return null
         return clean.toIntOrNull(16)?.toFloat()
     }
 
-    private fun parseRpm(raw: String): Int? {
+    internal fun parseRpm(raw: String): Int? {
         val clean = cleanHex(raw, "410C") ?: return null
         if (clean.length < 4) return null
         val a = clean.substring(0, 2).toIntOrNull(16) ?: return null
@@ -260,24 +260,24 @@ object ObdManager {
         return ((a * 256) + b) / 4
     }
 
-    private fun parseCoolant(raw: String): Int? {
+    internal fun parseCoolant(raw: String): Int? {
         val clean = cleanHex(raw, "4105") ?: return null
         val a = clean.toIntOrNull(16) ?: return null
         return a - 40
     }
 
-    private fun parseFuel(raw: String): Float? {
+    internal fun parseFuel(raw: String): Float? {
         val clean = cleanHex(raw, "412F") ?: return null
         val a = clean.toIntOrNull(16) ?: return null
         return (a * 100f) / 255f
     }
 
-    private fun parseVoltage(raw: String): Float? {
+    internal fun parseVoltage(raw: String): Float? {
         val digits = raw.replace("V", "", ignoreCase = true).trim()
         return digits.toFloatOrNull()
     }
 
-    private fun parseDtc(raw: String): List<String> {
+    internal fun parseDtc(raw: String): List<String> {
         val clean = raw.replace(" ", "").replace("\r", "").replace("\n", "")
         if (!clean.contains("43")) return emptyList()
         val hex = clean.substringAfter("43")
