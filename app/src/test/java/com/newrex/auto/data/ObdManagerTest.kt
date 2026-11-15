@@ -60,7 +60,7 @@ class ObdManagerTest {
         )
         assertEquals(
             listOf("P0133", "P0456"),
-            ObdManager.parseDtc("7e8 04 43 01 33\\r\\n7e9 04 43 04 56")
+            ObdManager.parseDtc("7e8 04 43 01 33\r\n7e9 04 43 04 56")
         )
     }
 
@@ -74,7 +74,7 @@ class ObdManagerTest {
     fun parsesPidBitmapWithCanHeaderAndLineBreaks() {
         assertEquals(
             setOf(0x0C, 0x0D, 0x20),
-            ObdManager.parseSupportedPids("7E806410000180001\\r\\n>", 0x00)
+            ObdManager.parseSupportedPids("7E806410000180001\r\n>", 0x00)
         )
     }
 
