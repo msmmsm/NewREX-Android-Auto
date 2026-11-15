@@ -11,6 +11,9 @@ data class ObdFreezeFrame(
     val throttlePercent: Int? = null
 )
 
+/** Mode 03 taramasının yanıtı gerçekten çözümlenebildiyse tamamlanmış sayılır. */
+data class DtcScanResult(val codes: List<String>, val completed: Boolean)
+
 /** Sınırlı Türkçe DTC açıklama kataloğu; listede olmayan kodlar için tahmin yapılmaz. */
 object ObdDiagnostics {
     private val descriptions = mapOf(
@@ -37,6 +40,14 @@ object ObdDiagnostics {
     )
 
     fun description(code: String): String? = descriptions[code.trim().uppercase()]
+
+    /** ELM327'nin NO DATA yanıtı geçerli boş taramadır; hata/boş yanıt tamamlanmış sayılmaz. */
+    internal fun isDtcScanResponseValid(raw: String): Boolean {
+        val normalized = raw.uppercase()
+        if (normalized.contains("NO DATA")) return true
+        val clean = normalized.filter { it in '0'..'9' || it in 'A'..'F' }
+        return clean.contains("43")
+    }
 
     /** Mode 02 PID 00 destek bitmap'ini ayrıştırır. */
     internal fun parseSupportedFreezeFramePids(raw: String): Set<Int>? {
