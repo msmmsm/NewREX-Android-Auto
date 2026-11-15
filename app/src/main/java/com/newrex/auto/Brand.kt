@@ -7,7 +7,8 @@ package com.newrex.auto
  */
 object Brand {
     const val ORIGINAL_DEVELOPER = "NewREX"
-    const val PROJECT_URL = "https://github.com/msmmsm/NewREX-Android-Auto"
+    const val PROJECT_URL = "https://github.com/NewREX1337/NewREX-Android-Auto"
+    const val REPOSITORY_URL = "https://github.com/msmmsm/NewREX-Android-Auto"
     const val COPYRIGHT = "OmniDrive • Copyright © 2026 NewREX"
     const val LICENSE_NOTICE =
         "Bu uygulama ücretsizdir ve GNU GPL v3 lisansıyla açık kaynaktır. HİÇBİR GARANTİ VERİLMEZ. " +
