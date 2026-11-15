@@ -7,6 +7,13 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class NetTest {
+    @Test fun acceptsOnlySafeHttpRedirectTargets() {
+        assertEquals(true, Net.isSafeHttpUrl("https://pod.example.org/feed.xml"))
+        assertEquals(false, Net.isSafeHttpUrl("file:///tmp/feed.xml"))
+        assertEquals(false, Net.isSafeHttpUrl("https://user:pass@pod.example.org/feed.xml"))
+        assertEquals(false, Net.isSafeHttpUrl("https://pod.example.org/" + "x".repeat(4100)))
+    }
+
     @Test fun acceptsResponseExactlyAtByteLimit() {
         val result = Net.readBounded(ByteArrayInputStream("12345".toByteArray()), 5)
         assertEquals("12345", result)
