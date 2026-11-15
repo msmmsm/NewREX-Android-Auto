@@ -66,6 +66,14 @@ class RadioApiTest {
         assertEquals(original.directoryReportsHealthy, restored.directoryReportsHealthy)
     }
 
+    @Test fun countryCodesAreNormalizedAndInvalidValuesRejected() {
+        assertEquals("TR", RadioApi.normalizeCountryCode(" tr "))
+        assertEquals("US", RadioApi.normalizeCountryCode("us"))
+        assertEquals(null, RadioApi.normalizeCountryCode("TUR"))
+        assertEquals(null, RadioApi.normalizeCountryCode("tr&limit=999"))
+        assertEquals(null, RadioApi.normalizeCountryCode(""))
+    }
+
     @Test fun blankStationNamesReceiveReadableFallback() {
         val stations = RadioApi.parseStations(
             """[{"name":"  ","url":"https://radio.example/live"}]"""
