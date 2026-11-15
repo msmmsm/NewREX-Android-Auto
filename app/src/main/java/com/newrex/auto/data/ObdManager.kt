@@ -55,6 +55,8 @@ object ObdManager {
     // ELM327 komut/yanıt çiftlerinin polling ve DTC işlemleri arasında karışmasını önler.
     private val commandMutex = Mutex()
     private var workerJob: Job? = null
+    // Eski iptal edilmiş bağlantı işi yeni soketi kapatamasın.
+    @Volatile private var connectionGeneration: Long = 0L
     private var socket: BluetoothSocket? = null
     private var inStream: InputStream? = null
     private var outStream: OutputStream? = null
@@ -89,11 +91,12 @@ object ObdManager {
     @SuppressLint("MissingPermission")
     fun connect(context: Context, device: BluetoothDevice) {
         disconnect()
+        val generation = connectionGeneration
         selectedDevice.value = device
 
         workerJob = scope.launch {
             var retriesUsed = 0
-            while (isActive && selectedDevice.value?.address == device.address) {
+            while (isActive && generation == connectionGeneration && selectedDevice.value?.address == device.address) {
                 state.value = ConnectionState.CONNECTING
                 TelemetryHub.obdConnected.value = false
                 TelemetryHub.clearObdData()
@@ -126,18 +129,19 @@ object ObdManager {
                     if (!isActive || selectedDevice.value?.address != device.address) break
                     if (state.value != ConnectionState.ERROR) markConnectionError()
                 } catch (e: CancellationException) {
-                    closeTransport()
+                    if (generation == connectionGeneration) closeTransport()
                     throw e
                 } catch (e: Exception) {
-                    markConnectionError()
+                    if (isActive && generation == connectionGeneration) markConnectionError()
+                    else throw CancellationException("Eski OBD bağlantı denemesi geçersiz kılındı", e)
                 }
 
-                if (!isActive || selectedDevice.value?.address != device.address) break
+                if (!isActive || generation != connectionGeneration || selectedDevice.value?.address != device.address) break
                 if (!ObdReconnectPolicy.shouldRetry(retriesUsed)) break
                 delay(ObdReconnectPolicy.delayMs(retriesUsed))
                 retriesUsed++
             }
-            if (isActive && selectedDevice.value?.address == device.address &&
+            if (isActive && generation == connectionGeneration && selectedDevice.value?.address == device.address &&
                 state.value == ConnectionState.ERROR
             ) {
                 // Otomatik denemeler tükendi; kullanıcı aynı adaptörü manuel yeniden seçebilir.
@@ -147,6 +151,7 @@ object ObdManager {
     }
 
     fun disconnect() {
+        connectionGeneration++
         workerJob?.cancel()
         workerJob = null
         closeTransport()
