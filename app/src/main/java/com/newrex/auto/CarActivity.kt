@@ -60,10 +60,7 @@ class CarActivity : Activity() {
         val future = MediaController.Builder(this, token).buildAsync()
         controllerFuture = future
         future.addListener({
-            if (destroyed) {
-                MediaController.releaseFuture(future)
-                return@addListener
-            }
+            if (destroyed) return@addListener
             runCatching { future.get() }
                 .onSuccess { buildUi() }
                 .onFailure {
