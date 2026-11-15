@@ -79,6 +79,7 @@ Dal: `master`
 
 ### Statik bulgular / ürün kapsamı
 - **Podcast çevrimdışı indirme eklendi.** Android DownloadManager, bölümleri uygulamaya özel Podcasts klasörüne indirir; Android sistem bildirimi indirme durumunu gösterir. İndirme kaydı URL'nin kendisini değil SHA-256 anahtarını ve DownloadManager kimliğini saklar. İndirilen dosya oynatma sırasında otomatik seçilir; indirme düğmesi araç hareket halindeyken engellenir.
+- İndirilen bölümler Podcast ekranındaki ayrı **İndirilenler** sekmesinden, RSS akışına erişim olmasa da listelenir; uyumlu medya kütüphanesinde de ayrı kategori olarak sunulur.
 - İndirme hedefi uygulamaya özel harici depolamadır; uygulama kaldırılırsa dosyalar da kaldırılabilir. İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
@@ -91,7 +92,7 @@ Dal: `master`
 - [ ] Enclosure MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [ ] Uzun RSS, eksik alan, XML namespace ve bozuk XML testleri.
-- [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme ve indirilmiş dosyayı otomatik oynatma eklendi.
+- [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
 
 ## 4. YouTube ve genel WebView — `pages/WebPage.kt`, `pages/YouTubeAdBlocker.kt`
