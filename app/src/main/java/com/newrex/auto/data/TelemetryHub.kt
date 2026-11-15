@@ -67,6 +67,8 @@ object TelemetryHub {
     val obdBatteryVoltage = MutableStateFlow<Float?>(null)
     val obdFuelLevel = MutableStateFlow<Float?>(null)
     val obdEngineLoad = MutableStateFlow<Int?>(null)
+    /** SAE J1979 PID 5B: pack remaining life; not a measured SOC or SOH. */
+    val obdHybridBatteryRemainingLifePercent = MutableStateFlow<Float?>(null)
     val obdBoost = MutableStateFlow<Float?>(null)
     val obdDtcList = MutableStateFlow<List<String>>(emptyList())
     val obdLastUpdatedMs = MutableStateFlow<Long?>(null)
@@ -158,6 +160,7 @@ object TelemetryHub {
         obdBatteryVoltage.value = null
         obdFuelLevel.value = null
         obdEngineLoad.value = null
+        obdHybridBatteryRemainingLifePercent.value = null
         obdBoost.value = null
         obdDtcList.value = emptyList()
         obdLastUpdatedMs.value = null
