@@ -9,9 +9,12 @@ Tarih: 2026-11-15
 ## Bulgular
 
 ### F0-01 — Genel cleartext ağ izni
-**Dosya:** app/src/main/AndroidManifest.xml  
-**Durum:** İncelenmeli  
-Uygulama düzeyinde `android:usesCleartextTraffic="true"` tanımlı. Aynı manifestte `@xml/network_security_config` de kullanılıyor. Ağ güvenliği kararı verilmeden önce XML yapılandırmasının tamamı, tüm HTTP kaynakları ve yerel ağ/stream gereksinimleri çıkarılmalı. Hedef, tüm uygulamaya genel HTTP izni vermek yerine yalnızca zorunlu ve gerekçeli istisnaları tanımlamak.
+**Dosyalar:** app/src/main/AndroidManifest.xml, app/src/main/res/xml/network_security_config.xml  
+**Durum:** Kısmen düzeltildi; açık risk mevcut  
+- HTTPS sertifika hatasında otomatik HTTP'ye düşme ve HTTPS→HTTP çapraz protokol yönlendirmesi kaldırıldı.
+- Kullanıcı tarafından yüklenmiş CA sertifikalarına genel güven kaldırıldı; sistem CA deposu kullanılıyor.
+- Kullanıcı tanımlı IPTV/radyo listeleri ve yerel ağ kaynakları için temel ağ yapılandırmasında cleartext HTTP hâlâ açık. Dinamik kullanıcı URL'leri nedeniyle alan adı bazında statik istisna listesi yeterli değildir. Bu nedenle HTTP kaynakları kullanıcı tarafından açıkça girilen adreslerle sınırlı tutulmalı; hassas hesap/kimlik bilgileri HTTP üzerinden kullanılmamalıdır.
+- Sonraki iş: HTTP kaynak envanteri, kullanıcıya HTTP kaynak risk uyarısı ve mümkünse kullanıcı bazında güvenli tercih eklenmesi.
 
 ### F0-02 — Marka, paket kimliği ve ek lisans koşulları
 **Dosyalar:** README.md, app/build.gradle.kts, NOTICE.md  
