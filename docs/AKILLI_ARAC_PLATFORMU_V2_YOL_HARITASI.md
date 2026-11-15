@@ -228,3 +228,10 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Bağlantı kurulumu iptal edildiğinde iptal istisnası normal bağlantı hatası gibi yutulmaz; coroutine iptali korunur.
 - Mode 04 DTC temizleme onayı artık rastgele bir `44` alt dizesine göre verilmez; pozitif servis yanıtının beklenen yalın veya 7E8–7EF ECU yanıt biçiminde bulunması gerekir.
 - Bu davranışlar için Mode 04 olumlu/olumsuz yanıt testleri eklendi. Donanım zaman aşımı, Bluetooth kopması ve gerçek ECU yanıtları fiziksel adaptörle ayrıca doğrulanmalıdır.
+
+
+### Bağlantı hatalarının ortak ele alınması
+
+- ELM327 komut zaman aşımı veya giriş/çıkış akışı hatası DTC okuma/silme işlemlerinde de bağlantı hatası olarak ele alınır; bağlantı durumu ERROR yapılır, eski OBD ölçümleri temizlenir ve taşıma katmanı kapatılır.
+- Kullanıcı bağlantıyı iptal ettiğinde coroutine iptali bağlantı hatası olarak raporlanmaz.
+- Giriş tamponunda 4 KiB sınırını aşan bekleyen veri varsa yeni komut gönderilmez.
