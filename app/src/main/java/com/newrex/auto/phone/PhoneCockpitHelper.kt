@@ -22,6 +22,9 @@ import com.newrex.auto.data.ToyotaEnhancedDiagnosticCatalog
 import com.newrex.auto.data.EnhancedDiagnosticStatus
 import com.newrex.auto.data.EquipmentStatus
 import com.newrex.auto.data.DataAccessStatus
+import com.newrex.auto.data.DiagnosticConnectionState
+import com.newrex.auto.data.DiagnosticProviderRegistry
+import com.newrex.auto.data.DiagnosticProviderState
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Palette
 import com.newrex.auto.ui.WRAP
@@ -266,6 +269,37 @@ object PhoneCockpitHelper {
                 "Erişim: ${system.accessPath}. ${system.limitation}",
                 10f, Palette.TEXT_FAINT, lines = 4
             ), lp(MATCH, WRAP).margins(t = dp(1), b = dp(4)))
+        }
+
+        // Standart OBD-II ve Toyota OEM teşhis sağlayıcılarını birbirinden ayrı göster.
+        val providerConnectionState = when (obdState) {
+            ObdManager.ConnectionState.CONNECTED -> DiagnosticConnectionState.CONNECTED
+            ObdManager.ConnectionState.CONNECTING -> DiagnosticConnectionState.CONNECTING
+            ObdManager.ConnectionState.INITIALIZING -> DiagnosticConnectionState.INITIALIZING
+            ObdManager.ConnectionState.ERROR -> DiagnosticConnectionState.ERROR
+            ObdManager.ConnectionState.DISCONNECTED -> DiagnosticConnectionState.DISCONNECTED
+        }
+        cockpitBox.addView(label("Teşhis bağlantı sağlayıcıları", 14f, Palette.TEXT, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(8), b = dp(3)))
+        DiagnosticProviderRegistry.snapshots(
+            obdState = providerConnectionState,
+            obdAdapterSelected = ObdManager.selectedDevice.value != null
+        ).forEach { provider ->
+            val stateText = when (provider.state) {
+                DiagnosticProviderState.CONNECTED -> "Bağlı"
+                DiagnosticProviderState.NOT_CONNECTED -> "Bağlı değil"
+                DiagnosticProviderState.NOT_IMPLEMENTED -> "Henüz uygulanmadı"
+                DiagnosticProviderState.UNSUPPORTED -> "Desteklenmiyor"
+            }
+            cockpitBox.addView(label("${provider.displayName} · $stateText", 12f, Palette.TEXT, bold = true),
+                lp(MATCH, WRAP).margins(t = dp(4)))
+            val services = if (provider.supportedServices.isEmpty()) {
+                "Etkin servis yok"
+            } else {
+                provider.supportedServices.joinToString(" · ") { it.name.replace('_', ' ') }
+            }
+            cockpitBox.addView(label("$services. ${provider.limitation}", 10f, Palette.TEXT_FAINT, lines = 4),
+                lp(MATCH, WRAP).margins(t = dp(1), b = dp(4)))
         }
 
         // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
