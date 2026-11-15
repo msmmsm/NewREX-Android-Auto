@@ -128,6 +128,7 @@ object PlayerHub {
         Prefs.savePlaybackQueue(queue, index, resumePosition)
     }
 
+    @OptIn(UnstableApi::class)
     fun init(context: Context) {
         if (exo != null) return
         fun sources(userAgent: String) = DefaultMediaSourceFactory(DefaultDataSource.Factory(context,
