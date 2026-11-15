@@ -38,6 +38,19 @@ object ObdDiagnostics {
 
     fun description(code: String): String? = descriptions[code.trim().uppercase()]
 
+    /** Mode 02 PID 00 destek bitmap'ini ayrıştırır. */
+    internal fun parseSupportedFreezeFramePids(raw: String): Set<Int>? {
+        val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
+        val index = clean.indexOf("4200")
+        if (index < 0) return null
+        val payload = clean.substring(index + 4, (index + 12).coerceAtMost(clean.length))
+        if (payload.length != 8) return null
+        val mask = payload.toLongOrNull(16) ?: return null
+        return (0 until 32).mapNotNull { bit ->
+            if ((mask and (1L shl (31 - bit))) != 0L) bit + 1 else null
+        }.toSet()
+    }
+
     /**
      * Mode 02 yanıtından tek PID verisini çıkarır.
      * Beklenen yanıt: 42, PID, kare numarası, veri baytları.
