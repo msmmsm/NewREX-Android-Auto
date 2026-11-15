@@ -19,7 +19,7 @@ class ObdDiagnosticsTest {
     @Test fun parsesFreezeFrameSupportedPidBitmap() {
         assertEquals(
             setOf(0x04, 0x05, 0x0C, 0x0D),
-            ObdDiagnostics.parseSupportedFreezeFramePids("7E806420000180018")
+            ObdDiagnostics.parseSupportedFreezeFramePids("7E806420018180000")
         )
         assertNull(ObdDiagnostics.parseSupportedFreezeFramePids("NO DATA"))
         assertNull(ObdDiagnostics.parseSupportedFreezeFramePids("42000018"))
