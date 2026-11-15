@@ -19,6 +19,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.SessionError
@@ -72,6 +73,8 @@ object PlayerHub {
     private var exo: ExoPlayer? = null
     private var session: MediaLibraryService.MediaLibrarySession? = null
     private var sessionPlayer: Player? = null
+    /** UI denetimleri MediaController üzerinden oturuma gider; oynatıcı yalnızca servis sahibidir. */
+    private var mediaController: MediaController? = null
     private var queue: List<MediaEntry> = emptyList()
     private var index = 0
 
@@ -109,6 +112,14 @@ object PlayerHub {
 
     /** Media library için oturumun anlık kuyruğunun güvenli kopyası. */
     internal fun libraryQueue(): List<MediaEntry> = queue.toList()
+
+    internal fun attachController(controller: MediaController) {
+        mediaController = controller
+    }
+
+    internal fun detachController(controller: MediaController) {
+        if (mediaController === controller) mediaController = null
+    }
 
     /** Media3 playback-resumption callback'i için kaydedilmiş kuyruğu belleğe alır. */
     internal fun restoreQueue(snapshot: com.newrex.auto.data.PlaybackQueueSnapshot) {
@@ -219,10 +230,10 @@ object PlayerHub {
             override fun isCommandAvailable(command: Int) =
                 command in extra || super.isCommandAvailable(command)
 
-            override fun seekToNext() = next()
-            override fun seekToNextMediaItem() = next()
-            override fun seekToPrevious() = prev()
-            override fun seekToPreviousMediaItem() = prev()
+            override fun seekToNext() = advanceNext()
+            override fun seekToNextMediaItem() = advanceNext()
+            override fun seekToPrevious() = advancePrevious()
+            override fun seekToPreviousMediaItem() = advancePrevious()
         }
         exo = p
         applyQuality()
@@ -366,49 +377,61 @@ object PlayerHub {
     val isPodcast get() = now.value?.kind == Kind.PODCAST
 
     fun seekBy(ms: Long) {
-        val p = exo ?: return
-        val d = p.duration
-        val target = (p.currentPosition + ms).coerceAtLeast(0)
-        p.seekTo(if (d > 0) target.coerceAtMost(d - 1000) else target)
-        position.value = p.currentPosition
+        val active = mediaController ?: exo ?: return
+        val d = active.duration
+        val target = (active.currentPosition + ms).coerceAtLeast(0)
+        active.seekTo(if (d > 0) target.coerceAtMost((d - 1000).coerceAtLeast(0)) else target)
+        position.value = active.currentPosition
     }
 
     fun seekTo(ms: Long) {
-        exo?.seekTo(ms.coerceAtLeast(0))
-        position.value = ms
+        val target = ms.coerceAtLeast(0)
+        (mediaController ?: exo)?.seekTo(target)
+        position.value = target
     }
 
     /** Podcast'te direksiyon ve mini oynatıcı tuşları 30 sn ileri / 15 sn geri sarar. */
     fun next() {
         if (isPodcast) { seekBy(30_000); return }
+        val controller = mediaController
+        if (controller != null) controller.seekToNext() else advanceNext()
+    }
+
+    fun prev() {
+        if (isPodcast) { seekBy(-15_000); return }
+        val controller = mediaController
+        if (controller != null) controller.seekToPrevious() else advancePrevious()
+    }
+
+    private fun advanceNext() {
         if (queue.isEmpty()) return
         index = (index + 1) % queue.size
         start()
     }
 
-    fun prev() {
-        if (isPodcast) { seekBy(-15_000); return }
+    private fun advancePrevious() {
         if (queue.isEmpty()) return
         index = (index - 1 + queue.size) % queue.size
         start()
     }
 
     fun toggle() {
-        val p = exo ?: return
-        if (p.isPlaying) {
-            p.pause()
+        val controller = mediaController
+        val active: Player = controller ?: exo ?: return
+        if (active.isPlaying) {
+            active.pause()
         } else {
-            if (p.playbackState == Player.STATE_IDLE || p.playbackState == Player.STATE_ENDED) p.prepare()
+            if (active.playbackState == Player.STATE_IDLE || active.playbackState == Player.STATE_ENDED) active.prepare()
             // Canlı yayında duraklatınca geride kalmamak için canlıya dön
-            if (p.isCurrentMediaItemLive) p.seekToDefaultPosition()
-            p.play()
+            if (active.isCurrentMediaItemLive) active.seekToDefaultPosition()
+            active.play()
         }
     }
 
     fun stop() {
         cancelRecovery()
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
-        exo?.stop()
+        (mediaController ?: exo)?.stop()
         exo?.clearMediaItems()
         Prefs.clearPlaybackQueue()
         queue = emptyList()
@@ -427,6 +450,7 @@ object PlayerHub {
         exo?.release()
         session = null
         sessionPlayer = null
+        mediaController = null
         exo = null
         now.value = null
         playing.value = false
