@@ -25,7 +25,7 @@ Dal: `master`
 - MediaSession `onPlaybackResumption` callback'i kayıtlı kuyruğu ve podcast konumunu geri veriyor; MediaButtonReceiver sistem medya düğmesi/yeniden başlatma talebini servise iletiyor.
 - Geri yükleme yalnızca HTTP(S), sunucu adı bulunan ve açık kullanıcı/parola veya bilinen token parametresi taşımayan URL'lerde yapılır. Kimlik doğrulama başlıkları/çerezleri saklanmaz. Özel kimlik doğrulamalı yayınlar otomatik geri yüklenmeyebilir.
 - Kullanıcı `Durdur` komutunu verdiğinde kuyruk kaydı silinir; beklenmedik servis/süreç kapanışında son kuyruk korunur.
-- DownloadManager tamamlanan dosyaları çevrimdışı listeye almadan önce 1 bayt–512 MiB boyut aralığı ve medya MIME türü (`audio/*`, Ogg, MP4 veya `application/octet-stream`) açısından doğrular; doğrulamayı geçmeyen indirme kaydı ve dosyası kaldırılır.
+- DownloadManager tamamlanan dosyaları çevrimdışı listeye almadan önce 1 bayt–512 MiB boyut aralığı ve izin verilen ses MIME türleri, Ogg, MP4 veya `application/octet-stream` açısından doğrular; doğrulamayı geçmeyen indirme kaydı ve dosyası kaldırılır.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var. Yeniden bağlanma denemeleri ilk açılışta 2, daha önce çalmış akışta 10 denemeyle sınırlıdır; bekleme 1/2/4/8/15 saniye düzenindedir. Kullanıcı veya Android Auto duraklattığında bekleyen yeniden bağlanma iptal edilir ve yeniden yükleme duraklatma durumunu korur.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
@@ -99,7 +99,7 @@ Dal: `master`
 ### Düzeltme ve test planı
 - [x] RSS tarih biçimlerine toleranslı ayrıştırma ve bozuk tarih testleri eklendi.
 - [x] RSS MIME türü kontrolü, güvenli yönlendirme sınırı ve HTTPS→HTTP düşüşünü engelleme eklendi.
-- [x] Tamamlanan indirmede MIME türü ve 512 MiB bölüm boyutu üst sınırı doğrulanır; geçersiz dosya kaldırılır.
+- [x] Tamamlanan indirmede izin verilen medya MIME türü ve 512 MiB bölüm boyutu üst sınırı doğrulanır; geçersiz dosya kaldırılır.
 - [ ] İndirilen enclosure dosyasının MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [x] RSS enclosure şeması, kimlik bilgisi ve uzunluk doğrulaması için regresyon testleri eklendi.
