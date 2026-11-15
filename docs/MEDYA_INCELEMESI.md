@@ -112,6 +112,12 @@ Dal: `master`
 - API ülke kodları iki harfli biçime normalize edilir, arama metni 100 karakterle, sonuç sayısı 1–300 aralığıyla sınırlandırılır. Boş arama ağa gönderilmez.
 - Önbellek 6 saat taze kabul edilir; ağ hatasında en fazla 30 günlük son başarılı kayıt kullanılabilir. Daha eski kayıtlar atılır; ileri tarihli bozuk zaman damgaları da reddedilir. Arama anahtarları SHA-256 ile saklanır; arama önbelleği en fazla 20 kayıtla sınırlandırılır.
 - Oynatma hatalarında HTTP 401/403, 404/410, 429 ve 5xx yanıtları ile bozuk/desteklenmeyen medya biçimleri ayrı Türkçe hata mesajlarıyla raporlanır. Aynı istasyon için alternatif adres aranması sürdürülür.
+- Radyo ekranındaki hız/teşhis eylemi, yalnızca kullanıcının o anda çaldığı istasyonu elle sınar; katalogdaki tüm istasyonlara arka planda toplu istek göndermez.
+- Sağlık testi HTTP Range isteğiyle en fazla ilk veri baytını okumayı dener; bağlantı/okuma zaman aşımı sınırlıdır ve tam ses akışı indirilmez. İlk yanıt süresi 2 saniyeyi aşarsa yavaş olarak sınıflandırılır.
+- Test otomatik HTTP yönlendirmelerini izlemez; 3xx ayrı raporlanır. 401/403, 404/410, 429, 5xx, HTML sayfası, boş gövde, TLS ve DNS sorunları ayrı sonuçlara ayrılır.
+- Testten önce host DNS üzerinden çözülür; localhost, .local, loopback, link-local, özel ağ ve multicast adresleri sınanmaz. Böylece katalogdan gelen bir adresin yerel ağa istek göndermesi engellenir. Bu nedenle özel ağdaki yerel radyo akışları bu teşhis aracıyla sınanamaz.
+- Bu test yalnızca ilk HTTP yanıtı ve ilk baytın alınmasını doğrular; codec çözümleme, uzun süreli kararlılık, ses duyulabilirliği veya gerçek oynatıcı uyumluluğu garantisi vermez.
+- [x] HTTP durum sınıflandırması, HTML yanıtı ve gecikme eşiği için birim testleri eklendi.
 - Önbellekten okunan yayın, logo ve ana sayfa adresleri tekrar doğrulanır; bozuk veya değiştirilmiş kayıtlar oynatma listesine alınmaz.
 - [x] Radyo katalog önbelleği, güvenli adres ayrıştırma, katalog tekilleştirme, teknik metaveri, JSON kalıcılığı ve ülke kodu doğrulama testleri eklendi.
 - [ ] Radio Browser sunucu kesintisi, çevrimdışı açılış ve gerçek radyo akışlarının Android cihazda kabul testi yapılmalı.
