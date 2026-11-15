@@ -3,7 +3,7 @@
 Tarih: 2026-11-15  
 İncelenen depo: msmmsm/NewREX-Android-Auto  
 İncelenen dal: master  
-İncelenen dalın güncel commit'i: f12535baa1197433b01d4890c207e1b660981b3c  
+İnceleme başlangıcındaki dal commit'i: 28ed7c34d23e22aa51f86a1b6a891308312b7dec  
 İnceleme türü: Kaynak kodu statik incelemesi. APK, gerçek telefon, Android Auto araç ekranı, OBD adaptörü veya Toyota C-HR üzerinde bu kayıtta test yapılmamıştır.
 
 ## Bulgular
@@ -135,3 +135,18 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Kullanıcı talimatıyla GitHub Actions iş akışı depodan kaldırıldı; otomatik APK derleme/yayın akışı kullanılmayacak.
 - Bu ortamda Java 21 var; ancak Gradle ve Android SDK/ADB bulunmadığından burada Android APK derlemesi yapılamadı.
 - APK üretimi için geliştirici bilgisayarında Android SDK ve Gradle Wrapper ile yerel derleme yapılması gerekir. Bu raporda derleme başarılı olarak işaretlenmemiştir.
+
+
+### 2026-11-15 — Medya bağlantısında TLS düşürme güvenlik düzeltmesi
+
+**Bulgu:** Önceki TlsFallbackFactory, herhangi bir HTTPS medya kaynağında TLS/sertifika hatası oluştuğunda aynı adresi otomatik HTTP ile yeniden açabiliyordu. Ayrıca Media3 HTTP kaynağında çapraz protokol yönlendirmeleri açıktı. Bu, yayın içeriğinin şifrelenmemiş bağlantıya düşmesine neden olabilirdi.
+
+**Düzeltme:**
+- Oynatıcıdan otomatik HTTPS→HTTP TLS fallback kaldırıldı.
+- Çapraz protokol yönlendirmeleri kapatıldı.
+- Uygulama ağ yapılandırmasında kullanıcı tarafından yüklenmiş CA sertifikalarına genel güven kaldırıldı; sistem CA deposu kullanılıyor.
+- Kullanıcının açıkça HTTP olarak tanımladığı IPTV/radyo adresleri, mevcut cleartext ağ politikası nedeniyle çalışabilir. HTTPS sertifika hatası veren kaynaklar artık HTTP'ye otomatik düşürülmez.
+
+**Uyumluluk etkisi:** Hatalı/sona ermiş sertifika kullanan bazı yayınlar artık açılmayabilir. Bu, bağlantıyı sessizce şifresiz hâle getirmekten daha güvenli davranıştır. Yayın kaynağının geçerli TLS sertifikasıyla düzeltilmesi gerekir.
+
+**Doğrulama:** Kaynak kodu değişikliği yapıldı; Android SDK/Gradle bulunmadığından derleme, lint ve cihaz üzerinde medya akışı testi çalıştırılmadı.
