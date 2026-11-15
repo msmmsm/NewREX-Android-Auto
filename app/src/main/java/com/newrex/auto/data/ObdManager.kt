@@ -126,10 +126,7 @@ object ObdManager {
                 closeTransport()
                 throw e
             } catch (e: Exception) {
-                state.value = ConnectionState.ERROR
-                TelemetryHub.obdConnected.value = false
-                TelemetryHub.clearObdData()
-                closeTransport()
+                markConnectionError()
             }
         }
     }
@@ -244,10 +241,7 @@ object ObdManager {
             } catch (e: Exception) {
                 if (isActive) {
                     // Bağlantı/okuma hatasında son geçerli ölçümleri canlı veri gibi göstermeyi bırak.
-                    TelemetryHub.obdConnected.value = false
-                    TelemetryHub.clearObdData()
-                    state.value = ConnectionState.ERROR
-                    closeTransport()
+                    markConnectionError()
                 }
                 break
             }
@@ -265,6 +259,7 @@ object ObdManager {
             TelemetryHub.obdDtcList.value = dtcs
             dtcs
         } catch (e: Exception) {
+            if (e is java.io.IOException) markConnectionError()
             emptyList()
         }
     }
@@ -281,8 +276,16 @@ object ObdManager {
             if (acknowledged) TelemetryHub.obdDtcList.value = emptyList()
             acknowledged
         } catch (e: Exception) {
+            if (e is java.io.IOException) markConnectionError()
             false
         }
+    }
+
+    private fun markConnectionError() {
+        TelemetryHub.obdConnected.value = false
+        TelemetryHub.clearObdData()
+        state.value = ConnectionState.ERROR
+        closeTransport()
     }
 
     private suspend fun sendCommand(cmd: String): String = withContext(Dispatchers.IO) {
@@ -297,6 +300,9 @@ object ObdManager {
                 val skipped = ins.read()
                 if (skipped < 0) throw java.io.IOException("OBD bağlantısı kapandı")
                 drained++
+            }
+            if (ins.available() > 0) {
+                throw java.io.IOException("OBD giriş tamponu beklenmeyen miktarda veri içeriyor")
             }
 
             out.write((cmd + "\r").toByteArray(Charsets.US_ASCII))
