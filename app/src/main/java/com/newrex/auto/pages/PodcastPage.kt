@@ -81,6 +81,7 @@ class PodcastPage(ui: CarUi) : Page(ui) {
             refreshTabs()
             show()
             scope.launch { Prefs.changes.collect { if (tab == Tab.SUBS || tab == Tab.RECENT) show() } }
+            scope.launch { PodcastDownloads.changes.collect { if (tab == Tab.DOWNLOADS) show() } }
             scope.launch { PlayerHub.now.collect { tiles.highlightKey = it?.key } }
         }
     }
