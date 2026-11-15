@@ -56,6 +56,8 @@ object ObdManager {
     private var socket: BluetoothSocket? = null
     private var inStream: InputStream? = null
     private var outStream: OutputStream? = null
+    // null: adaptör destek bitmap'i vermedi; bu durumda temel PID'ler denenir.
+    private var supportedPids: Set<Int>? = null
 
     fun hasBluetoothPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -109,6 +111,9 @@ object ObdManager {
                 sendCommand("ATSP0")   // Otomatik Protokol (CAN/KWP vb.)
                 delay(200)
 
+                // ECU'nun desteklediği PID'leri keşfet; desteklenmeyen PID'ler her döngüde sorgulanmasın.
+                supportedPids = discoverSupportedPids()
+
                 state.value = ConnectionState.CONNECTED
                 TelemetryHub.obdConnected.value = true
 
@@ -141,6 +146,44 @@ object ObdManager {
         socket = null
         inStream = null
         outStream = null
+        supportedPids = null
+    }
+
+    private suspend fun discoverSupportedPids(): Set<Int>? {
+        val supported = mutableSetOf<Int>()
+        val first = parseSupportedPids(sendCommand("0100"), 0x00) ?: return null
+        supported += first
+
+        if (0x20 in supported) {
+            val second = parseSupportedPids(sendCommand("0120"), 0x20)
+            if (second != null) supported += second
+        }
+        if (0x40 in supported) {
+            val third = parseSupportedPids(sendCommand("0140"), 0x40)
+            if (third != null) supported += third
+        }
+        return supported
+    }
+
+    private fun isPidSupported(pid: Int): Boolean = supportedPids?.contains(pid) ?: true
+
+    internal fun parseSupportedPids(raw: String, basePid: Int): Set<Int>? {
+        val prefix = "41" + basePid.toString(16).uppercase().padStart(2, '0')
+        val clean = raw.replace(" ", "").replace("\\r", "").replace("\\n", "").uppercase()
+        val index = clean.indexOf(prefix)
+        if (index < 0) return null
+        val payload = clean.substring(index + prefix.length).take(8)
+        if (payload.length != 8) return null
+        val mask = payload.toLongOrNull(16) ?: return null
+        return (0 until 32).mapNotNull { bit ->
+            if ((mask and (1L shl (31 - bit))) != 0L) basePid + bit + 1 else null
+        }.toSet()
+    }
+
+    internal fun parseEngineLoad(raw: String): Int? {
+        val clean = cleanHex(raw, "4104") ?: return null
+        val value = clean.take(2).toIntOrNull(16) ?: return null
+        return ((value * 100f) / 255f).toInt()
     }
 
     /**
@@ -151,15 +194,25 @@ object ObdManager {
         while (isActive) {
             try {
                 // Hız (km/s) - PID 010D
-                val speedRaw = sendCommand("010D")
-                parseSpeed(speedRaw)?.let { TelemetryHub.obdSpeed.value = it }
+                if (isPidSupported(0x0D)) {
+                    val speedRaw = sendCommand("010D")
+                    parseSpeed(speedRaw)?.let { TelemetryHub.obdSpeed.value = it }
+                }
 
                 // Motor Devri (RPM) - PID 010C
-                val rpmRaw = sendCommand("010C")
-                parseRpm(rpmRaw)?.let { TelemetryHub.obdRpm.value = it }
+                if (isPidSupported(0x0C)) {
+                    val rpmRaw = sendCommand("010C")
+                    parseRpm(rpmRaw)?.let { TelemetryHub.obdRpm.value = it }
+                }
+
+                // Motor yükü - PID 0104
+                if (loopCount % 5 == 0 && isPidSupported(0x04)) {
+                    val loadRaw = sendCommand("0104")
+                    parseEngineLoad(loadRaw)?.let { TelemetryHub.obdEngineLoad.value = it }
+                }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
-                if (loopCount % 5 == 0) {
+                if (loopCount % 5 == 0 && isPidSupported(0x05)) {
                     val tempRaw = sendCommand("0105")
                     parseCoolant(tempRaw)?.let { TelemetryHub.obdCoolantTemp.value = it }
                 }
@@ -171,7 +224,7 @@ object ObdManager {
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
-                if (loopCount % 20 == 0) {
+                if (loopCount % 20 == 0 && isPidSupported(0x2F)) {
                     val fuelRaw = sendCommand("012F")
                     parseFuel(fuelRaw)?.let { TelemetryHub.obdFuelLevel.value = it }
                 }
