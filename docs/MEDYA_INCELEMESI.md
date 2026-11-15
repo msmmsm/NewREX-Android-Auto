@@ -79,7 +79,7 @@ Dal: `master`
 
 ### Statik bulgular / ürün kapsamı
 - **Podcast çevrimdışı indirme eklendi.** Android DownloadManager, bölümleri uygulamaya özel Podcasts klasörüne indirir; Android sistem bildirimi indirme durumunu gösterir. İndirme kaydı URL'nin kendisini değil SHA-256 anahtarını ve DownloadManager kimliğini saklar. İndirilen dosya oynatma sırasında otomatik seçilir; indirme düğmesi araç hareket halindeyken engellenir.
-- İndirilen bölümler Podcast ekranındaki ayrı **İndirilenler** sekmesinden, RSS akışına erişim olmasa da listelenir; uyumlu medya kütüphanesinde de ayrı kategori olarak sunulur.
+- İndirilen bölümler Podcast ekranındaki ayrı **İndirilenler** sekmesinden, RSS akışına erişim olmasa da listelenir; uyumlu medya kütüphanesinde de ayrı kategori olarak sunulur. İndirme tamamlanma/iptal/progress değişimleri medya kütüphanesine bildirilir.
 - İndirme hedefi uygulamaya özel harici depolamadır; uygulama kaldırılırsa dosyalar da kaldırılabilir. İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
