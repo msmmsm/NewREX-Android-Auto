@@ -17,6 +17,9 @@ import com.newrex.auto.data.ObdManager
 import com.newrex.auto.data.PerformanceTimer
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.TelemetryHub
+import com.newrex.auto.data.ToyotaChr2025PassionProfile
+import com.newrex.auto.data.EquipmentStatus
+import com.newrex.auto.data.DataAccessStatus
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Palette
 import com.newrex.auto.ui.WRAP
@@ -208,6 +211,34 @@ object PhoneCockpitHelper {
             "Bu standart değer SOC (şarj seviyesi) veya batarya sağlık testi (SOH) değildir. Hücre/blok gerilimi ve sıcaklık gibi Toyota'ya özel veriler bu ekranda henüz okunmaz.",
             10f, Palette.TEXT_FAINT, lines = 3
         ), lp(MATCH, WRAP).margins(b = dp(12)))
+
+        // Kullanıcının aracı için donanım profili; donanım varlığı ile veri erişimi ayrı gösterilir.
+        cockpitBox.addView(label(ToyotaChr2025PassionProfile.displayName, 14f, Palette.TEXT, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(8), b = dp(4)))
+        cockpitBox.addView(label(
+            "Kamera/radar envanteri — OEM sensörleri uygulamaya doğrudan görüntü veya ham hedef akışı vermez.",
+            11f, Palette.TEXT_DIM, lines = 2
+        ), lp(MATCH, WRAP).margins(b = dp(6)))
+        ToyotaChr2025PassionProfile.sensors.forEach { sensor ->
+            val equipment = when (sensor.equipmentStatus) {
+                EquipmentStatus.CONFIRMED_PRESENT -> "Donanım: mevcut"
+                EquipmentStatus.NOT_INCLUDED_IN_TRIM -> "Donanım: Passion paketinde yok"
+                EquipmentStatus.VARIANT_DEPENDENT -> "Donanım: varyanta bağlı"
+            }
+            val access = when (sensor.dataAccess) {
+                DataAccessStatus.OEM_SYSTEM_ONLY -> "Erişim: OEM sisteminde"
+                DataAccessStatus.DIAGNOSTIC_STATUS_ONLY -> "Erişim: teşhis durumu araştırılabilir"
+                DataAccessStatus.NOT_VERIFIED -> "Erişim: doğrulanmadı"
+            }
+            cockpitBox.addView(label("${sensor.name} · $equipment · $access", 11f, Palette.TEXT, bold = true),
+                lp(MATCH, WRAP).margins(t = dp(4)))
+            cockpitBox.addView(label(sensor.note, 10f, Palette.TEXT_FAINT, lines = 3),
+                lp(MATCH, WRAP).margins(t = dp(1), b = dp(4)))
+        }
+        cockpitBox.addView(label(
+            "Not: Envanter 2025 Türkiye Hybrid Passion donanım tablosuna dayanır. Araç üzerindeki donanım/ECU yazılımı fiziksel doğrulama gerektirir.",
+            10f, Palette.TEXT_FAINT, lines = 2
+        ), lp(MATCH, WRAP).margins(t = dp(4), b = dp(10)))
 
         // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
         cockpitBox.addView(label("🩺 Araç arıza tanılama", 15f, bold = true))
