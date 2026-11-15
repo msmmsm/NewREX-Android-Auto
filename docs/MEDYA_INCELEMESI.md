@@ -25,6 +25,7 @@ Dal: `master`
 - MediaSession `onPlaybackResumption` callback'i kayıtlı kuyruğu ve podcast konumunu geri veriyor; MediaButtonReceiver sistem medya düğmesi/yeniden başlatma talebini servise iletiyor.
 - Geri yükleme yalnızca HTTP(S), sunucu adı bulunan ve açık kullanıcı/parola veya bilinen token parametresi taşımayan URL'lerde yapılır. Kimlik doğrulama başlıkları/çerezleri saklanmaz. Özel kimlik doğrulamalı yayınlar otomatik geri yüklenmeyebilir.
 - Kullanıcı `Durdur` komutunu verdiğinde kuyruk kaydı silinir; beklenmedik servis/süreç kapanışında son kuyruk korunur.
+- DownloadManager tamamlanan dosyaları çevrimdışı listeye almadan önce 1 bayt–512 MiB boyut aralığı ve medya MIME türü (`audio/*`, Ogg, MP4 veya `application/octet-stream`) açısından doğrular; doğrulamayı geçmeyen indirme kaydı ve dosyası kaldırılır.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
 - Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var. Yeniden bağlanma denemeleri ilk açılışta 2, daha önce çalmış akışta 10 denemeyle sınırlıdır; bekleme 1/2/4/8/15 saniye düzenindedir. Kullanıcı veya Android Auto duraklattığında bekleyen yeniden bağlanma iptal edilir ve yeniden yükleme duraklatma durumunu korur.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
@@ -51,7 +52,8 @@ Dal: `master`
 
 ### Mevcut uygulama
 - Kullanıcı URL'si veya `content://` belge URI'si üzerinden M3U metni okunabiliyor.
-- Sınırlı akış okuyucusu, sıfır uzunlukta okuma döndüren `InputStream` uygulamalarında tek baytlık geri dönüş kullanır; böylece döngüde takılmaz.\n- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor. Ağ ve `content://` liste okumaları 8 MiB sınırıyla yapılır; MIME türü M3U ve metin biçimleriyle sınırlandırılır; aşırı büyük eski önbellek silinir.
+- Sınırlı akış okuyucusu, sıfır uzunlukta okuma döndüren `InputStream` uygulamalarında tek baytlık geri dönüş kullanır; böylece döngüde takılmaz.
+- HTTP listeleri 6 saatlik dosya önbelleğine yazılıyor; indirme hatasında önbellek varsa kullanılabiliyor. Ağ ve `content://` liste okumaları 8 MiB sınırıyla yapılır; MIME türü M3U ve metin biçimleriyle sınırlandırılır; aşırı büyük eski önbellek silinir.
 - `#EXTINF` içinden kanal adı, `tvg-logo` ve `group-title` okunuyor.
 - Aynı URL'ye sahip kanallar tekilleştiriliyor.
 
@@ -96,11 +98,14 @@ Dal: `master`
 
 ### Düzeltme ve test planı
 - [x] RSS tarih biçimlerine toleranslı ayrıştırma ve bozuk tarih testleri eklendi.
-- [x] RSS MIME türü kontrolü, güvenli yönlendirme sınırı ve HTTPS→HTTP düşüşünü engelleme eklendi.\n- [ ] İndirilen enclosure dosyasının MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
+- [x] RSS MIME türü kontrolü, güvenli yönlendirme sınırı ve HTTPS→HTTP düşüşünü engelleme eklendi.
+- [x] Tamamlanan indirmede MIME türü ve 512 MiB bölüm boyutu üst sınırı doğrulanır; geçersiz dosya kaldırılır.
+- [ ] İndirilen enclosure dosyasının MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [x] RSS enclosure şeması, kimlik bilgisi ve uzunluk doğrulaması için regresyon testleri eklendi.
 - [x] RSS feed URL doğrulaması ve 4 MiB indirme sınırı eklendi; sınır davranışı için birim testleri eklendi.
-- [x] RSS XML namespace yerel adları desteklenecek şekilde ayrıştırma ve harici belge bildirimi kapatma eklendi.\n- [ ] Uzun RSS, eksik alan ve bozuk XML testleri; XML namespace ayrıştırma kodu eklendi ancak farklı sağlayıcılarla saha doğrulaması yapılmadı.
+- [x] RSS XML namespace yerel adları desteklenecek şekilde ayrıştırma ve harici belge bildirimi kapatma eklendi.
+- [ ] Uzun RSS, eksik alan ve bozuk XML testleri; XML namespace ayrıştırma kodu eklendi ancak farklı sağlayıcılarla saha doğrulaması yapılmadı.
 - [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
 
