@@ -308,7 +308,7 @@ object ObdManager {
 
     internal fun parseSpeed(raw: String): Float? {
         val clean = cleanHex(raw, "410D") ?: return null
-        return clean.toIntOrNull(16)?.toFloat()
+        return clean.take(2).toIntOrNull(16)?.toFloat()
     }
 
     internal fun parseRpm(raw: String): Int? {
@@ -321,13 +321,13 @@ object ObdManager {
 
     internal fun parseCoolant(raw: String): Int? {
         val clean = cleanHex(raw, "4105") ?: return null
-        val a = clean.toIntOrNull(16) ?: return null
+        val a = clean.take(2).toIntOrNull(16) ?: return null
         return a - 40
     }
 
     internal fun parseFuel(raw: String): Float? {
         val clean = cleanHex(raw, "412F") ?: return null
-        val a = clean.toIntOrNull(16) ?: return null
+        val a = clean.take(2).toIntOrNull(16) ?: return null
         return (a * 100f) / 255f
     }
 
