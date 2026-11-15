@@ -19,6 +19,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaLibraryService
+import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.newrex.auto.data.Kind
@@ -65,7 +67,7 @@ object PlayerHub {
     private val stable = Runnable { retries = 0 }
 
     private var exo: ExoPlayer? = null
-    private var session: MediaSession? = null
+    private var session: MediaLibraryService.MediaLibrarySession? = null
     private var sessionPlayer: Player? = null
     private var queue: List<MediaEntry> = emptyList()
     private var index = 0
@@ -100,7 +102,7 @@ object PlayerHub {
     val player: ExoPlayer get() = exo ?: error("OmniDriveMediaService henüz başlatılmadı")
 
     /** MediaSessionService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
-    internal val mediaSession: MediaSession? get() = session
+    internal val mediaSession: MediaLibraryService.MediaLibrarySession? get() = session
 
     /** Media3 playback-resumption callback'i için kaydedilmiş kuyruğu belleğe alır. */
     internal fun restoreQueue(snapshot: com.newrex.auto.data.PlaybackQueueSnapshot) {
@@ -219,27 +221,110 @@ object PlayerHub {
         applyQuality()
         this.sessionPlayer = sessionPlayer
         // Oturum servis oluşturulurken hazırlanır; etkinlik kapanınca bırakılmaz.
-        session = MediaSession.Builder(context.applicationContext, sessionPlayer)
-            .setId("omnidrive")
-            .setCallback(object : MediaSession.Callback {
-                @OptIn(UnstableApi::class)
-                override fun onPlaybackResumption(
-                    mediaSession: MediaSession,
-                    controller: MediaSession.ControllerInfo,
-                    isForPlayback: Boolean,
-                ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
-                    val snapshot = Prefs.playbackQueue()
-                        ?: return Futures.immediateFailedFuture(IllegalStateException("Kayıtlı oynatma kuyruğu yok"))
-                    restoreQueue(snapshot)
-                    val items = if (isForPlayback) snapshot.entries else listOf(snapshot.entries[snapshot.index])
-                    val startIndex = if (isForPlayback) snapshot.index else 0
-                    val startPosition = if (isForPlayback && items[startIndex].kind == Kind.PODCAST) snapshot.positionMs else 0L
-                    return Futures.immediateFuture(
-                        MediaSession.MediaItemsWithStartPosition(items.map(::itemFor), startIndex, startPosition)
-                    )
+        val libraryCallback = object : MediaLibraryService.MediaLibrarySession.Callback {
+            @OptIn(UnstableApi::class)
+            override fun onPlaybackResumption(
+                mediaSession: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                isForPlayback: Boolean,
+            ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+                val snapshot = Prefs.playbackQueue()
+                    ?: return Futures.immediateFailedFuture(IllegalStateException("Kayıtlı oynatma kuyruğu yok"))
+                restoreQueue(snapshot)
+                val items = if (isForPlayback) snapshot.entries else listOf(snapshot.entries[snapshot.index])
+                val startIndex = if (isForPlayback) snapshot.index else 0
+                val startPosition = if (isForPlayback && items[startIndex].kind == Kind.PODCAST) snapshot.positionMs else 0L
+                return Futures.immediateFuture(
+                    MediaSession.MediaItemsWithStartPosition(items.map(::itemFor), startIndex, startPosition)
+                )
+            }
+
+            @OptIn(UnstableApi::class)
+            override fun onGetLibraryRoot(
+                session: MediaLibraryService.MediaLibrarySession,
+                browser: MediaSession.ControllerInfo,
+                params: MediaLibraryService.LibraryParams?,
+            ): ListenableFuture<MediaLibraryService.LibraryResult<MediaItem>> {
+                val root = MediaItem.Builder()
+                    .setMediaId(LIBRARY_ROOT)
+                    .setMediaMetadata(MediaMetadata.Builder()
+                        .setTitle("OmniDrive")
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .build())
+                    .build()
+                return Futures.immediateFuture(MediaLibraryService.LibraryResult.ofItem(root, params))
+            }
+
+            @OptIn(UnstableApi::class)
+            override fun onGetChildren(
+                session: MediaLibraryService.MediaLibrarySession,
+                browser: MediaSession.ControllerInfo,
+                parentId: String,
+                page: Int,
+                pageSize: Int,
+                params: MediaLibraryService.LibraryParams?,
+            ): ListenableFuture<MediaLibraryService.LibraryResult<ImmutableList<MediaItem>>> {
+                val children = when (parentId) {
+                    LIBRARY_ROOT -> libraryCategories()
+                    LIBRARY_FAVORITES_TV -> Prefs.favorites(Kind.TV).map(::itemFor)
+                    LIBRARY_FAVORITES_RADIO -> Prefs.favorites(Kind.RADIO).map(::itemFor)
+                    LIBRARY_FAVORITES_PODCAST -> Prefs.favorites(Kind.PODCAST).map(::itemFor)
+                    LIBRARY_RECENTS -> Prefs.recents().map(::itemFor)
+                    else -> emptyList()
                 }
-            })
-            .build()
+                val from = (page.toLong() * pageSize).coerceAtMost(children.size.toLong()).toInt()
+                val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(children.size.toLong()).toInt()
+                return Futures.immediateFuture(
+                    MediaLibraryService.LibraryResult.ofItemList(ImmutableList.copyOf(children.subList(from, to)), params)
+                )
+            }
+
+            @OptIn(UnstableApi::class)
+            override fun onGetItem(
+                session: MediaLibraryService.MediaLibrarySession,
+                browser: MediaSession.ControllerInfo,
+                mediaId: String,
+            ): ListenableFuture<MediaLibraryService.LibraryResult<MediaItem>> {
+                val item = when (mediaId) {
+                    LIBRARY_ROOT -> libraryRootItem()
+                    LIBRARY_FAVORITES_TV -> categoryItem(mediaId, "TV Favorileri")
+                    LIBRARY_FAVORITES_RADIO -> categoryItem(mediaId, "Radyo Favorileri")
+                    LIBRARY_FAVORITES_PODCAST -> categoryItem(mediaId, "Podcast Favorileri")
+                    LIBRARY_RECENTS -> categoryItem(mediaId, "Son Dinlenenler")
+                    else -> (Prefs.favorites() + Prefs.recents()).firstOrNull { it.key == mediaId }?.let(::itemFor)
+                }
+                return if (item != null) Futures.immediateFuture(MediaLibraryService.LibraryResult.ofItem(item, null))
+                else Futures.immediateFuture(MediaLibraryService.LibraryResult.ofError(MediaSession.SessionError.ERROR_BAD_VALUE))
+            }
+
+            @OptIn(UnstableApi::class)
+            override fun onGetSearchResult(
+                session: MediaLibraryService.MediaLibrarySession,
+                browser: MediaSession.ControllerInfo,
+                query: String,
+                page: Int,
+                pageSize: Int,
+                params: MediaLibraryService.LibraryParams?,
+            ): ListenableFuture<MediaLibraryService.LibraryResult<ImmutableList<MediaItem>>> {
+                val normalized = query.trim().lowercase(java.util.Locale.ROOT)
+                val matches = (Prefs.favorites() + Prefs.recents())
+                    .distinctBy { it.key }
+                    .filter { normalized.isNotEmpty() && (
+                        it.title.lowercase(java.util.Locale.ROOT).contains(normalized) ||
+                        it.group.lowercase(java.util.Locale.ROOT).contains(normalized)
+                    ) }
+                    .map(::itemFor)
+                val from = (page.toLong().coerceAtLeast(0) * pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
+                val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
+                return Futures.immediateFuture(
+                    MediaLibraryService.LibraryResult.ofItemList(ImmutableList.copyOf(matches.subList(from, to)), params)
+                )
+            }
+        }
+        session = MediaLibraryService.MediaLibrarySession.Builder(
+            context.applicationContext, sessionPlayer, libraryCallback
+        ).setId("omnidrive").build()
         handler.post(ticker)
     }
 
@@ -375,17 +460,45 @@ object PlayerHub {
         retries = 0
     }
 
+    private const val LIBRARY_ROOT = "omnidrive:root"
+    private const val LIBRARY_FAVORITES_TV = "omnidrive:favorites:tv"
+    private const val LIBRARY_FAVORITES_RADIO = "omnidrive:favorites:radio"
+    private const val LIBRARY_FAVORITES_PODCAST = "omnidrive:favorites:podcast"
+    private const val LIBRARY_RECENTS = "omnidrive:recents"
+
+    private fun libraryRootItem() = MediaItem.Builder()
+        .setMediaId(LIBRARY_ROOT)
+        .setMediaMetadata(MediaMetadata.Builder().setTitle("OmniDrive")
+            .setIsBrowsable(true).setIsPlayable(false).build())
+        .build()
+
+    private fun categoryItem(id: String, title: String) = MediaItem.Builder()
+        .setMediaId(id)
+        .setMediaMetadata(MediaMetadata.Builder().setTitle(title)
+            .setIsBrowsable(true).setIsPlayable(false).build())
+        .build()
+
+    private fun libraryCategories(): List<MediaItem> = listOf(
+        categoryItem(LIBRARY_FAVORITES_TV, "TV Favorileri"),
+        categoryItem(LIBRARY_FAVORITES_RADIO, "Radyo Favorileri"),
+        categoryItem(LIBRARY_FAVORITES_PODCAST, "Podcast Favorileri"),
+        categoryItem(LIBRARY_RECENTS, "Son Dinlenenler"),
+    )
+
     private fun itemFor(e: MediaEntry) = MediaItem.Builder()
         .setMediaId(e.key)
         .setUri(e.url)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(e.title)
+                .setIsBrowsable(false)
+                .setIsPlayable(true)
                 .setArtist(when (e.kind) {
                     Kind.TV -> "OmniDrive TV"
                     Kind.RADIO -> "OmniDrive Radyo"
                     Kind.PODCAST -> e.group.ifBlank { "OmniDrive Podcast" }
                 })
+                .apply { e.image?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { setArtworkUri(android.net.Uri.parse(it)) } }
                 .build()
         )
         .apply { if (e.url.contains(".m3u8", ignoreCase = true)) setMimeType(MimeTypes.APPLICATION_M3U8) }
