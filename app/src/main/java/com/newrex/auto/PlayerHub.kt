@@ -273,12 +273,12 @@ object PlayerHub {
             ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
                 val children = when (parentId) {
                     LIBRARY_ROOT -> libraryCategories()
-                    LIBRARY_FAVORITES_TV -> Prefs.favorites(Kind.TV).map(::itemFor)
-                    LIBRARY_FAVORITES_RADIO -> Prefs.favorites(Kind.RADIO).map(::itemFor)
-                    LIBRARY_FAVORITES_PODCAST -> Prefs.favorites(Kind.PODCAST).map(::itemFor)
-                    LIBRARY_RECENTS -> Prefs.recents().map(::itemFor)
-                    LIBRARY_QUEUE -> libraryQueue().map(::itemFor)
-                    LIBRARY_NOW_PLAYING -> listOfNotNull(now.value).map(::itemFor)
+                    LIBRARY_FAVORITES_TV -> externalEntries(Prefs.favorites(Kind.TV)).map(::itemFor)
+                    LIBRARY_FAVORITES_RADIO -> externalEntries(Prefs.favorites(Kind.RADIO)).map(::itemFor)
+                    LIBRARY_FAVORITES_PODCAST -> externalEntries(Prefs.favorites(Kind.PODCAST)).map(::itemFor)
+                    LIBRARY_RECENTS -> externalEntries(Prefs.recents()).map(::itemFor)
+                    LIBRARY_QUEUE -> externalEntries(libraryQueue()).map(::itemFor)
+                    LIBRARY_NOW_PLAYING -> externalEntries(listOfNotNull(now.value)).map(::itemFor)
                     else -> emptyList()
                 }
                 val safePage = page.coerceAtLeast(0)
@@ -304,7 +304,8 @@ object PlayerHub {
                     LIBRARY_RECENTS -> categoryItem(mediaId, "Son Dinlenenler")
                     LIBRARY_QUEUE -> categoryItem(mediaId, "Çalma Kuyruğu")
                     LIBRARY_NOW_PLAYING -> categoryItem(mediaId, "Şimdi Çalıyor")
-                    else -> (Prefs.favorites() + Prefs.recents() + libraryQueue()).firstOrNull { it.key == mediaId }?.let(::itemFor)
+                    else -> externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
+                        .firstOrNull { it.key == mediaId }?.let(::itemFor)
                 }
                 return if (item != null) Futures.immediateFuture(LibraryResult.ofItem(item, null))
                 else Futures.immediateFuture(LibraryResult.ofError(SessionError(SessionError.ERROR_BAD_VALUE, "Medya öğesi bulunamadı")))
@@ -320,7 +321,7 @@ object PlayerHub {
                 params: MediaLibraryService.LibraryParams?,
             ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
                 val normalized = query.trim().lowercase(java.util.Locale.ROOT)
-                val matches = (Prefs.favorites() + Prefs.recents() + libraryQueue())
+                val matches = externalEntries(Prefs.favorites() + Prefs.recents() + libraryQueue())
                     .distinctBy { it.key }
                     .filter { normalized.isNotEmpty() && (
                         it.title.lowercase(java.util.Locale.ROOT).contains(normalized) ||
@@ -494,6 +495,9 @@ object PlayerHub {
             .setIsBrowsable(true).setIsPlayable(false).build())
         .build()
 
+    private fun externalEntries(entries: List<MediaEntry>): List<MediaEntry> =
+        entries.filter { PlaybackQueueSnapshot.isSafeExternalUrl(it.url) }
+
     private fun libraryCategories(): List<MediaItem> = listOf(
         categoryItem(LIBRARY_FAVORITES_TV, "TV Favorileri"),
         categoryItem(LIBRARY_FAVORITES_RADIO, "Radyo Favorileri"),
@@ -505,7 +509,7 @@ object PlayerHub {
 
     private fun itemFor(e: MediaEntry) = MediaItem.Builder()
         .setMediaId(e.key)
-        .apply { if (PlaybackQueueSnapshot.isSafeExternalUrl(e.url)) setUri(e.url) }
+        .setUri(e.url)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(e.title)
