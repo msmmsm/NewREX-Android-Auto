@@ -163,3 +163,9 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - PRIVACY.md Bluetooth izninin yalnızca eşleştirilmiş OBD adaptörüne bağlanmak için kullanıldığını açıklıyor.
 
 **Doğrulama:** Kaynak kodu ve manifest statik olarak incelendi. Android izin diyaloğu ve gerçek Bluetooth adaptörüyle bağlantı testi yapılmadı.
+
+
+### F0-08 — BLE desteği beyanı ve güncelleme bağlantısı doğrulaması
+- Manifestte BLE özelliği gereksiz yere beyan ediliyordu; mevcut OBD yöneticisi Bluetooth Classic SPP kullanıyor ve BLE bağlantısı uygulamıyor. BLE feature bildirimi kaldırıldı ve izin açıklaması Classic SPP ile sınırlandırıldı. README zaten BLE desteğinin bulunmadığını açıklıyor.
+- Güncelleme denetimi GitHub Releases API yanıtındaki `html_url` değerini açıyordu. Uygulama artık güncelleme ekranında sabit, resmi OmniDrive depo Releases adresini açıyor; API yanıtındaki yönlendirme URL'si kullanıcıya açılan bağlantı olarak kullanılmıyor.
+- Bu değişiklikler kaynak kodu statik olarak işlendi. Derleme ve cihaz testi yapılmadı.
