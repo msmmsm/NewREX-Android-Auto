@@ -43,13 +43,12 @@ internal object PlaylistParser {
                     val isHidden = group?.contains("religious", ignoreCase = true) == true ||
                         hiddenNames.any { channelName.contains(it, ignoreCase = true) }
                     if (!isHidden) {
-                        val resolved = resolveUrl(line, sourceUrl) ?: run {
-                            name = null; logo = null; group = null
-                            continue
+                        val resolved = resolveUrl(line, sourceUrl)
+                        if (resolved != null) {
+                            val groupName = group?.split(';')?.firstOrNull()?.trim()?.ifBlank { null }
+                                ?.let { groupNames[it.lowercase()] ?: it } ?: fallbackGroup
+                            out += MediaEntry(Kind.TV, channelName, resolved, logo?.ifBlank { null }, groupName)
                         }
-                        val groupName = group?.split(';')?.firstOrNull()?.trim()?.ifBlank { null }
-                            ?.let { groupNames[it.lowercase()] ?: it } ?: fallbackGroup
-                        out += MediaEntry(Kind.TV, channelName, resolved, logo?.ifBlank { null }, groupName)
                     }
                     name = null
                     logo = null
