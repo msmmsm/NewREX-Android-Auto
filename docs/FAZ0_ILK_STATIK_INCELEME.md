@@ -150,3 +150,13 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 **Uyumluluk etkisi:** Hatalı/sona ermiş sertifika kullanan bazı yayınlar artık açılmayabilir. Bu, bağlantıyı sessizce şifresiz hâle getirmekten daha güvenli davranıştır. Yayın kaynağının geçerli TLS sertifikasıyla düzeltilmesi gerekir.
 
 **Doğrulama:** Kaynak kodu değişikliği yapıldı; Android SDK/Gradle bulunmadığından derleme, lint ve cihaz üzerinde medya akışı testi çalıştırılmadı.
+
+
+### F0-07 — Gereksiz Bluetooth tarama izni ve uygulama içi gizlilik ifadesi
+**Dosyalar:** app/src/main/AndroidManifest.xml, app/src/main/java/com/newrex/auto/MainActivity.kt, PRIVACY.md  
+**Durum:** Kaynak kodunda düzeltildi
+- OBD yöneticisi yalnızca Android ile önceden eşleştirilmiş Bluetooth cihazlarını `bondedDevices` üzerinden listeliyor; yakındaki cihazları taramıyor. Bu nedenle Android 12+ `BLUETOOTH_SCAN` izni kaldırıldı. `BLUETOOTH_CONNECT` izni korundu.
+- Telefon ekranının altındaki "hiçbir veri toplanmaz" ifadesi, üçüncü taraf servislerin IP adresini görebildiğini ve hava durumu sorgusunda yaklaşık konum gönderildiğini belirten gizlilik belgesiyle çelişiyordu. Metin, reklam/analiz takibinin bulunmadığını ve bazı özelliklerin üçüncü taraf servislere bağlandığını açıklayacak şekilde düzeltildi.
+- PRIVACY.md Bluetooth izninin yalnızca eşleştirilmiş OBD adaptörüne bağlanmak için kullanıldığını açıklıyor.
+
+**Doğrulama:** Kaynak kodu ve manifest statik olarak incelendi. Android izin diyaloğu ve gerçek Bluetooth adaptörüyle bağlantı testi yapılmadı.
