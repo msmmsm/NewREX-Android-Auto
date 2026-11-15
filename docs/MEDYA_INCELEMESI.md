@@ -32,6 +32,7 @@ Dal: `master`
 - [x] Medya oturumu `MediaLibraryService` / `MediaLibrarySession` olarak genişletildi; Türkçe favori/son dinlenen/çalma kuyruğu/şimdi çalıyor kütüphane ağacı, arama başlatma ve sayfalı arama sonuçları callback'leri eklendi.
 - [x] Harici katalog için URL güvenlik filtresi ve token/kullanıcı bilgisi sızıntısı regresyon testi eklendi.
 - [x] Araç arayüzü denetimleri MediaController üzerinden MediaLibrarySession'a yönlendirildi; ileri/geri komutları döngüsel medya kuyruğuna bağlandı.
+- [x] Ağ durumu izleme, çevrimdışı bekleme ve bağlantı geri geldiğinde kontrollü yeniden bağlanma eklendi.
 - [ ] Arka plana alma, ekran kilidi ve araç bağlantısının kesilmesi/yeniden kurulması gerçek cihazlarda doğrulanmalı.
 - [x] Kuyruğu, seçili öğeyi ve podcast konumunu kalıcı sakla; Media3 `onPlaybackResumption` ve `MediaButtonReceiver` ile servis yeniden oluşturulduğunda kurtarma akışını uygula.
 - [ ] Force-stop, cihaz yeniden başlatma, Android Auto bağlantı kesilmesi ve servis zaman aşımı senaryolarını fiziksel cihazlarda doğrula; sistem üreticisi kısıtlamaları nedeniyle otomatik başlatma garantisi verilmez.
