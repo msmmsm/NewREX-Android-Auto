@@ -261,3 +261,13 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - `ObdDiagnostics.description(code)` sınırlı Türkçe DTC kataloğunda bulunan kodlara açıklama verir. Katalogda bulunmayan kodlar için açıklama uydurulmaz; ham kod korunur.
 - Freeze Frame bitmap'i, CAN başlığı, kare numarası, eksik yanıt ve bilinen/bilinmeyen DTC açıklaması için birim testleri eklendi.
 - Bu aşama veri erişim katmanını sağlar. DTC/Freeze Frame kullanıcı ekranı, gerçek ECU uyumluluk doğrulaması ve araç üzerindeki kabul testi henüz tamamlanmamıştır.
+
+
+### Telefon kokpiti — OBD-II arıza tanılama arayüzü
+
+- Telefon ekranındaki **Kokpit & Araç Telemetrisi** bölümüne arıza tanılama alanı eklendi.
+- Kullanıcı, bağlı ELM327 üzerinden Mode 03 arıza kodlarını elle okuyabilir. Kodlar Türkçe katalogda varsa açıklamasıyla, yoksa açıklama uydurulmadan ham koduyla gösterilir.
+- Mode 02 dondurulmuş kare okuma ayrı bir eylemdir. ECU'nun desteklediği alanlar ve kare numarası gösterilir; geçmiş ölçümler canlı sensör değerlerine aktarılmaz.
+- Mode 04 temizleme eylemi ayrı düğmede ve açık onay penceresi arkasındadır. Ekran yalnızca ECU'dan olumlu Mode 04 yanıtı geldiyse temizleme isteğinin onaylandığını bildirir. Arızanın onarıldığı iddia edilmez; hazırlık monitörlerinin sıfırlanabileceği uyarılır.
+- Boş/henüz taranmamış liste ile tarama sonrası görüntülenebilir kod alınamaması ayrı metinlerle gösterilir. ECU yanıtının tüm modülleri kapsadığı varsayılmaz.
+- DTC geçmişi, otomatik canlı yenileme ve gerçek araç/ELM327 kabul testi bu kapsamda tamamlanmış değildir. Android derlemesi ve JUnit testleri çalıştırılmadı; fiziksel araç doğrulaması bekliyor.
