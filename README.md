@@ -33,8 +33,8 @@ Araç hareket hâlindeyken medya davranışı Android Auto ve araç güvenliği 
 
 ## 📲 Kurulum
 
-**1. İndir**
-[Buraya dokun](https://github.com/msmmsm/NewREX-Android-Auto/releases/latest), sonu **.apk** olan dosyayı indir.
+**1. APK'yı edin**
+OmniDrive için henüz bu depoda yayımlanmış bir APK sürümü yok. Derleme doğrulandıktan ve ilk sürüm yayımlandıktan sonra [Sürümler](https://github.com/msmmsm/NewREX-Android-Auto/releases) sayfasından APK indirilebilir.
 
 **2. Kur**
 İndirdiğin dosyaya dokun → **Yükle**.
@@ -46,7 +46,7 @@ OmniDrive'ı aç → en alttaki **Yardım** → **Arabada görünür yap** → *
 **4. Arabaya bağlan**
 OmniDrive menüde çıkar. 🎉
 
-> Her güncellemede 2–4. adımları tekrarla.
+
 
 ### Görünmüyor mu?
 
