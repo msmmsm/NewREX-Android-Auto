@@ -80,7 +80,8 @@ Dal: `master`
 ### Statik bulgular / ürün kapsamı
 - **Podcast çevrimdışı indirme eklendi.** Android DownloadManager, bölümleri uygulamaya özel Podcasts klasörüne indirir; Android sistem bildirimi indirme durumunu gösterir. İndirme kaydı URL'nin kendisini değil SHA-256 anahtarını ve DownloadManager kimliğini saklar. İndirilen dosya oynatma sırasında otomatik seçilir; indirme düğmesi araç hareket halindeyken engellenir.
 - İndirilen bölümler Podcast ekranındaki ayrı **İndirilenler** sekmesinden, RSS akışına erişim olmasa da listelenir; uyumlu medya kütüphanesinde de ayrı kategori olarak sunulur. İndirme tamamlanma/iptal/progress değişimleri medya kütüphanesine bildirilir.
-- İndirme hedefi uygulamaya özel harici depolamadır; uygulama kaldırılırsa dosyalar da kaldırılabilir. İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
+- Android 10 ve üzeri sürümlerde dosyalar ortak **İndirilenler/OmniDrive Podcasts** klasörüne yazılır; böylece DownloadManager'ın yalnızca uygulamaya özel alandaki görünmeyen dosyaları temizlik sırasında kaldırması riski azaltılır. Android 8/9'da uygulamaya özel Podcast klasörü kullanılır. Android 10+ ortak klasördeki dosyalar uygulama kaldırıldığında kullanıcı tarafından ayrıca silinene kadar kalabilir.
+- İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
 - RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
 - **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
