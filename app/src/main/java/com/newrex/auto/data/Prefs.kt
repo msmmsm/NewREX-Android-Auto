@@ -188,6 +188,54 @@ object Prefs {
         get() = sp.getLong("diag_session", 0)
         set(v) = sp.edit().putLong("diag_session", v).apply()
 
+    // ---- OBD-II kalıcı arıza geçmişi ----
+
+    /** Son 100 farklı DTC kaydının ilk/son görülme ve tarama bilgisi. */
+    val dtcHistory: List<DtcHistoryEntry>
+        get() = runCatching {
+            val raw = sp.getString("obd_dtc_history_v1", "[]") ?: "[]"
+            val array = JSONArray(raw)
+            (0 until array.length()).mapNotNull { index ->
+                val item = array.optJSONObject(index) ?: return@mapNotNull null
+                val code = item.optString("code").uppercase()
+                if (!code.matches(Regex("[PCBU][0-3][0-9A-F]{3}"))) return@mapNotNull null
+                DtcHistoryEntry(
+                    code = code,
+                    firstSeenMs = item.optLong("firstSeenMs", 0L),
+                    lastSeenMs = item.optLong("lastSeenMs", 0L),
+                    scanCount = item.optInt("scanCount", 1).coerceAtLeast(1),
+                    active = item.optBoolean("active", false),
+                    clearedAtMs = item.optLong("clearedAtMs", -1L).takeIf { it >= 0L }
+                )
+            }.sortedByDescending { it.lastSeenMs }.take(DtcHistory.MAX_ENTRIES)
+        }.getOrDefault(emptyList())
+
+    /** Yalnızca doğrulanmış Mode 03 yanıtları bu metodu çağırmalıdır. */
+    fun recordDtcScan(codes: List<String>, scannedAtMs: Long = System.currentTimeMillis()) {
+        val next = DtcHistory.recordScan(dtcHistory, codes, scannedAtMs)
+        saveDtcHistory(next)
+    }
+
+    /** ECU Mode 04 temizleme isteğini olumlu yanıtladığında geçmiş kayıtları koruyarak pasifleştirir. */
+    fun markDtcHistoryCleared(clearedAtMs: Long = System.currentTimeMillis()) {
+        saveDtcHistory(DtcHistory.markCleared(dtcHistory, clearedAtMs))
+    }
+
+    private fun saveDtcHistory(entries: List<DtcHistoryEntry>) {
+        val array = JSONArray()
+        entries.take(DtcHistory.MAX_ENTRIES).forEach { entry ->
+            array.put(JSONObject()
+                .put("code", entry.code)
+                .put("firstSeenMs", entry.firstSeenMs)
+                .put("lastSeenMs", entry.lastSeenMs)
+                .put("scanCount", entry.scanCount)
+                .put("active", entry.active)
+                .put("clearedAtMs", entry.clearedAtMs ?: -1L))
+        }
+        sp.edit().putString("obd_dtc_history_v1", array.toString()).apply()
+        bump()
+    }
+
     // ---- Medya oynatma kuyruğu ----
 
     /** Uygulama süreci yeniden oluşturulursa son medya kuyruğunu geri yüklemek için saklanır. */
