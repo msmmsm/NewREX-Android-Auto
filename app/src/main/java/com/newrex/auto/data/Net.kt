@@ -14,7 +14,7 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 object Net {
-    const val USER_AGENT = "NewREX-Android-Auto/1.0"
+    const val USER_AGENT = "OmniDrive/1.0"
 
     val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
