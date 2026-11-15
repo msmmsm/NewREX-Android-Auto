@@ -189,7 +189,7 @@ class MainActivity : Activity() {
         col.addView(section(R.drawable.ic_info, 0xFF8B93A7.toInt(), "Yardım", summary().apply { text = "Arabada görünmüyorsa buraya bak" },
             label("1. Telefonu araca bağla, Android Auto açılsın.\n" +
                 "2. Araç ekranında uygulamalar menüsüne gir.\n" +
-                "3. \"NewREX Android Auto\" simgesine dokun.\n\n" +
+                "3. \"OmniDrive Android Auto\" simgesine dokun.\n\n" +
                 "Görünmüyorsa: Android Auto ayarları → Geliştirici ayarları → \"Bilinmeyen kaynaklar\" açık olmalı.",
                 14f, Palette.TEXT_DIM, lines = 10),
             label("Sorun giderme", 15f, bold = true),
@@ -200,7 +200,7 @@ class MainActivity : Activity() {
             label(diagnostics(), 13f, Palette.TEXT_DIM, lines = 20)))
 
         col.addView(label(
-            "NewREX Android Auto ${BuildConfig.VERSION_NAME} • Orijinal geliştirici: ${Brand.ORIGINAL_DEVELOPER}\n" +
+            "OmniDrive Android Auto ${BuildConfig.VERSION_NAME} • Orijinal geliştirici: ${Brand.ORIGINAL_DEVELOPER}\n" +
                 "Reklam yok, takip yok, hiçbir veri toplanmaz.\n\n${Brand.COPYRIGHT}\n${Brand.LICENSE_NOTICE}",
             12f, Palette.TEXT_FAINT, lines = 10).apply { gravity = Gravity.CENTER }, lp(MATCH, WRAP).margins(t = dp(18)))
 
@@ -406,17 +406,17 @@ class MainActivity : Activity() {
                 "❌ Telefonun kendi yükleyicisi kullanılmış ($initiating). Aşağıdaki \"Arabada görünür yap\" düğmesine bas."
             CarEntry.effective(this) == CarEntry.PARKED && Prefs.lastParkedSession == 0L ->
                 "⚠️ Park kapısı açık ama araçta henüz açılmadı. Android Auto → Geliştirici ayarları → \"Bilinmeyen kaynaklar\" " +
-                    "açık olmalı; sonra telefonu arabaya bağla, park halindeyken uygulamalar listesinde NewREX'e dokun."
+                    "açık olmalı; sonra telefonu arabaya bağla, park halindeyken uygulamalar listesinde OmniDrive'e dokun."
             CarEntry.effective(this) == CarEntry.PARKED -> "✅ Park kapısı çalışıyor."
             Prefs.lastCarBind == 0L ->
-                "⚠️ Kurulum doğru ama Android Auto NewREX'i hiç açmayı denemedi. Android Auto → Geliştirici ayarları → " +
+                "⚠️ Kurulum doğru ama Android Auto OmniDrive'i hiç açmayı denemedi. Android Auto → Geliştirici ayarları → " +
                     "\"Bilinmeyen kaynaklar\" açık olmalı; açıksa kapatıp tekrar aç ve telefonu yeniden başlat." +
                     if (oem) " Bu marka ($brand) Android Auto'da ek kısıtlama yapabiliyor." else ""
             Prefs.lastCarSession == 0L ->
-                "⚠️ Android Auto NewREX'i gördü ama ekranda açmadı. Android Auto → \"Başlatıcıyı özelleştir\" listesinde NewREX'i işaretle."
+                "⚠️ Android Auto OmniDrive'i gördü ama ekranda açmadı. Android Auto → \"Başlatıcıyı özelleştir\" listesinde OmniDrive'i işaretle."
             else -> "✅ Kurulum ve bağlantı düzgün görünüyor."
         }
-        return if (sleeping) "$head\n🔋 Pil tasarrufu NewREX'i uyutabiliyor; aşağıdaki düğmeyle kısıtlamayı kaldır." else head
+        return if (sleeping) "$head\n🔋 Pil tasarrufu OmniDrive'i uyutabiliyor; aşağıdaki düğmeyle kısıtlamayı kaldır." else head
     }
 
     /** Basit seçim düğmeleri (ör. TV kalitesi). */
@@ -478,13 +478,13 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Normal APK kurulumunda Android Auto NewREX'i sadece park halindeyken açar. Uygulama her açılışta, bu
+     * Normal APK kurulumunda Android Auto OmniDrive'i sadece park halindeyken açar. Uygulama her açılışta, bu
      * düzelene kadar, sürüşte de çalışması için gereken adımları nazikçe anlatır ve tek dokunuşla başlatır.
      */
     private fun showDrivingGuide() {
         AlertDialog.Builder(this)
             .setTitle("Sürüşte de çalışması için son bir adım")
-            .setMessage("NewREX kuruldu 🎉 Şu an arabada sadece park halindeyken açılıyor. Sürüşte de kullanabilmek için " +
+            .setMessage("OmniDrive kuruldu 🎉 Şu an arabada sadece park halindeyken açılıyor. Sürüşte de kullanabilmek için " +
                 "bir kez şunları yapman yeterli:\n\n" +
                 "1. Play Store → sağ üstte profil resmin → Play Protect → ⚙️ → \"Uygulamaları Play Protect ile tara\"yı kısa süreliğine kapat.\n" +
                 "    Samsung'daysan: Ayarlar → Güvenlik ve gizlilik → Otomatik Engelleyici'yi de kapat.\n\n" +
@@ -523,7 +523,7 @@ class MainActivity : Activity() {
 
     private fun refreshMirror() {
         val on = Mirror.active.value
-        mirrorStatus.text = if (on) "✅ Ekran araca yansıtılıyor. Araçta NewREX → Yansıt'a gir."
+        mirrorStatus.text = if (on) "✅ Ekran araca yansıtılıyor. Araçta OmniDrive → Yansıt'a gir."
         else "Telefonundaki her şeyi (oyun, sosyal medya, uygulamalar) araç ekranında göster. Her başlatmada telefonda bir kez \"Başlat\" onayı istenir. " +
             "Netflix gibi korumalı uygulamalar siyah görünür. Yansıtma sırasında telefon ekranı açık kalır; uygulamaları telefonun kendi ekranından kullanırsın."
         mirrorButton.text = if (on) "Yansıtmayı durdur" else "Ekranı arabaya yansıt"
@@ -682,7 +682,7 @@ class MainActivity : Activity() {
         private const val PICK_FILE = 7
         private const val EXTRA_ASK_LOCATION = "askLocation"
 
-        /** Araç ekranından: telefonda NewREX'i açıp konum iznini sorar. */
+        /** Araç ekranından: telefonda OmniDrive'i açıp konum iznini sorar. */
         fun askLocation(context: android.content.Context) {
             context.startActivity(Intent(context, MainActivity::class.java)
                 .putExtra(EXTRA_ASK_LOCATION, true)
