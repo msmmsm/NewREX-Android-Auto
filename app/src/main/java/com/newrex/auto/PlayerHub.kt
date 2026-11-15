@@ -112,7 +112,7 @@ object PlayerHub {
 
     private fun persistQueue() {
         if (queue.isEmpty() || index !in queue.indices) return
-        val current = now.value
+        val current = now.value ?: return
         val activeItemMatches = exo?.currentMediaItem?.mediaId == current?.key
         val resumePosition = if (current?.kind == Kind.PODCAST) {
             if (activeItemMatches) exo?.currentPosition ?: 0L else Prefs.position(current.url)
@@ -298,6 +298,8 @@ object PlayerHub {
         exo?.stop()
         exo?.clearMediaItems()
         Prefs.clearPlaybackQueue()
+        queue = emptyList()
+        index = 0
         now.value = null
         error.value = null
         // Oturum servis yaşamı boyunca açık kalır; boş oynatma listesi medya bildirimini sonlandırır.
