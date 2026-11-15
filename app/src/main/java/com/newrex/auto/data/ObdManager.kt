@@ -284,19 +284,25 @@ object ObdManager {
     /**
      * Arıza Kodlarını (DTC) Oku (Mode 03)
      */
-    suspend fun readDtcCodes(): List<String> = withContext(Dispatchers.IO) {
-        if (state.value != ConnectionState.CONNECTED) return@withContext emptyList()
+    suspend fun readDtcCodes(): List<String> = scanDtcCodes().codes
+
+    /** Mode 03 yanıtını doğrular; NO DATA geçerli boş sonuçtur, çözümlenemeyen yanıt tarama değildir. */
+    suspend fun scanDtcCodes(): DtcScanResult = withContext(Dispatchers.IO) {
+        if (state.value != ConnectionState.CONNECTED) return@withContext DtcScanResult(emptyList(), false)
         try {
             val response = sendCommand("03")
+            if (!ObdDiagnostics.isDtcScanResponseValid(response)) {
+                return@withContext DtcScanResult(emptyList(), false)
+            }
             val dtcs = parseDtc(response)
             TelemetryHub.obdDtcList.value = dtcs
             TelemetryHub.markObdDataUpdated()
-            dtcs
+            DtcScanResult(dtcs, true)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             if (e is java.io.IOException) markConnectionError()
-            emptyList()
+            DtcScanResult(emptyList(), false)
         }
     }
 
