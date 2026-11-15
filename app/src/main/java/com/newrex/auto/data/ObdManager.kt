@@ -120,7 +120,6 @@ object ObdManager {
                     supportedPids = discoverSupportedPids()
                     state.value = ConnectionState.CONNECTED
                     TelemetryHub.obdConnected.value = true
-                    retriesUsed = 0
 
                     // Bağlantı kaybolursa polling döngüsü döner; aşağıdaki politika yeniden dener.
                     startPollingLoop()
@@ -219,37 +218,37 @@ object ObdManager {
                 // Hız (km/s) - PID 010D
                 if (isPidSupported(0x0D)) {
                     val speedRaw = sendCommand("010D")
-                    TelemetryHub.obdSpeed.value = parseSpeed(speedRaw)
+                    parseSpeed(speedRaw)?.let { TelemetryHub.obdSpeed.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 // Motor Devri (RPM) - PID 010C
                 if (isPidSupported(0x0C)) {
                     val rpmRaw = sendCommand("010C")
-                    TelemetryHub.obdRpm.value = parseRpm(rpmRaw)
+                    parseRpm(rpmRaw)?.let { TelemetryHub.obdRpm.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 // Motor yükü - PID 0104
                 if (loopCount % 5 == 0 && isPidSupported(0x04)) {
                     val loadRaw = sendCommand("0104")
-                    TelemetryHub.obdEngineLoad.value = parseEngineLoad(loadRaw)
+                    parseEngineLoad(loadRaw)?.let { TelemetryHub.obdEngineLoad.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
                 if (loopCount % 5 == 0 && isPidSupported(0x05)) {
                     val tempRaw = sendCommand("0105")
-                    TelemetryHub.obdCoolantTemp.value = parseCoolant(tempRaw)
+                    parseCoolant(tempRaw)?.let { TelemetryHub.obdCoolantTemp.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 // Akü Voltajı (V) - "AT RV"
                 if (loopCount % 10 == 0) {
                     val voltRaw = sendCommand("ATRV")
-                    TelemetryHub.obdBatteryVoltage.value = parseVoltage(voltRaw)
+                    parseVoltage(voltRaw)?.let { TelemetryHub.obdBatteryVoltage.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
                 if (loopCount % 20 == 0 && isPidSupported(0x2F)) {
                     val fuelRaw = sendCommand("012F")
-                    TelemetryHub.obdFuelLevel.value = parseFuel(fuelRaw)
+                    parseFuel(fuelRaw)?.let { TelemetryHub.obdFuelLevel.value = it; TelemetryHub.markObdDataUpdated() }
                 }
 
                 loopCount++
@@ -273,6 +272,7 @@ object ObdManager {
             val response = sendCommand("03")
             val dtcs = parseDtc(response)
             TelemetryHub.obdDtcList.value = dtcs
+            TelemetryHub.markObdDataUpdated()
             dtcs
         } catch (e: CancellationException) {
             throw e
@@ -291,7 +291,10 @@ object ObdManager {
             val res = sendCommand("04")
             // Komut yankısı veya başka bir hex alanı değil, gerçek Mode 04 yanıtı aranır.
             val acknowledged = hasDtcClearAcknowledgement(res)
-            if (acknowledged) TelemetryHub.obdDtcList.value = emptyList()
+            if (acknowledged) {
+                TelemetryHub.obdDtcList.value = emptyList()
+                TelemetryHub.markObdDataUpdated()
+            }
             acknowledged
         } catch (e: CancellationException) {
             throw e
@@ -403,8 +406,9 @@ object ObdManager {
     }
 
     internal fun parseVoltage(raw: String): Float? {
-        val digits = raw.replace("V", "", ignoreCase = true).trim()
-        return digits.toFloatOrNull()
+        val digits = raw.trim().removeSuffix("V").removeSuffix("v").trim()
+        if (!digits.matches(Regex("^\\d{1,2}(?:\\.\\d{1,3})?$"))) return null
+        return digits.toFloatOrNull()?.takeIf { it in 0.0f..30.0f }
     }
 
     internal fun hasDtcClearAcknowledgement(raw: String): Boolean {
