@@ -317,3 +317,26 @@ Teknik dayanak:
 - SAE J1979 Mode 09 araç bilgisi ve desteklenen kimlik alanları: https://py-obdii.readthedocs.io/en/latest/api/modes/mode_09.html
 - VIN, CALID, CVN ve ECU adı alanlarının Mode 09 kapsamı: https://ww2.arb.ca.gov/sites/default/files/classic/msprog/hdim/meetings/20191108_workgroup/hdim_obd_specs_tables.pdf
 
+
+### Toyota gelişmiş ECU veri kataloğu — salt okunur araştırma aşaması
+
+Kokpitteki **Toyota gelişmiş ECU veri kataloğu**, aşağıdaki sistemleri araştırma hedefi olarak listeler; canlı veri veya çalışan teşhis bağlantısı olduğunu iddia etmez:
+
+- **HV Battery ECU:** SOC, batarya sıcaklık sensörleri, blok gerilimleri ve akım parametre sınıfları.
+- **Hybrid Control ECU:** hibrit sistem çalışma durumu, motor/jeneratör ve READY/güç aktarım durumu.
+- **Pre-Collision / ön radar ECU:** iletişim, arıza ve sistem kullanılabilirlik durumu. Ham radar hedefleri kapsam dışıdır.
+- **BSM ECU:** iletişim, arıza ve sistem kullanılabilirlik durumu. Ham hedef/mesafe/hız akışı doğrulanmış değildir.
+
+Toyota servis dokümanları Data List'in ilgili ECU seçilerek üretici teşhis cihazından okunabildiğini gösterir. Eski Toyota hibrit eğitim/onarım dokümanlarındaki parametre adları bu 2025 Türkiye C-HR varyantına doğrudan taşınamaz; yalnızca parametre sınıflarını araştırmak için referanstır. 2025 modelin kesin ECU adı, parametre etiketi, ölçüm birimi, ölçeği ve destek durumu araç üzerinde doğrulanmalıdır.
+
+**Arayüz gereksinimi:** Toyota'nın kendi teknik bilgi sayfaları tam teşhis işlevleri için Techstream/Techstream Lite'ı işaret eder. Toyota'nın onaylı J2534 yeniden programlama cihazları sayfası, bu cihazların tek başına teşhis tarayıcısı işlevi sunmadığını açıkça belirtir. Bu nedenle “J2534 uyumlu” ibaresi tek başına yeterli değildir. OmniDrive'e henüz J2534, DoIP veya Toyota'ya özgü CAN sorgusu eklenmedi.
+
+**Güvenlik kapısı:** Şimdilik yalnızca katalog ve salt okunur teşhis araştırması vardır. Toyota protokolü, araç varyantı ve her parametrenin ölçeği doğrulanmadan Mode 21/22 PID, CAN ID, gateway yönlendirmesi veya komut gönderilmez. Aktif test, kalibrasyon, kodlama ve ECU yazma kapsam dışıdır.
+
+Kaynaklar:
+- [Toyota TIS — J2534 yeniden programlama cihazları ve teşhis sınırlaması](https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_j2534_device)
+- [Toyota TIS — Techstream ve araç teşhis arayüzleri](https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_vehicle_reprog)
+- [Toyota C-HR — Pre-Collision ECU Data List](https://www.tochr.net/2046/data_list_active_test.html)
+- [Toyota C-HR — CAN iletişim teşhis sistemi](https://www.tochr.net/908/diagnosis_system.html)
+- [Toyota hibrit teşhis Data List örneği](https://toyotaspace.com/wp-content/uploads/2024/07/Hybrid-Battery-Control.pdf)
+
