@@ -218,3 +218,13 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - Mode 03 DTC yanıtları birden fazla 11-bit CAN ECU başlığı (7E8–7EF) içerdiğinde her ECU'nun yanıt yükü ayrı ayrıştırılır. ECU başlığı ve sonraki yanıt, önceki ECU'nun DTC baytlarına eklenmez; yinelenen kodlar tekilleştirilir.
 - Eksik DTC bayt çiftleri ve boş 0000 yuvaları sonuç listesine eklenmez.
 - Bu değişiklikler için çoklu ECU, CAN başlığı, satır sonu, yinelenen kod ve eksik veri regresyon testleri kaynak koda eklenmiştir. JUnit testleri ve Android derlemesi çalıştırılmadığından otomatik doğrulama sonucu beklemektedir; gerçek ELM327/araç testi ayrıca gereklidir.
+
+
+## ELM327 komut taşıma katmanı — ek güvenlik
+
+- Komut/yanıt işlemi artık ELM327'nin `>` yanıt sonlandırıcısını bekler. Süre dolarsa kısmi yanıt başarı gibi döndürülmez; zaman aşımı hatası oluşur ve aktif polling bağlantı hatası yoluna geçer.
+- Komut yanıtı 4 KiB ile sınırlandırılır; önceki komuttan kalmış giriş baytları yeni komut gönderilmeden önce sınırlı biçimde temizlenir.
+- Süre ölçümü duvar saati yerine monotonik saatle yapılır.
+- Bağlantı kurulumu iptal edildiğinde iptal istisnası normal bağlantı hatası gibi yutulmaz; coroutine iptali korunur.
+- Mode 04 DTC temizleme onayı artık rastgele bir `44` alt dizesine göre verilmez; pozitif servis yanıtının beklenen yalın veya 7E8–7EF ECU yanıt biçiminde bulunması gerekir.
+- Bu davranışlar için Mode 04 olumlu/olumsuz yanıt testleri eklendi. Donanım zaman aşımı, Bluetooth kopması ve gerçek ECU yanıtları fiziksel adaptörle ayrıca doğrulanmalıdır.
