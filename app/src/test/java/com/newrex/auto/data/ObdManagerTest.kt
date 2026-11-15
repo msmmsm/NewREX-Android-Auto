@@ -33,6 +33,19 @@ class ObdManagerTest {
     }
 
     @Test
+    fun discoversSupportedPidsFromMode01Bitmaps() {
+        assertEquals(setOf(0x0C, 0x0D, 0x20), ObdManager.parseSupportedPids("410000180001", 0x00))
+        assertEquals(setOf(0x2F, 0x40), ObdManager.parseSupportedPids("412000020001", 0x20))
+        assertNull(ObdManager.parseSupportedPids("NO DATA", 0x00))
+    }
+
+    @Test
+    fun parsesEngineLoadPercentage() {
+        assertEquals(50, ObdManager.parseEngineLoad("410480"))
+        assertNull(ObdManager.parseEngineLoad("NO DATA"))
+    }
+
+    @Test
     fun ignoresEmptyDtcSlotsAndNonDtcResponses() {
         assertTrue(ObdManager.parseDtc("430000").isEmpty())
         assertTrue(ObdManager.parseDtc("NO DATA").isEmpty())
