@@ -15,6 +15,7 @@
     <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
     <!-- Ekran yansıtma: Android, ekran paylaşımı sürerken bildirimli bir servis ister -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -107,6 +108,17 @@
             android:name=".MirrorService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+
+        <!-- Media3 arka plan oynatımı: tek medya oturumu, sistem bildirimi ve araç kontrolleri -->
+        <service
+            android:name=".OmniDriveMediaService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
 
 
         <!-- Android Auto park uygulaması kapısı (Android 15+): Play Store dışı kurulumda da "Bilinmeyen
