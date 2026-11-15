@@ -35,26 +35,8 @@ object Net {
 object Playlists {
     private const val CACHE_HOURS = 6
 
-    // iptv-org gibi listeler grupları İngilizce veriyor
-    private val GROUP_NAMES = mapOf(
-        "animation" to "Animasyon", "auto" to "Otomobil", "business" to "Ekonomi", "classic" to "Klasik",
-        "comedy" to "Komedi", "cooking" to "Yemek", "culture" to "Kültür", "documentary" to "Belgesel",
-        "education" to "Eğitim", "entertainment" to "Eğlence", "family" to "Aile", "general" to "Genel",
-        "kids" to "Çocuk", "legislative" to "Meclis", "lifestyle" to "Yaşam", "movies" to "Film",
-        "music" to "Müzik", "news" to "Haber", "outdoor" to "Doğa", "relax" to "Rahatlama",
-        "religious" to "Dini", "series" to "Dizi", "science" to "Bilim", "shop" to "Alışveriş",
-        "sports" to "Spor", "travel" to "Gezi", "weather" to "Hava durumu", "undefined" to "Diğer",
-    )
-
-    /** Listede gösterilmeyen dini kanallar (grubu "Religious" olanlar zaten çıkarılır). */
-    private val HIDDEN = listOf("diyanet", "semerkand", "lalegul", "lalegül", "dost tv", "diyar tv", "sat 7", "sat-7",
-        "al-zahra", "al-rafidain", "sercem", "ilke tv", "qaf tv", "hilal tv", "rehber tv", "berat tv", "mesaj tv", "kanal hayat")
-
     /** A Haber, A Spor, ATV, A2 gibi kanallar listenin sonuna konur. */
     private val LAST = Regex("^(a |a2|atv)", RegexOption.IGNORE_CASE)
-
-    private fun hidden(name: String, group: String?) =
-        group?.contains("religious", ignoreCase = true) == true || HIDDEN.any { name.lowercase().contains(it) }
 
     data class Result(val channels: List<MediaEntry>, val errors: List<String>)
 
