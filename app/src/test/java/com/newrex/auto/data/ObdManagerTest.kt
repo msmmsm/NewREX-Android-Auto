@@ -27,6 +27,10 @@ class ObdManagerTest {
     @Test
     fun rejectsUnsupportedOrMalformedPidResponses() {
         assertNull(ObdManager.parseSpeed("NO DATA"))
+        assertNull(ObdManager.parseSpeed("410D1"))
+        assertNull(ObdManager.parseCoolant("4105"))
+        assertNull(ObdManager.parseFuel("412F0"))
+        assertNull(ObdManager.parseEngineLoad("4104"))
         assertNull(ObdManager.parseRpm("410C1A"))
         assertNull(ObdManager.parseCoolant("ERROR"))
         assertNull(ObdManager.parseFuel("412FZZ"))
