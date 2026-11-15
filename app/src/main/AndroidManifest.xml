@@ -63,7 +63,7 @@
             </intent-filter>
         </receiver>
 
-    <service
+        <service
             android:name=".NewRexCarAppService"
             android:exported="true">
             <intent-filter>
