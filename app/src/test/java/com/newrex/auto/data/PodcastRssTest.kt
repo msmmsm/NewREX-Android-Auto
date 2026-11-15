@@ -32,4 +32,18 @@ class PodcastRssTest {
     @Test fun invalidDateReturnsEmptyString() {
         assertEquals("", PodcastRss.formatDate("not-a-date"))
     }
+    @Test fun rejectsUnsafeEnclosureSchemesAndCredentials() {
+        assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "file:///tmp/episode.mp3"))
+        assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "ftp://cdn.example.org/episode.mp3"))
+        assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "https://user:pass@cdn.example.org/episode.mp3"))
+    }
+
+    @Test fun resolvesRelativeEnclosureOnlyFromValidHttpFeed() {
+        assertNull(PodcastRss.resolveEnclosureUrl("content://provider/feed.xml", "episode.mp3"))
+        assertNull(PodcastRss.resolveEnclosureUrl("https://user:pass@pod.example.org/feed.xml", "episode.mp3"))
+    }
+
+    @Test fun rejectsOversizedEnclosureAddress() {
+        assertNull(PodcastRss.resolveEnclosureUrl("https://pod.example.org/rss.xml", "https://cdn.example.org/" + "a".repeat(4100)))
+    }
 }
