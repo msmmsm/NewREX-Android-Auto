@@ -48,6 +48,11 @@ object RadioHealth {
             if (addresses.isEmpty() || addresses.any { !isPublicAddress(it) }) {
                 return@withContext Result(State.UNSAFE_ADDRESS, "Yerel veya özel ağ adresi güvenlik nedeniyle sınanmadı.")
             }
+            // OkHttp aynı kontrol edilmiş DNS yanıtını kullanır; ikinci çözümlemede DNS rebinding yapılmaz.
+            val pinnedClient = client.newBuilder().dns { requestedHost ->
+                if (requestedHost.equals(host, ignoreCase = true)) addresses.toList()
+                else throw java.net.UnknownHostException("Beklenmeyen yönlendirme hostu")
+            }.build()
             val request = Request.Builder()
                 .url(station.url)
                 .header("User-Agent", Net.USER_AGENT)
@@ -55,7 +60,7 @@ object RadioHealth {
                 .get()
                 .build()
             val started = SystemClock.elapsedRealtime()
-            client.newCall(request).execute().use { response ->
+            pinnedClient.newCall(request).execute().use { response ->
                 val elapsed = SystemClock.elapsedRealtime() - started
                 val type = response.header("Content-Type")?.substringBefore(';')?.trim()?.lowercase()
                 val classification = classifyStatus(response.code, type)
