@@ -39,6 +39,8 @@ object PodcastDownloads {
     val changes = MutableStateFlow(0)
     private const val PREFS_NAME = "omnidrive_podcast_downloads"
     private const val RECORDS_KEY = "records"
+    // Tek podcast bölümü için üst sınır; hatalı veya aşırı büyük indirmeler arşive alınmaz.
+    internal const val MAX_EPISODE_BYTES = 512L * 1024L * 1024L
 
     fun init(context: Context) {
         if (::manager.isInitialized) return
@@ -52,7 +54,8 @@ object PodcastDownloads {
     /** Başarılı indirme varsa DownloadManager'ın uygulamaya verdiği içerik URI'sini döndürür. */
     fun localUri(url: String): Uri? {
         val record = find(url) ?: return null
-        if (statusById(record.id).state != State.SUCCESSFUL) return null
+        val status = statusById(record.id)
+        if (status.state != State.SUCCESSFUL || !isVerifiedDownload(record.id, status)) return null
         return runCatching { manager.getUriForDownloadedFile(record.id) }.getOrNull()
     }
 
@@ -85,11 +88,16 @@ object PodcastDownloads {
                     DownloadManager.STATUS_SUCCESSFUL -> State.SUCCESSFUL
                     else -> State.FAILED
                 }
-                refreshed[it.getLong(idColumn)] = Status(
+                val id = it.getLong(idColumn)
+                val itemStatus = Status(
                     state,
                     it.getLong(downloadedColumn).coerceAtLeast(0),
                     it.getLong(totalColumn),
                 )
+                refreshed[id] = if (state == State.SUCCESSFUL && !isVerifiedDownload(id, itemStatus)) {
+                    runCatching { manager.remove(id) }
+                    Status(State.FAILED, itemStatus.downloadedBytes, itemStatus.totalBytes)
+                } else itemStatus
             }
         }
         records.forEach { refreshed.putIfAbsent(it.id, Status(State.FAILED)) }
@@ -170,13 +178,35 @@ object PodcastDownloads {
             if (idColumn < 0 || uriColumn < 0 || statusColumn < 0) return emptyList()
             while (it.moveToNext()) {
                 if (it.getInt(statusColumn) != DownloadManager.STATUS_SUCCESSFUL) continue
-                val record = byId[it.getLong(idColumn)] ?: continue
+                val id = it.getLong(idColumn)
+                val record = byId[id] ?: continue
                 val sourceUrl = it.getString(uriColumn) ?: continue
                 if (!isHttpUrl(sourceUrl)) continue
+                val status = statusById(id)
+                if (!isVerifiedDownload(id, status)) {
+                    runCatching { manager.remove(id) }
+                    continue
+                }
                 result += MediaEntry(Kind.PODCAST, record.title, sourceUrl, record.image, record.group)
             }
         }
         return result
+    }
+
+    private fun isVerifiedDownload(id: Long, status: Status): Boolean {
+        if (status.state != State.SUCCESSFUL) return false
+        if (!isAllowedDownloadedSize(status.totalBytes)) return false
+        val mime = runCatching { manager.getMimeTypeForDownloadedFile(id) }.getOrNull()
+        return isAllowedDownloadedMime(mime)
+    }
+
+    internal fun isAllowedDownloadedSize(bytes: Long): Boolean =
+        bytes in 1L..MAX_EPISODE_BYTES
+
+    internal fun isAllowedDownloadedMime(mime: String?): Boolean {
+        val value = mime?.substringBefore(';')?.trim()?.lowercase() ?: return false
+        return value.startsWith("audio/") ||
+            value in setOf("application/ogg", "application/octet-stream", "video/mp4")
     }
 
     private fun statusById(id: Long): Status {
