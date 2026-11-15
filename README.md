@@ -5,14 +5,16 @@ Arabanın ekranında **TV, YouTube, radyo ve podcast**. Ücretsiz ve reklamsız;
 > ### 🚗 OmniDrive arabada görünmüyor ya da vitese takınca kapanıyor mu?
 > Bilgisayarın varsa **[Kurulum Aracı'nı indir](https://github.com/msmmsm/NewREX-Android-Auto/raw/master/kurulum-araci/NewREX-Kurulum-Araci.zip)** → zip'i aç → **`BASLAT.bat`**'a çift tıkla.
 > Araç seni adım adım götürür, OmniDrive'ı telefonuna sürüşte de açılacak şekilde kurar ve sonunda **"İMZA ATILDI"** ya da **"İMZA ATILAMADI"** diye yazar.
-> Telefonu USB kablosuyla bilgisayara takman yeterli. Samsung ve Xiaomi'de denendi. Hiçbir veri toplamaz; kaynak kodu [burada](kurulum-araci).
+> Telefonu USB kablosuyla bilgisayara takman yeterli. Kurulum aracının cihaz/Android sürümü uyumluluğunu kontrol et. Uygulamada reklam veya analiz SDK'sı yoktur; üçüncü taraf servislere yapılan bağlantılar ve veri akışları [Gizlilik](PRIVACY.md) belgesinde açıklanır.
 
 ## ✨ Özellikler
 
+> Özelliklerin araç, telefon, Android sürümü, Android Auto ve bağlı donanıma göre kullanılabilirliği değişebilir. Donanım gerektiren işlevler gerçek araç/adaptör testi yapılmadan doğrulanmış kabul edilmemelidir.
+
 - 🏎️ **Next-Gen Otomobil Kokpiti**: MBUX / Tesla ilhamlı modern dijital kokpit ve HUD göstergesi
-- 🚘 **Toyota C-HR 2025 3D/2.5D Etkileşimli Model**: Hammerhead LED far tasarımı, Bi-Tone tavan, dokunmatik 360° döndürme ve özelleştirilebilir Türk plaka standardı (`[TR | 34 REX 1337]`)
+- 🚘 **Toyota C-HR 3D/2.5D Etkileşimli Model**: Hammerhead LED far tasarımı, Bi-Tone tavan, dokunmatik 360° döndürme ve özelleştirilebilir Türk plaka standardı (`[TR | 34 REX 1337]`)
 - 🔌 **OBD-II CAN-Bus Entegrasyonu**: ELM327 Bluetooth Classic (SPP) üzerinden gerçek ECU verisi: devir (RPM), hararet (°C), adaptörün bildirdiği voltaj, desteklenen yakıt seviyesi PID'i ve DTC okuma/silme; BLE desteği henüz yok
-- ⚡ **0-100 km/s Performans & Drag Sayacı**: Otomatik hazır bekleme ve hassas ivmelenme kronometresi
+- ⚡ **0-100 km/s Performans & Drag Sayacı**: Otomatik hazır bekleme ve telefon sensörlerine bağlı ivmelenme ölçümü
 - 🔊 **Hıza Duyarlı Akıllı Ses Dengeleme**: Hızlandıkça artan yol ve rüzgar gürültüsünü otomatik telafi eden ses yönetimi
 - 📺 **Canlı TV**: Türk kanalları hazır gelir, kendi IPTV listeni de ekleyebilirsin
 - 🎬 **TV+ ve Netflix**: kendi hesabınla giriş yap, oturumun kapanmaz
@@ -44,7 +46,7 @@ OmniDrive'ı aç → en alttaki **Yardım** → **Arabada görünür yap** → *
 **4. Arabaya bağlan**
 OmniDrive menüde çıkar. 🎉
 
-> Her güncellemede 2–5. adımları tekrarla.
+> Her güncellemede 2–4. adımları tekrarla.
 
 ### Görünmüyor mu?
 
