@@ -20,6 +20,8 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.SessionError
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -244,7 +246,7 @@ object PlayerHub {
                 session: MediaLibraryService.MediaLibrarySession,
                 browser: MediaSession.ControllerInfo,
                 params: MediaLibraryService.LibraryParams?,
-            ): ListenableFuture<MediaLibraryService.LibraryResult<MediaItem>> {
+            ): ListenableFuture<LibraryResult<MediaItem>> {
                 val root = MediaItem.Builder()
                     .setMediaId(LIBRARY_ROOT)
                     .setMediaMetadata(MediaMetadata.Builder()
@@ -253,7 +255,7 @@ object PlayerHub {
                         .setIsPlayable(false)
                         .build())
                     .build()
-                return Futures.immediateFuture(MediaLibraryService.LibraryResult.ofItem(root, params))
+                return Futures.immediateFuture(LibraryResult.ofItem(root, params))
             }
 
             @OptIn(UnstableApi::class)
@@ -264,7 +266,7 @@ object PlayerHub {
                 page: Int,
                 pageSize: Int,
                 params: MediaLibraryService.LibraryParams?,
-            ): ListenableFuture<MediaLibraryService.LibraryResult<ImmutableList<MediaItem>>> {
+            ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
                 val children = when (parentId) {
                     LIBRARY_ROOT -> libraryCategories()
                     LIBRARY_FAVORITES_TV -> Prefs.favorites(Kind.TV).map(::itemFor)
@@ -276,7 +278,7 @@ object PlayerHub {
                 val from = (page.toLong() * pageSize).coerceAtMost(children.size.toLong()).toInt()
                 val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(children.size.toLong()).toInt()
                 return Futures.immediateFuture(
-                    MediaLibraryService.LibraryResult.ofItemList(ImmutableList.copyOf(children.subList(from, to)), params)
+                    LibraryResult.ofItemList(ImmutableList.copyOf(children.subList(from, to)), params)
                 )
             }
 
@@ -285,7 +287,7 @@ object PlayerHub {
                 session: MediaLibraryService.MediaLibrarySession,
                 browser: MediaSession.ControllerInfo,
                 mediaId: String,
-            ): ListenableFuture<MediaLibraryService.LibraryResult<MediaItem>> {
+            ): ListenableFuture<LibraryResult<MediaItem>> {
                 val item = when (mediaId) {
                     LIBRARY_ROOT -> libraryRootItem()
                     LIBRARY_FAVORITES_TV -> categoryItem(mediaId, "TV Favorileri")
@@ -294,8 +296,8 @@ object PlayerHub {
                     LIBRARY_RECENTS -> categoryItem(mediaId, "Son Dinlenenler")
                     else -> (Prefs.favorites() + Prefs.recents()).firstOrNull { it.key == mediaId }?.let(::itemFor)
                 }
-                return if (item != null) Futures.immediateFuture(MediaLibraryService.LibraryResult.ofItem(item, null))
-                else Futures.immediateFuture(MediaLibraryService.LibraryResult.ofError(MediaSession.SessionError.ERROR_BAD_VALUE))
+                return if (item != null) Futures.immediateFuture(LibraryResult.ofItem(item, null))
+                else Futures.immediateFuture(LibraryResult.ofError(SessionError(SessionError.ERROR_BAD_VALUE, "Medya öğesi bulunamadı")))
             }
 
             @OptIn(UnstableApi::class)
@@ -306,7 +308,7 @@ object PlayerHub {
                 page: Int,
                 pageSize: Int,
                 params: MediaLibraryService.LibraryParams?,
-            ): ListenableFuture<MediaLibraryService.LibraryResult<ImmutableList<MediaItem>>> {
+            ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
                 val normalized = query.trim().lowercase(java.util.Locale.ROOT)
                 val matches = (Prefs.favorites() + Prefs.recents())
                     .distinctBy { it.key }
@@ -318,7 +320,7 @@ object PlayerHub {
                 val from = (page.toLong().coerceAtLeast(0) * pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
                 val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
                 return Futures.immediateFuture(
-                    MediaLibraryService.LibraryResult.ofItemList(ImmutableList.copyOf(matches.subList(from, to)), params)
+                    LibraryResult.ofItemList(ImmutableList.copyOf(matches.subList(from, to)), params)
                 )
             }
         }
