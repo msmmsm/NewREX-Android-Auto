@@ -26,7 +26,7 @@ object ObdVehicleInfo {
 
     /** Mode 09 PID 02; ISO-TP ardışık çerçeve sıra baytlarını ve CAN başlıklarını atlar. */
     internal fun parseVin(raw: String): String? {
-        val bytes = responseBytes(raw, 0x02) ?: return null
+        val bytes = responseBytes(raw, 0x02, skipIsoTpSequence = true) ?: return null
         val ascii = bytes.mapNotNull { value ->
             if (value in 0x20..0x7E) value.toChar() else null
         }.joinToString("").filter { it.isLetterOrDigit() }
@@ -52,7 +52,7 @@ object ObdVehicleInfo {
             .map { chunk -> chunk.joinToString("") { it.toString(16).uppercase().padStart(2, '0') } }
     }
 
-    private fun responseBytes(raw: String, pid: Int): List<Int>? {
+    private fun responseBytes(raw: String, pid: Int, skipIsoTpSequence: Boolean = false): List<Int>? {
         val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
         val marker = "49" + pid.toString(16).uppercase().padStart(2, '0')
         val index = clean.indexOf(marker)
@@ -64,6 +64,6 @@ object ObdVehicleInfo {
         if (parsed.isEmpty()) return null
         // İlk bayt, Mode 09 CAN yanıtında veri sıra numarasıdır (VIN için 01).
         val start = if (parsed.first() in 0x01..0x05) 1 else 0
-        return parsed.drop(start).filterNot { it in 0x21..0x2F }
+        return if (skipIsoTpSequence) parsed.drop(start).filterNot { it in 0x21..0x2F } else parsed.drop(start)
     }
 }
