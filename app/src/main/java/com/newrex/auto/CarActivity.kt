@@ -2,9 +2,14 @@
 package com.newrex.auto
 
 import android.app.Activity
+import android.content.ComponentName
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.core.content.ContextCompat
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import com.newrex.auto.data.Prefs
 import android.view.Gravity
 import com.newrex.auto.ui.CarUi
@@ -31,6 +36,8 @@ class CarActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var ui: CarUi? = null
     private var guideShown = false
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var destroyed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,10 +45,36 @@ class CarActivity : Activity() {
         com.newrex.auto.data.CarLog.init(this)
         Prefs.lastCarSession = System.currentTimeMillis()
         Prefs.lastParkedSession = System.currentTimeMillis()
-        PlayerHub.init(applicationContext)
         DriveState.start(this)
         com.newrex.auto.ui.SessionAlerts.reset()
-        buildUi()
+        connectMediaService()
+    }
+
+
+    /**
+     * MediaController bağlantısı MediaSessionService'i oluşturur ve bağlı tutar.
+     * Oynatıcı yalnızca servis içinde başlatılır; Activity kapanınca PlayerHub bırakılmaz.
+     */
+    private fun connectMediaService() {
+        val token = SessionToken(this, ComponentName(this, OmniDriveMediaService::class.java))
+        val future = MediaController.Builder(this, token).buildAsync()
+        controllerFuture = future
+        future.addListener({
+            if (destroyed) {
+                MediaController.releaseFuture(future)
+                return@addListener
+            }
+            runCatching { future.get() }
+                .onSuccess { buildUi() }
+                .onFailure {
+                    setContentView(android.widget.TextView(this).apply {
+                        text = "Medya hizmeti başlatılamadı. OmniDrive'i yeniden açın."
+                        gravity = Gravity.CENTER
+                        setTextColor(Palette.TEXT)
+                        setPadding(dp(24), dp(24), dp(24), dp(24))
+                    })
+                }
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun buildUi(startOnApps: Boolean = false) {
@@ -106,6 +139,9 @@ class CarActivity : Activity() {
     }
 
     override fun onDestroy() {
+        destroyed = true
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
         handler.removeCallbacksAndMessages(null)
         ui?.destroy()
         ui = null
@@ -113,7 +149,6 @@ class CarActivity : Activity() {
             TripSaver.save()
             ParkSaver.save(this)
             DriveState.stop()
-            PlayerHub.release()
         }
         super.onDestroy()
     }
