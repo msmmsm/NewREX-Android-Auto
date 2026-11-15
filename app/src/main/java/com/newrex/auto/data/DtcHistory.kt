@@ -6,7 +6,7 @@ data class DtcHistoryEntry(
     val firstSeenMs: Long,
     val lastSeenMs: Long,
     val scanCount: Int,
-    val active: Boolean,
+    val presentInLastScan: Boolean,
     val clearedAtMs: Long? = null
 )
 
@@ -33,15 +33,15 @@ object DtcHistory {
                     firstSeenMs = scannedAtMs,
                     lastSeenMs = scannedAtMs,
                     scanCount = 1,
-                    active = true
+                    presentInLastScan = true
                 )
                 code in found -> old!!.copy(
                     lastSeenMs = maxOf(old.lastSeenMs, scannedAtMs),
                     scanCount = if (scannedAtMs > old.lastSeenMs) old.scanCount + 1 else old.scanCount,
-                    active = true,
+                    presentInLastScan = true,
                     clearedAtMs = null
                 )
-                else -> old!!.copy(active = false)
+                else -> old!!.copy(presentInLastScan = false)
             }
         }
         return updated.sortedWith(compareByDescending<DtcHistoryEntry> { it.lastSeenMs }.thenBy { it.code })
@@ -50,6 +50,6 @@ object DtcHistory {
 
     fun markCleared(history: List<DtcHistoryEntry>, clearedAtMs: Long): List<DtcHistoryEntry> {
         if (clearedAtMs <= 0L) return history
-        return history.map { if (it.active) it.copy(active = false, clearedAtMs = clearedAtMs) else it }
+        return history.map { if (it.presentInLastScan) it.copy(presentInLastScan = false, clearedAtMs = clearedAtMs) else it }
     }
 }
