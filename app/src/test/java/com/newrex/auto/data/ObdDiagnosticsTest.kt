@@ -45,6 +45,8 @@ class ObdDiagnosticsTest {
         assertEquals(true, ObdDiagnostics.isDtcScanResponseValid("7E803430000"))
         assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("SEARCHING..."))
         assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("03"))
+        assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("43"))
+        assertEquals(false, ObdDiagnostics.isDtcScanResponseValid("4300"))
         assertEquals(false, ObdDiagnostics.isDtcScanResponseValid(""))
     }
 
