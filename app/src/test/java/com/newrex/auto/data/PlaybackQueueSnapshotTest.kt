@@ -23,6 +23,19 @@ class PlaybackQueueSnapshotTest {
         assertNull(PlaybackQueueSnapshot.create(listOf(radio), 1, 0))
     }
 
+    @Test fun boundsLargeQueuesAroundTheSelectedItem() {
+        val entries = List(120) { radio.copy(title = "Radyo $it", url = "https://radio.example/$it") }
+        val saved = PlaybackQueueSnapshot.create(entries, 90, 0)!!
+        assertEquals(PlaybackQueueSnapshot.MAX_ENTRIES, saved.entries.size)
+        assertEquals("Radyo 90", saved.entries[saved.index].title)
+    }
+
+    @Test fun rejectsUrlsContainingEmbeddedCredentials() {
+        assertNull(PlaybackQueueSnapshot.create(
+            listOf(radio.copy(url = "https://user:password@radio.example/stream")), 0, 0
+        ))
+    }
+
     @Test fun rejectsNonHttpSchemes() {
         val invalid = radio.copy(url = "file:///private/stream.mp3")
         assertNull(PlaybackQueueSnapshot.create(listOf(invalid), 0, 0))
