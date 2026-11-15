@@ -97,7 +97,10 @@ data class PlaybackQueueSnapshot(
             if (uri.rawUserInfo != null) return true
             val sensitiveKeys = setOf("user", "username", "password", "pass", "token", "access_token", "auth", "authorization", "api_key", "apikey", "signature", "sig", "jwt", "session")
             return uri.rawQuery.orEmpty().split("&").any { part ->
-                val key = part.substringBefore("=").lowercase(java.util.Locale.ROOT)
+                val rawKey = part.substringBefore("=")
+                val key = runCatching {
+                    java.net.URLDecoder.decode(rawKey, java.nio.charset.StandardCharsets.UTF_8.name())
+                }.getOrDefault(rawKey).lowercase(java.util.Locale.ROOT)
                 key in sensitiveKeys
             }
         }
