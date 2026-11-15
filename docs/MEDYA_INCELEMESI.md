@@ -26,7 +26,7 @@ Dal: `master`
 - Geri yükleme yalnızca HTTP(S), sunucu adı bulunan ve açık kullanıcı/parola veya bilinen token parametresi taşımayan URL'lerde yapılır. Kimlik doğrulama başlıkları/çerezleri saklanmaz. Özel kimlik doğrulamalı yayınlar otomatik geri yüklenmeyebilir.
 - Kullanıcı `Durdur` komutunu verdiğinde kuyruk kaydı silinir; beklenmedik servis/süreç kapanışında son kuyruk korunur.
 - Podcast konumu 10 saniyelik aralıklarla kaydediliyor; durdurma ve başka bölüme geçişte de mevcut konum kaydediliyor.
-- Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var.
+- Canlı yayınlarda artan bekleme aralığıyla yeniden bağlanma ve radyo için alternatif akış arama mekanizması var. Yeniden bağlanma denemeleri ilk açılışta 2, daha önce çalmış akışta 10 denemeyle sınırlıdır; bekleme 1/2/4/8/15 saniye düzenindedir. Kullanıcı veya Android Auto duraklattığında bekleyen yeniden bağlanma iptal edilir ve yeniden yükleme duraklatma durumunu korur.
 - HTTPS→HTTP otomatik düşürme ve çapraz protokol yönlendirmesi kapalı.
 
 ### Açık riskler / doğrulama işleri
