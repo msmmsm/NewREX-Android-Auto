@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.newrex.auto.data.Kind
+import com.newrex.auto.data.LiveReconnectPolicy
 import com.newrex.auto.data.FmPresets
 import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Net
@@ -57,9 +58,6 @@ object PlayerHub {
     // (StreamTheWorld: Joy Türk, Süper FM, Metro FM, Virgin; Shoutcast sunucuları). Oynatıcı gibi tanıtılır.
     private const val AUDIO_USER_AGENT = Net.USER_AGENT
 
-    /** Kopan canlı yayına kaç kez yeniden bağlanılır (1, 2, 4, 8, sonra 15 sn arayla; tünelde ~2 dk bekler). */
-    private const val MAX_RETRIES = 10
-
     private lateinit var tvSources: DefaultMediaSourceFactory
     private lateinit var audioSources: DefaultMediaSourceFactory
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -72,7 +70,11 @@ object PlayerHub {
 
     /** Bu istasyon için denenmiş ve çalmayan adresler. */
     private val dead = HashSet<String>()
-    private val reconnect = Runnable { reload() }
+    private val reconnect = Runnable {
+        val active = exo ?: return@Runnable
+        if (!active.playWhenReady || now.value?.kind == Kind.PODCAST) return@Runnable
+        reload()
+    }
 
     /** 30 sn sorunsuz çalan yayında yeniden bağlanma hakkı yenilenir. */
     private val stable = Runnable { retries = 0 }
@@ -184,6 +186,11 @@ object PlayerHub {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playing.value = isPlaying
                 if (!isPlaying) persistQueue()
+            }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                // Kullanıcı veya Android Auto duraklattıysa bekleyen yeniden bağlanma iptal edilir.
+                if (!playWhenReady) handler.removeCallbacks(reconnect)
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -521,10 +528,12 @@ object PlayerHub {
 
     /** Kopan canlı yayına artan aralıklarla yeniden bağlanır. Bir süre düzgün çaldıysa sayaç sıfırlanır. */
     private fun retry(): Boolean {
-        if (retries >= (if (playedOk) MAX_RETRIES else 2)) return false
+        val active = exo ?: return false
+        if (!active.playWhenReady || now.value?.kind == Kind.PODCAST) return false
+        if (!LiveReconnectPolicy.shouldRetry(retries, playedOk)) return false
         buffering.value = true
         handler.removeCallbacks(reconnect)
-        handler.postDelayed(reconnect, (1000L shl retries.coerceAtMost(4)).coerceAtMost(15_000))
+        handler.postDelayed(reconnect, LiveReconnectPolicy.delayMs(retries))
         retries++
         return true
     }
@@ -682,6 +691,8 @@ object PlayerHub {
     /** Aynı yayını baştan açar (yönlendirmeli adresler yeni sunucuya bağlanır). */
     private fun reload() {
         val p = exo ?: return
+        // Yeniden bağlanma ile kullanıcı duraklatması aynı ana denk gelirse duraklatmayı koru.
+        if (!p.playWhenReady) return
         val e = now.value ?: return
         if (e.kind == Kind.PODCAST) {
             Prefs.savePosition(e.url, p.currentPosition)
