@@ -207,10 +207,13 @@ object PhoneCockpitHelper {
             12f, Palette.TEXT_DIM, lines = 3
         )
         val dtcListBox = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        fun renderDtcs(codes: List<String>) {
+        fun renderDtcs(codes: List<String>, scanCompleted: Boolean = true) {
             dtcListBox.removeAllViews()
             if (codes.isEmpty()) {
-                dtcListBox.addView(label("Okunmuş arıza kodu yok.", 12f, Palette.TEXT_FAINT))
+                dtcListBox.addView(label(
+                    if (scanCompleted) "Bu taramada görüntülenebilir arıza kodu alınmadı." else "Henüz arıza taraması yapılmadı.",
+                    12f, Palette.TEXT_FAINT
+                ))
             } else {
                 codes.distinct().forEach { code ->
                     val description = com.newrex.auto.data.ObdDiagnostics.description(code)
@@ -226,7 +229,7 @@ object PhoneCockpitHelper {
                 }
             }
         }
-        renderDtcs(TelemetryHub.obdDtcList.value)
+        renderDtcs(TelemetryHub.obdDtcList.value, scanCompleted = TelemetryHub.obdDtcList.value.isNotEmpty())
 
         fun diagnosticButton(title: String, action: () -> Unit) = Button(context).apply {
             text = title
@@ -247,7 +250,7 @@ object PhoneCockpitHelper {
             diagnosticStatus.setTextColor(Palette.TEXT_DIM)
             diagnosticsScope.launch {
                 val codes = ObdManager.readDtcCodes()
-                renderDtcs(codes)
+                renderDtcs(codes, scanCompleted = true)
                 diagnosticStatus.text = if (ObdManager.state.value != ObdManager.ConnectionState.CONNECTED) {
                     "Okuma tamamlanamadı: OBD-II bağlantısı kesildi."
                 } else if (codes.isEmpty()) {
@@ -302,7 +305,7 @@ object PhoneCockpitHelper {
                     diagnosticsScope.launch {
                         val cleared = ObdManager.clearDtcCodes()
                         if (cleared) {
-                            renderDtcs(emptyList())
+                            renderDtcs(emptyList(), scanCompleted = true)
                             diagnosticStatus.text = "ECU, Mode 04 temizleme isteğini olumlu yanıtladı. Arıza giderilmiş sayılmaz; yeniden tarama yap."
                         } else {
                             diagnosticStatus.text = "ECU temizleme işlemini onaylamadı. Kodlar silinmiş kabul edilmedi."
