@@ -101,8 +101,9 @@ object RadioHealth {
                 a == 169 && second == 254 -> false
                 a == 172 && second in 16..31 -> false
                 a == 192 && second == 168 -> false
-                a == 192 && second == 0 -> false
-                a == 192 && second == 0 && b[2] == 2 -> false
+                a == 192 && second == 0 && b[2] == 0 -> false // 192.0.0.0/24: IETF özel amaçlı ağ
+                a == 192 && second == 0 && b[2] == 2 -> false // 192.0.2.0/24: dokümantasyon
+                a == 192 && second == 88 && b[2] == 99 -> false // 192.88.99.0/24: kullanımdan kaldırılmış 6to4 rölesi
                 a == 198 && second in 18..19 -> false
                 a == 198 && second == 51 && b[2] == 100 -> false
                 a == 203 && second == 0 && b[2] == 113 -> false
