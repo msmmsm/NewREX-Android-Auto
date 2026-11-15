@@ -18,6 +18,8 @@ import com.newrex.auto.data.PerformanceTimer
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.TelemetryHub
 import com.newrex.auto.data.ToyotaChr2025PassionProfile
+import com.newrex.auto.data.ToyotaEnhancedDiagnosticCatalog
+import com.newrex.auto.data.EnhancedDiagnosticStatus
 import com.newrex.auto.data.EquipmentStatus
 import com.newrex.auto.data.DataAccessStatus
 import com.newrex.auto.ui.MATCH
@@ -239,6 +241,32 @@ object PhoneCockpitHelper {
             "Not: Envanter 2025 Türkiye Hybrid Passion donanım tablosuna dayanır. Araç üzerindeki donanım/ECU yazılımı fiziksel doğrulama gerektirir.",
             10f, Palette.TEXT_FAINT, lines = 2
         ), lp(MATCH, WRAP).margins(t = dp(4), b = dp(10)))
+
+        cockpitBox.addView(label("Toyota gelişmiş ECU veri kataloğu", 14f, Palette.TEXT, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(4), b = dp(3)))
+        cockpitBox.addView(label(
+            "Aşağıdaki parametreler araştırma hedefidir; henüz bu araçtan okunmuş canlı değer değildir. Toyota OEM Data List protokolü doğrulanmadan sorgu gönderilmez.",
+            10f, Palette.TEXT_FAINT, lines = 3
+        ), lp(MATCH, WRAP).margins(b = dp(5)))
+        ToyotaEnhancedDiagnosticCatalog.systems.forEach { system ->
+            val status = when (system.status) {
+                EnhancedDiagnosticStatus.OEM_DATA_LIST_DOCUMENTED -> "OEM Data List ailesi belgelenmiş · araç varyantı teyidi bekliyor"
+                EnhancedDiagnosticStatus.VEHICLE_VARIANT_NOT_VERIFIED -> "Araç varyantında doğrulanmadı"
+                EnhancedDiagnosticStatus.PROTOCOL_NOT_IMPLEMENTED -> "Protokol uygulanmadı"
+            }
+            cockpitBox.addView(label(system.name, 12f, Palette.TEXT, bold = true),
+                lp(MATCH, WRAP).margins(t = dp(5)))
+            cockpitBox.addView(label(status, 10f, Palette.TEXT_DIM),
+                lp(MATCH, WRAP).margins(t = dp(1)))
+            cockpitBox.addView(label(
+                "İzlenecek alanlar: ${system.candidateMeasurements.joinToString(" · ")}",
+                10f, Palette.TEXT_FAINT, lines = 3
+            ), lp(MATCH, WRAP).margins(t = dp(2)))
+            cockpitBox.addView(label(
+                "Erişim: ${system.accessPath}. ${system.limitation}",
+                10f, Palette.TEXT_FAINT, lines = 4
+            ), lp(MATCH, WRAP).margins(t = dp(1), b = dp(4)))
+        }
 
         // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
         cockpitBox.addView(label("🩺 Araç arıza tanılama", 15f, bold = true))
