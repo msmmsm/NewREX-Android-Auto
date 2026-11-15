@@ -11,7 +11,7 @@ import androidx.core.content.FileProvider
 import java.io.File
 
 /**
- * King Installer'ın yaptığını uygulamanın içinden yapar: NewREX kendi APK'sını Google'ın paket yükleyicisine
+ * King Installer'ın yaptığını uygulamanın içinden yapar: OmniDrive kendi APK'sını Google'ın paket yükleyicisine
  * "Play Store kuruyor" bilgisiyle tekrar kurdurur. Android Auto bu kayda bakıp uygulamayı gösteriyor.
  * Xiaomi gibi telefonlarda kendi yükleyicileri araya giriyor; o yüzden Google'ın yükleyicisi adıyla çağrılır.
  */
@@ -41,7 +41,7 @@ object SelfInstall {
     /** Kendi APK'sını [installer] ile yeniden kurar. Kurulum bitince uygulama yeniden başlar. */
     fun start(activity: Activity, installer: String): Boolean {
         val dir = File(activity.cacheDir, "self").apply { mkdirs() }
-        val apk = File(dir, "NewREX.apk")
+        val apk = File(dir, "OmniDrive.apk")
         File(activity.applicationInfo.sourceDir).copyTo(apk, overwrite = true)
         val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.files", apk)
         @Suppress("DEPRECATION")
