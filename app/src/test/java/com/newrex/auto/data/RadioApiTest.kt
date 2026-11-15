@@ -41,6 +41,31 @@ class RadioApiTest {
         assertEquals("http://radio.example/live", stations.single().url)
     }
 
+    @Test fun parserPreservesTechnicalAndDirectoryMetadata() {
+        val station = RadioApi.parseStations(
+            """[{"name":"Teknik Radyo","url":"https://radio.example/live","codec":"MP3","bitrate":128,"countrycode":"tr","votes":42,"clickcount":1200,"lastcheckok":true}]"""
+        ).single()
+        assertEquals("MP3", station.codec)
+        assertEquals(128, station.bitrateKbps)
+        assertEquals("TR", station.countryCode)
+        assertEquals(42, station.votes)
+        assertEquals(1200, station.clickCount)
+        assertEquals(true, station.directoryReportsHealthy)
+    }
+
+    @Test fun mediaEntryJsonRoundTripKeepsRadioMetadata() {
+        val original = RadioApi.parseStations(
+            """[{"name":"JSON Radyo","url":"https://radio.example/live","codec":"AAC","bitrate":96,"countrycode":"tr","votes":5,"clickcount":90,"lastcheckok":false}]"""
+        ).single()
+        val restored = MediaEntry.fromJson(original.toJson())
+        assertEquals(original.codec, restored.codec)
+        assertEquals(original.bitrateKbps, restored.bitrateKbps)
+        assertEquals(original.countryCode, restored.countryCode)
+        assertEquals(original.votes, restored.votes)
+        assertEquals(original.clickCount, restored.clickCount)
+        assertEquals(original.directoryReportsHealthy, restored.directoryReportsHealthy)
+    }
+
     @Test fun blankStationNamesReceiveReadableFallback() {
         val stations = RadioApi.parseStations(
             """[{"name":"  ","url":"https://radio.example/live"}]"""
