@@ -210,3 +210,11 @@ Her iş maddesi için GitHub üzerinde şu bilgiler tutulur:
 5. Durum: Bekliyor / Geliştiriliyor / Testte / Tamamlandı / Donanım bekliyor
 
 Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test ve gerekiyorsa gerçek araç/adaptör testi kanıtı bulunmalıdır.
+
+
+## OBD-II ayrıştırma güvenilirliği — kod inceleme notu
+
+- Mode 01 PID destek bitmap'i ayrıştırılırken ELM satır sonları/boşlukları ve CAN ECU başlıkları normalize edilir; yalnızca standart 32-PID bitmap başlangıç blokları kabul edilir.
+- Mode 03 DTC yanıtları birden fazla 11-bit CAN ECU başlığı (7E8–7EF) içerdiğinde her ECU'nun yanıt yükü ayrı ayrıştırılır. ECU başlığı ve sonraki yanıt, önceki ECU'nun DTC baytlarına eklenmez; yinelenen kodlar tekilleştirilir.
+- Eksik DTC bayt çiftleri ve boş 0000 yuvaları sonuç listesine eklenmez.
+- Bu değişiklikler için çoklu ECU, CAN başlığı, satır sonu, yinelenen kod ve eksik veri regresyon testleri kaynak koda eklenmiştir. JUnit testleri ve Android derlemesi çalıştırılmadığından otomatik doğrulama sonucu beklemektedir; gerçek ELM327/araç testi ayrıca gereklidir.
