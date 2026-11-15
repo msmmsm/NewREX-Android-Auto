@@ -202,7 +202,9 @@ object Prefs {
     /** Bozuk/eski kayıtlar oynatmayı engellemez; güvenli biçimde yok sayılır. */
     fun playbackQueue(): PlaybackQueueSnapshot? {
         val raw = sp.getString("playback_queue_v1", null) ?: return null
-        return runCatching { PlaybackQueueSnapshot.fromJson(JSONObject(raw)) }.getOrNull()
+        val snapshot = runCatching { PlaybackQueueSnapshot.fromJson(JSONObject(raw)) }.getOrNull()
+        if (snapshot == null) clearPlaybackQueue()
+        return snapshot
     }
 
     fun clearPlaybackQueue() {
