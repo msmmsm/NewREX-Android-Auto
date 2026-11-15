@@ -99,7 +99,18 @@ Dal: `master`
 - [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
 
-## 4. YouTube ve genel WebView — `pages/WebPage.kt`, `pages/YouTubeAdBlocker.kt`
+## 4. İnternet radyosu — `RadioApi`, `RadioPage.kt`
+
+- Radio Browser katalogu iki API sunucusundan sırayla alınır; boş/bozuk yanıt mevcut başarılı katalogun üzerine yazılmaz.
+- Popüler istasyon kataloğu ve arama sonuçları yerel SharedPreferences içinde saklanır. Önbellek 6 saat taze kabul edilir; süre dolduğunda ağdan yenilenir, iki sunucu da başarısız olursa son başarılı katalog kullanılır.
+- Arama önbelleği anahtarında arama metni açıkça tutulmaz; SHA-256 anahtarı kullanılır ve en fazla 20 arama kaydı saklanır.
+- Akış, logo ve ana sayfa adresleri yalnızca HTTP(S), geçerli host ve kullanıcı bilgisi içermeyen URL'lerden kabul edilir. Çözümlenmiş yayın adresi güvenli değilse güvenli özgün URL denenir; ikisi de geçersizse istasyon katalogdan çıkarılır.
+- İstasyon adı boşsa okunabilir varsayılan ad atanır; yinelenen akış adresleri tekilleştirilir.
+- Radyo alternatif istasyon araması da aynı kalıcı önbelleği kullanır.
+- [x] Radyo katalog önbelleği ve adres doğrulama testleri eklendi.
+- [ ] Radio Browser sunucu kesintisi, çevrimdışı açılış ve gerçek radyo akışlarının Android cihazda kabul testi yapılmalı.
+
+## 5. YouTube ve genel WebView — `pages/WebPage.kt`, `pages/YouTubeAdBlocker.kt`
 
 ### Mevcut uygulama
 - YouTube, mobil web sitesi üzerinden Android WebView içinde açılıyor; resmî YouTube Data API veya yerel YouTube oynatıcı entegrasyonu görülmüyor.
@@ -122,7 +133,7 @@ Dal: `master`
 - [ ] Ana çerçeve yönlendirme ve üçüncü taraf çerezleri için ek testler; oturum/çerez temizleme kontrolü değerlendirmesi.
 - [ ] Sürüş/park modu geçişleri ve tam ekran video için gerçek Android Auto testi.
 
-## 5. Sonuç ve öncelik
+## 6. Sonuç ve öncelik
 
 | Öncelik | İş | Durum |
 |---|---|---|
