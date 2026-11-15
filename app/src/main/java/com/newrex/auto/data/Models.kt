@@ -14,6 +14,13 @@ data class MediaEntry(
     val group: String,
     /** İstasyonun web sitesi (logosu yoksa oradan bulunur). */
     val home: String? = null,
+    /** Radio Browser katalogundan gelen teknik yayın bilgileri; diğer medya türlerinde null kalır. */
+    val codec: String? = null,
+    val bitrateKbps: Int? = null,
+    val countryCode: String? = null,
+    val votes: Int? = null,
+    val clickCount: Int? = null,
+    val directoryReportsHealthy: Boolean? = null,
 ) {
     val key: String get() = "$kind|$url"
 
@@ -24,6 +31,12 @@ data class MediaEntry(
         .put("image", image ?: "")
         .put("group", group)
         .put("home", home ?: "")
+        .put("codec", codec ?: "")
+        .put("bitrateKbps", bitrateKbps ?: 0)
+        .put("countryCode", countryCode ?: "")
+        .put("votes", votes ?: 0)
+        .put("clickCount", clickCount ?: 0)
+        .put("directoryReportsHealthy", directoryReportsHealthy)
 
     companion object {
         fun fromJson(o: JSONObject) = MediaEntry(
@@ -33,6 +46,13 @@ data class MediaEntry(
             image = o.optString("image").ifBlank { null },
             group = o.optString("group"),
             home = o.optString("home").ifBlank { null },
+            codec = o.optString("codec").ifBlank { null },
+            bitrateKbps = o.optInt("bitrateKbps").takeIf { it > 0 },
+            countryCode = o.optString("countryCode").ifBlank { null },
+            votes = o.optInt("votes").takeIf { it > 0 },
+            clickCount = o.optInt("clickCount").takeIf { it > 0 },
+            directoryReportsHealthy = if (o.has("directoryReportsHealthy") && !o.isNull("directoryReportsHealthy"))
+                o.optBoolean("directoryReportsHealthy") else null,
         )
     }
 }
