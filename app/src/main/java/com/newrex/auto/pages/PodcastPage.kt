@@ -50,7 +50,7 @@ import kotlinx.coroutines.delay
 class PodcastPage(ui: CarUi) : Page(ui) {
     override val title = "Podcast"
 
-    private enum class Tab(val label: String) { POPULAR("Popüler"), SUBS("Aboneliklerim"), RECENT("Son dinlenen"), SEARCH("Arama") }
+    private enum class Tab(val label: String) { POPULAR("Popüler"), SUBS("Aboneliklerim"), RECENT("Son dinlenen"), DOWNLOADS("İndirilenler"), SEARCH("Arama") }
 
     private companion object {
         var topCache: List<PodcastShow> = emptyList()
@@ -119,6 +119,13 @@ class PodcastPage(ui: CarUi) : Page(ui) {
                     Tile(e.key, e.title, e.group, e.image, R.drawable.ic_podcast) { PlayerHub.play(eps, i) }
                 }
                 setStatus(eps.isEmpty(), "Henüz podcast dinlemedin.")
+            }
+            Tab.DOWNLOADS -> {
+                val eps = PodcastDownloads.downloadedEntries()
+                tiles.items = eps.mapIndexed { i, e ->
+                    Tile(e.key, e.title, e.group, e.image, R.drawable.ic_podcast) { PlayerHub.play(eps, i) }
+                }
+                setStatus(eps.isEmpty(), "Henüz indirilmiş bölüm yok. Program sayfasından bölümlerin yanındaki İndir düğmesine dokun.")
             }
         }
     }
@@ -312,11 +319,12 @@ class PodcastShowPage(ui: CarUi, private val show: PodcastShow) : Page(ui) {
                         ui.toast("İndirme iptal edildi.")
                     }
                     else -> {
-                        val id = PodcastDownloads.enqueue(e.url, e.title)
+                        val id = PodcastDownloads.enqueue(e.url, e.title, e.image, show.name)
                         ui.toast(if (id == null) "İndirme başlatılamadı. Adresi kontrol et." else "Podcast indirme kuyruğuna eklendi.")
                     }
                 }
                 notifyDataSetChanged()
+                if (tab == Tab.DOWNLOADS) show()
             }
             h.root.onTap {
                 if (playing) PlayerHub.toggle() else PlayerHub.play(episodes, position)
