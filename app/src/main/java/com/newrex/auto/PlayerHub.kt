@@ -80,6 +80,7 @@ object PlayerHub {
     private var mediaController: MediaController? = null
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var libraryObserver: Job? = null
     val networkAvailable = MutableStateFlow(false)
     private var queue: List<MediaEntry> = emptyList()
     private var index = 0
@@ -245,10 +246,10 @@ object PlayerHub {
             override fun isCommandAvailable(command: Int) =
                 command in extra || super.isCommandAvailable(command)
 
-            override fun seekToNext() = advanceNext()
-            override fun seekToNextMediaItem() = advanceNext()
-            override fun seekToPrevious() = advancePrevious()
-            override fun seekToPreviousMediaItem() = advancePrevious()
+            override fun seekToNext() = if (isPodcast) seekBy(30_000) else advanceNext()
+            override fun seekToNextMediaItem() = if (isPodcast) seekBy(30_000) else advanceNext()
+            override fun seekToPrevious() = if (isPodcast) seekBy(-15_000) else advancePrevious()
+            override fun seekToPreviousMediaItem() = if (isPodcast) seekBy(-15_000) else advancePrevious()
         }
         exo = p
         applyQuality()
@@ -379,6 +380,12 @@ object PlayerHub {
         session = MediaLibraryService.MediaLibrarySession.Builder(
             context.applicationContext, sessionPlayer, libraryCallback
         ).setId("omnidrive").build()
+        libraryObserver?.cancel()
+        libraryObserver = scope.launch {
+            kotlinx.coroutines.flow.combine(now, Prefs.changes) { _, _ -> Unit }.collect {
+                notifyLibraryChanges()
+            }
+        }
         handler.post(ticker)
     }
 
@@ -461,6 +468,8 @@ object PlayerHub {
         cancelRecovery()
         now.value?.takeIf { it.kind == Kind.PODCAST }?.let { e -> exo?.let { Prefs.savePosition(e.url, it.currentPosition) } }
         handler.removeCallbacks(ticker)
+        libraryObserver?.cancel()
+        libraryObserver = null
         unregisterNetworkMonitor()
         session?.release()
         exo?.release()
@@ -535,6 +544,18 @@ object PlayerHub {
     private const val LIBRARY_RECENTS = "omnidrive:recents"
     private const val LIBRARY_QUEUE = "omnidrive:queue"
     private const val LIBRARY_NOW_PLAYING = "omnidrive:now-playing"
+
+    /** Favori, son dinlenen, kuyruk veya geçerli öğe değiştiğinde bağlı araç tarayıcılarını yenile. */
+    private fun notifyLibraryChanges() {
+        val activeSession = session ?: return
+        activeSession.notifyChildrenChanged(LIBRARY_ROOT, libraryCategories().size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_FAVORITES_TV, externalEntries(Prefs.favorites(Kind.TV)).size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_FAVORITES_RADIO, externalEntries(Prefs.favorites(Kind.RADIO)).size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_FAVORITES_PODCAST, externalEntries(Prefs.favorites(Kind.PODCAST)).size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_RECENTS, externalEntries(Prefs.recents()).size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_QUEUE, externalEntries(libraryQueue()).size, null)
+        activeSession.notifyChildrenChanged(LIBRARY_NOW_PLAYING, if (externalEntries(listOfNotNull(now.value)).isEmpty()) 0 else 1, null)
+    }
 
     private fun libraryRootItem() = MediaItem.Builder()
         .setMediaId(LIBRARY_ROOT)
