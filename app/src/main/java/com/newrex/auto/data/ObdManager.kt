@@ -307,15 +307,14 @@ object ObdManager {
     suspend fun readFreezeFrame(): ObdFreezeFrame? = withContext(Dispatchers.IO) {
         if (state.value != ConnectionState.CONNECTED) return@withContext null
         try {
-            val values = listOf(
-                0x0C to sendCommand("020C"),
-                0x0D to sendCommand("020D"),
-                0x05 to sendCommand("0205"),
-                0x0F to sendCommand("020F"),
-                0x04 to sendCommand("0204"),
-                0x11 to sendCommand("0211")
-            )
-            val parsed = values.mapNotNull { (pid, raw) ->
+            // Önce Mode 02 destek bitmap'i okunur; desteklenmeyen PID'lere gereksiz istek atılmaz.
+            val supported = ObdDiagnostics.parseSupportedFreezeFramePids(sendCommand("0200"))
+                ?: return@withContext null
+            val requested = listOf(0x0C, 0x0D, 0x05, 0x0F, 0x04, 0x11)
+                .filter { it in supported }
+            if (requested.isEmpty()) return@withContext null
+            val parsed = requested.mapNotNull { pid ->
+                val raw = sendCommand("02" + pid.toString(16).uppercase().padStart(2, '0'))
                 val size = if (pid == 0x0C) 2 else 1
                 ObdDiagnostics.parseFreezeFrameBytes(raw, pid, size)?.let { pid to it }
             }
