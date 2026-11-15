@@ -33,7 +33,7 @@ object Net {
     }
 
     /** RSS gibi dış kaynak yanıtlarını belleğe almadan önce kesin boyut sınırı uygular. */
-    fun getLimited(url: String, maxBytes: Int): String {
+    fun getLimited(url: String, maxBytes: Int, allowedContentTypes: Set<String> = setOf("application/rss+xml", "application/atom+xml", "application/xml", "text/xml", "text/plain", "application/octet-stream")): String {
         require(maxBytes > 0) { "Yanıt boyutu sınırı pozitif olmalı" }
         var current = okhttp3.HttpUrl.get(url)
         val redirectClient = client.newBuilder().followRedirects(false).followSslRedirects(false).build()
@@ -53,7 +53,7 @@ object Net {
                 if (!resp.isSuccessful) throw IOException("HTTP ${resp.code}")
                 val body = resp.body ?: return ""
                 val mime = body.contentType()?.let { "${it.type}/${it.subtype}".lowercase() }.orEmpty()
-                if (mime.isNotBlank() && mime !in setOf("application/rss+xml", "application/atom+xml", "application/xml", "text/xml", "text/plain", "application/octet-stream")) {
+                if (mime.isNotBlank() && mime !in allowedContentTypes) {
                     throw IOException("RSS için desteklenmeyen içerik türü")
                 }
                 return readBounded(body.byteStream(), maxBytes, body.contentLength())
@@ -90,6 +90,7 @@ object Net {
 /** M3U / M3U8 IPTV listelerini indirir, önbelleğe alır ve kanallara çevirir. */
 object Playlists {
     private const val CACHE_HOURS = 6
+    private const val MAX_PLAYLIST_BYTES = 8 * 1024 * 1024
 
     /** A Haber, A Spor, ATV, A2 gibi kanallar listenin sonuna konur. */
     private val LAST = Regex("^(a |a2|atv)", RegexOption.IGNORE_CASE)
@@ -113,18 +114,25 @@ object Playlists {
     private fun fetch(context: Context, pl: Playlist, forceRefresh: Boolean): String {
         if (pl.url.startsWith("content://")) {
             return context.contentResolver.openInputStream(Uri.parse(pl.url))
-                ?.bufferedReader()?.use { it.readText() }
+                ?.use { Net.readBounded(it, MAX_PLAYLIST_BYTES) }
                 ?: throw IOException("dosya okunamadı")
         }
         val cacheKey = MessageDigest.getInstance("SHA-256")
             .digest(pl.url.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
         val cache = File(context.cacheDir, "pl_$cacheKey.m3u")
+        if (cache.exists() && cache.length() > MAX_PLAYLIST_BYTES) cache.delete()
         val fresh = cache.exists() &&
             System.currentTimeMillis() - cache.lastModified() < CACHE_HOURS * 3_600_000L
         if (fresh && !forceRefresh) return cache.readText()
         return try {
-            Net.get(pl.url).also { cache.writeText(it) }
+            Net.getLimited(
+                pl.url,
+                MAX_PLAYLIST_BYTES,
+                setOf("application/rss+xml", "application/atom+xml", "application/xml", "text/xml",
+                    "text/plain", "application/octet-stream", "audio/x-mpegurl",
+                    "application/vnd.apple.mpegurl", "application/x-mpegurl", "application/mpegurl"),
+            ).also { cache.writeText(it) }
         } catch (e: IOException) {
             // İnternet yoksa eski liste ile devam et
             if (cache.exists()) cache.readText() else throw e
