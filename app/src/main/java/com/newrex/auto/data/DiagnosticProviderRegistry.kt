@@ -53,12 +53,10 @@ class Elm327DiagnosticProvider(
     private val adapterSelected: Boolean
 ) : DiagnosticProvider {
     override fun snapshot(): DiagnosticProviderSnapshot {
-        val state = when (connectionState) {
-            DiagnosticConnectionState.CONNECTED -> DiagnosticProviderState.CONNECTED
-            DiagnosticConnectionState.DISCONNECTED -> DiagnosticProviderState.NOT_CONNECTED
-            DiagnosticConnectionState.CONNECTING,
-            DiagnosticConnectionState.INITIALIZING -> DiagnosticProviderState.NOT_CONNECTED
-            DiagnosticConnectionState.ERROR -> DiagnosticProviderState.NOT_CONNECTED
+        val state = if (connectionState == DiagnosticConnectionState.CONNECTED && adapterSelected) {
+            DiagnosticProviderState.CONNECTED
+        } else {
+            DiagnosticProviderState.NOT_CONNECTED
         }
         val services = if (state == DiagnosticProviderState.CONNECTED) {
             setOf(
