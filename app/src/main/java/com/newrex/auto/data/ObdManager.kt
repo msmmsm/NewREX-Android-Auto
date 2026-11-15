@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
@@ -48,6 +50,8 @@ object ObdManager {
     val selectedDevice = MutableStateFlow<BluetoothDevice?>(null)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // ELM327 komut/yanıt çiftlerinin polling ve DTC işlemleri arasında karışmasını önler.
+    private val commandMutex = Mutex()
     private var workerJob: Job? = null
     private var socket: BluetoothSocket? = null
     private var inStream: InputStream? = null
@@ -114,7 +118,8 @@ object ObdManager {
             } catch (e: Exception) {
                 state.value = ConnectionState.ERROR
                 TelemetryHub.obdConnected.value = false
-                disconnect()
+                TelemetryHub.clearObdData()
+                closeTransport()
             }
         }
     }
@@ -122,14 +127,20 @@ object ObdManager {
     fun disconnect() {
         workerJob?.cancel()
         workerJob = null
+        closeTransport()
+        selectedDevice.value = null
+        state.value = ConnectionState.DISCONNECTED
+        TelemetryHub.obdConnected.value = false
+        TelemetryHub.clearObdData()
+    }
+
+    private fun closeTransport() {
         try { inStream?.close() } catch (_: Exception) {}
         try { outStream?.close() } catch (_: Exception) {}
         try { socket?.close() } catch (_: Exception) {}
         socket = null
         inStream = null
         outStream = null
-        state.value = ConnectionState.DISCONNECTED
-        TelemetryHub.obdConnected.value = false
     }
 
     /**
@@ -197,38 +208,41 @@ object ObdManager {
         if (state.value != ConnectionState.CONNECTED) return@withContext false
         try {
             val res = sendCommand("04")
-            TelemetryHub.obdDtcList.value = emptyList()
-            res.contains("OK", ignoreCase = true)
+            // Mode 04 için başarılı ECU yanıtı 44'tür; yalnızca onaydan sonra yerel liste temizlenir.
+            val acknowledged = res.replace(" ", "").replace("\r", "").replace("\n", "").uppercase().contains("44")
+            if (acknowledged) TelemetryHub.obdDtcList.value = emptyList()
+            acknowledged
         } catch (e: Exception) {
             false
         }
     }
 
     private suspend fun sendCommand(cmd: String): String = withContext(Dispatchers.IO) {
-        val out = outStream ?: return@withContext ""
-        val ins = inStream ?: return@withContext ""
+        commandMutex.withLock {
+            val out = outStream ?: return@withLock ""
+            val ins = inStream ?: return@withLock ""
 
-        out.write((cmd + "\r").toByteArray())
-        out.flush()
+            out.write((cmd + "\r").toByteArray())
+            out.flush()
 
-        val sb = StringBuilder()
-        val buffer = ByteArray(128)
-        var read: Int
-        val startTime = System.currentTimeMillis()
+            val sb = StringBuilder()
+            val buffer = ByteArray(128)
+            val startTime = System.currentTimeMillis()
 
-        while (System.currentTimeMillis() - startTime < 1200) {
-            if (ins.available() > 0) {
-                read = ins.read(buffer)
-                if (read > 0) {
-                    val chunk = String(buffer, 0, read)
-                    sb.append(chunk)
-                    if (chunk.contains(">")) break // ELM327 yanıt sonu belirteci
+            while (System.currentTimeMillis() - startTime < 1200) {
+                if (ins.available() > 0) {
+                    val read = ins.read(buffer)
+                    if (read > 0) {
+                        val chunk = String(buffer, 0, read)
+                        sb.append(chunk)
+                        if (chunk.contains(">")) break // ELM327 yanıt sonu belirteci
+                    }
+                } else {
+                    delay(10)
                 }
-            } else {
-                delay(10)
             }
+            sb.toString().replace(">", "").trim()
         }
-        sb.toString().replace(">", "").trim()
     }
 
     // ---- PID Ayrıştırıcı Fonksiyonlar ----
@@ -273,17 +287,15 @@ object ObdManager {
             if (i + 4 <= hex.length) {
                 val codeHex = hex.substring(i, i + 4)
                 if (codeHex == "0000") continue
-                val prefix = when (codeHex[0]) {
-                    '0' -> "P0"
-                    '1' -> "P1"
-                    '2' -> "P2"
-                    '3' -> "P3"
-                    '4' -> "C0"
-                    '8' -> "B0"
-                    'C' -> "U0"
-                    else -> "P"
+                val first = codeHex[0].digitToIntOrNull(16) ?: continue
+                val category = when (first ushr 2) {
+                    0 -> "P"
+                    1 -> "C"
+                    2 -> "B"
+                    else -> "U"
                 }
-                result.add(prefix + codeHex.substring(1))
+                val subtype = first and 0x03
+                result.add(category + subtype + codeHex.substring(1))
             }
         }
         return result
