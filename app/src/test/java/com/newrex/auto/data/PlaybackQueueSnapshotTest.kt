@@ -60,6 +60,7 @@ class PlaybackQueueSnapshotTest {
         assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("file:///private/live"))
         assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("https://user:pass@radio.example/live"))
         assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("https://radio.example/live?access_token=secret"))
+        assertEquals(false, PlaybackQueueSnapshot.isSafeExternalUrl("https://radio.example/live?access%5Ftoken=secret"))
     }
 
     @Test fun clampsUnreasonablyLongPosition() {
