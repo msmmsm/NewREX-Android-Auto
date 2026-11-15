@@ -85,6 +85,7 @@ object RadioApi {
     private val SERVERS = listOf("de1", "de2")
     private const val PREFS = "omnidrive_radio_cache"
     private const val CACHE_TTL_MS = 6 * 60 * 60 * 1000L
+    private const val MAX_STALE_CACHE_MS = 30L * 24 * 60 * 60 * 1000
     private lateinit var preferences: android.content.SharedPreferences
 
     /** Son başarılı katalog, uygulama yeniden başlatıldığında da kullanılabilir. */
@@ -98,19 +99,30 @@ object RadioApi {
         }
     }
 
-    suspend fun popular(countryCode: String = "TR", limit: Int = 300) =
-        query(
-            "/search?countrycode=$countryCode&hidebroken=true&order=clickcount&reverse=true&limit=$limit",
-            "popular_$countryCode"
+    suspend fun popular(countryCode: String = "TR", limit: Int = 300): List<MediaEntry> {
+        val country = normalizeCountryCode(countryCode) ?: "TR"
+        val safeLimit = limit.coerceIn(1, 300)
+        return query(
+            "/search?countrycode=$country&hidebroken=true&order=clickcount&reverse=true&limit=$safeLimit",
+            "popular_$country"
         )
+    }
 
-    suspend fun search(name: String, country: String? = null, limit: Int = 150) =
-        query(
-            "/search?name=${URLEncoder.encode(name.trim(), "UTF-8")}" +
-                (country?.let { "&countrycode=$it" } ?: "") +
-                "&hidebroken=true&order=clickcount&reverse=true&limit=$limit",
-            "search_${sha256((country ?: "all") + "|" + name.trim().lowercase())}"
+    suspend fun search(name: String, country: String? = null, limit: Int = 150): List<MediaEntry> {
+        val term = name.trim().take(100)
+        if (term.isBlank()) return emptyList()
+        val safeCountry = country?.let(::normalizeCountryCode)
+        val safeLimit = limit.coerceIn(1, 300)
+        return query(
+            "/search?name=${URLEncoder.encode(term, "UTF-8")}" +
+                (safeCountry?.let { "&countrycode=$it" } ?: "") +
+                "&hidebroken=true&order=clickcount&reverse=true&limit=$safeLimit",
+            "search_${sha256((safeCountry ?: "all") + "|" + term.lowercase(java.util.Locale.ROOT))}"
         )
+    }
+
+    internal fun normalizeCountryCode(value: String): String? =
+        value.trim().takeIf { it.matches(Regex("[A-Za-z]{2}")) }?.uppercase(java.util.Locale.ROOT)
 
     private suspend fun query(path: String, cacheKey: String): List<MediaEntry> = withContext(Dispatchers.IO) {
         val cached = readCache(cacheKey)
@@ -184,7 +196,9 @@ object RadioApi {
                 runCatching { MediaEntry.fromJson(rows.getJSONObject(i)) }.getOrNull()
             }.filter { it.kind == Kind.RADIO && isSafeStreamUrl(it.url) }
                 .map { it.copy(image = safeWebUrl(it.image.orEmpty()), home = safeWebUrl(it.home.orEmpty())) }
-            if (savedAt <= 0 || items.isEmpty()) null else savedAt to items
+            val age = System.currentTimeMillis() - savedAt
+            if (savedAt <= 0 || age < -5 * 60 * 1000L || age > MAX_STALE_CACHE_MS || items.isEmpty())
+                null else savedAt to items
         }.getOrNull()
     }
 
