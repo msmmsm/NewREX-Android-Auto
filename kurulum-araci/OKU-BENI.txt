@@ -2,6 +2,8 @@
 ===================================
 
 Bu araç ne yapar?
+
+NOT: Yeni paket kimliği için kurulum ZIP'i yeniden hazırlanıp test edilene kadar indirme paketi kullanıma kapalıdır.
 -----------------
 OmniDrive'yu bilgisayardan telefonuna, arabada SÜRÜŞ SIRASINDA da
 açılacak şekilde kurar. Android Auto'nun istediği "Play Store kurdu" kaydını
@@ -40,4 +42,4 @@ dosyasına da yazılır. Sorun olursa bu dosyayı geliştiriciye gönder.
 OmniDrive'ı her güncellediğinde bu aracı bir kez daha çalıştır.
 
 OmniDrive - ücretsiz ve açık kaynak
-https://github.com/OmniDrive1337/OmniDrive-Android-Auto
+https://github.com/msmmsm/NewREX-Android-Auto
