@@ -235,3 +235,11 @@ Bir madde yalnızca kod yazıldığı için tamamlandı sayılmaz; otomatik test
 - ELM327 komut zaman aşımı veya giriş/çıkış akışı hatası DTC okuma/silme işlemlerinde de bağlantı hatası olarak ele alınır; bağlantı durumu ERROR yapılır, eski OBD ölçümleri temizlenir ve taşıma katmanı kapatılır.
 - Kullanıcı bağlantıyı iptal ettiğinde coroutine iptali bağlantı hatası olarak raporlanmaz.
 - Giriş tamponunda 4 KiB sınırını aşan bekleyen veri varsa yeni komut gönderilmez.
+
+
+### OBD-II bağlantı kurtarma ve veri güncelliği
+
+- Beklenmeyen ELM327 bağlantı/yanıt hatasından sonra aynı seçili adaptöre en fazla üç otomatik yeniden bağlanma denemesi yapılır. Beklemeler 1, 3 ve 7 saniyedir; kullanıcı bağlantıyı keserse coroutine iptal edilir ve yeniden bağlanma yapılmaz.
+- Deneme sayacı aynı hata/yeniden bağlanma dizisi boyunca korunur; kısa süreli bağlantı kurulması sınırsız yeniden deneme döngüsü oluşturmaz.
+- Telemetri anlık görüntüsüne `obdLastUpdatedMs` eklendi. Bu zaman damgası yalnızca başarıyla ayrıştırılmış OBD yanıtlarında ilerler; bağlantı kesildiğinde temizlenir. Arayüz bu alanı kullanarak OBD verisinin yaşını gösterebilir.
+- Voltaj yanıtı sayısal biçim ve 0–30 V aralığı açısından doğrulanır; bozuk metin veya gerçek dışı değerler kabul edilmez.
