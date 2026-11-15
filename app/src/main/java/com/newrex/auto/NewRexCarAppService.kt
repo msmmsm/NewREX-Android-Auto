@@ -157,7 +157,7 @@ class SurfaceScreen(carContext: CarContext) : Screen(carContext), SurfaceCallbac
         height = container.height
         val dm = carContext.getSystemService(DisplayManager::class.java)
         val vd = dm.createVirtualDisplay(
-            "NewREX", width, height, container.dpi, surface,
+            "OmniDrive", width, height, container.dpi, surface,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY,
         )
         virtualDisplay = vd
@@ -294,7 +294,7 @@ class SurfaceScreen(carContext: CarContext) : Screen(carContext), SurfaceCallbac
     }
 
     private companion object {
-        const val TAG = "NewREX"
+        const val TAG = "OmniDrive"
         /** Android Auto çift dokunmada bu ölçek değerini gönderir. */
         const val DOUBLE_TAP_ZOOM = 2f
     }
