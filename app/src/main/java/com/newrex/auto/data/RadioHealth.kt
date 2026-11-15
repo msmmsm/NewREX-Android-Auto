@@ -45,10 +45,7 @@ object RadioHealth {
         try {
             // Katalogdan gelen bir adresin yerel ağa yönelmesini engelle.
             val addresses = InetAddress.getAllByName(host)
-            if (addresses.isEmpty() || addresses.any {
-                    it.isAnyLocalAddress || it.isLoopbackAddress || it.isLinkLocalAddress ||
-                        it.isSiteLocalAddress || it.isMulticastAddress
-                }) {
+            if (addresses.isEmpty() || addresses.any { !isPublicAddress(it) }) {
                 return@withContext Result(State.UNSAFE_ADDRESS, "Yerel veya özel ağ adresi güvenlik nedeniyle sınanmadı.")
             }
             val request = Request.Builder()
@@ -82,6 +79,39 @@ object RadioHealth {
                 else -> "Yayın bağlantısı kurulamadı: ${e.message ?: "ağ hatası"}"
             })
         }
+    }
+
+
+    /** Reddetilen adres blokları: özel, yerel, paylaşımlı, dokümantasyon ve ayrılmış ağlar. */
+    internal fun isPublicAddress(address: InetAddress): Boolean {
+        if (address.isAnyLocalAddress || address.isLoopbackAddress || address.isLinkLocalAddress ||
+            address.isSiteLocalAddress || address.isMulticastAddress) return false
+        val b = address.address.map { it.toInt() and 0xff }
+        if (b.size == 4) {
+            val a = b[0]
+            val second = b[1]
+            return when {
+                a == 0 || a == 10 || a == 127 || a >= 224 -> false
+                a == 100 && second in 64..127 -> false
+                a == 169 && second == 254 -> false
+                a == 172 && second in 16..31 -> false
+                a == 192 && second == 168 -> false
+                a == 192 && second == 0 -> false
+                a == 192 && second == 0 && b[2] == 2 -> false
+                a == 198 && second in 18..19 -> false
+                a == 198 && second == 51 && b[2] == 100 -> false
+                a == 203 && second == 0 && b[2] == 113 -> false
+                else -> true
+            }
+        }
+        if (b.size == 16) {
+            val first = b[0]
+            val second = b[1]
+            if ((first and 0xfe) == 0xfc) return false // IPv6 ULA fc00::/7
+            if (first == 0xfe && (second and 0xc0) == 0x80) return false // fe80::/10
+            if (first == 0x20 && second == 0x01 && b[2] == 0x0d && b[3] == 0xb8) return false
+        }
+        return true
     }
 
     internal fun classifyStatus(code: Int, contentType: String?): Pair<State, String> = when {
