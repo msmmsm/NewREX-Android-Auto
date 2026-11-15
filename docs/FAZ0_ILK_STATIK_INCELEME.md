@@ -81,3 +81,16 @@ Bu kayıttaki hiçbir özellik yalnızca kaynak kodunda sınıf veya ekran bulun
 - Kaynak değişiklikleri GitHub `master` dalına işlendi.
 - Bu güncelleme için GitHub Actions çalışması henüz görünmüyor; commit durumlarında da raporlanmış kontrol yok. Dolayısıyla derleme ve testlerin başarılı olduğu iddia edilmiyor.
 - Gerçek ELM327 adaptörü, araç ECU'su ve Toyota C-HR üzerinde fiziksel test yapılmadı.
+
+
+### Marka tutarlılığı ve güncelleme kanalı
+- Telefon ana ekranı, araç ekranı, Hakkında, Ayarlar, yardım metinleri ve sesli karşılama içindeki görünen ürün adı OmniDrive olarak düzenlendi.
+- Uygulama içi güncelleme denetleyicisi artık özgün NewREX deposunu değil OmniDrive fork deposunu kontrol ediyor.
+- Güncelleme denetleyicisi, OmniDrive deposunda sürüm bulunmadığında önceki upstream sürüm önbelleğini temizliyor; eski NewREX APK'sını OmniDrive güncellemesi gibi önermiyor.
+- Self-install geçici APK dosya adı OmniDrive.apk olarak değiştirildi.
+- OmniDrive deposunda şu anda yayımlanmış Release bulunmuyor. Bu nedenle README, APK'nın henüz yayımlanmadığını belirtiyor ve sürüm sayfasını işaret ediyor.
+- Hakkında ekranında lisansın istediği tam `Original developer: NewREX` atfı ve özgün proje bağlantısı gösteriliyor.
+
+### Açık dağıtım blokajı
+- `applicationId` ve `namespace` hâlâ `com.newrex.auto`. `applicationId` değerini `com.omnidrive.auto` yapmak mevcut kurulumun üzerine normal güncelleme olarak kurulmayı engeller; yeni paket ayrı uygulama olur. Kullanıcı verilerinin taşınması ve self-install/kurulum aracı uyumu test edilmeden bu değişiklik yapılmadı.
+- OmniDrive için ilk Release oluşturulmadığından otomatik güncelleme ve APK indirme akışı henüz uçtan uca doğrulanamaz.
