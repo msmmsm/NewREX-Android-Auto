@@ -104,8 +104,9 @@ object ObdManager {
 
                 try {
                     val sock = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                    sock.connect()
+                    // connect() hata verirse veya kullanıcı iptal ederse soket de kapatılabilsin.
                     socket = sock
+                    sock.connect()
                     inStream = sock.inputStream
                     outStream = sock.outputStream
 
