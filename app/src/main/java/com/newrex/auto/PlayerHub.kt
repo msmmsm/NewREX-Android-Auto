@@ -30,6 +30,7 @@ import com.newrex.auto.data.FmPresets
 import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Net
 import com.newrex.auto.data.Prefs
+import com.newrex.auto.data.PlaybackQueueSnapshot
 import com.newrex.auto.data.RadioApi
 import com.newrex.auto.data.normName
 import kotlinx.coroutines.CoroutineScope
@@ -105,6 +106,9 @@ object PlayerHub {
 
     /** MediaSessionService tarafından sunulan tek oturum. Yalnızca servis yaşam döngüsü yönetir. */
     internal val mediaSession: MediaLibraryService.MediaLibrarySession? get() = session
+
+    /** Media library için oturumun anlık kuyruğunun güvenli kopyası. */
+    internal fun libraryQueue(): List<MediaEntry> = queue.toList()
 
     /** Media3 playback-resumption callback'i için kaydedilmiş kuyruğu belleğe alır. */
     internal fun restoreQueue(snapshot: com.newrex.auto.data.PlaybackQueueSnapshot) {
@@ -273,10 +277,14 @@ object PlayerHub {
                     LIBRARY_FAVORITES_RADIO -> Prefs.favorites(Kind.RADIO).map(::itemFor)
                     LIBRARY_FAVORITES_PODCAST -> Prefs.favorites(Kind.PODCAST).map(::itemFor)
                     LIBRARY_RECENTS -> Prefs.recents().map(::itemFor)
+                    LIBRARY_QUEUE -> libraryQueue().map(::itemFor)
+                    LIBRARY_NOW_PLAYING -> listOfNotNull(now.value).map(::itemFor)
                     else -> emptyList()
                 }
-                val from = (page.toLong() * pageSize).coerceAtMost(children.size.toLong()).toInt()
-                val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(children.size.toLong()).toInt()
+                val safePage = page.coerceAtLeast(0)
+                val safePageSize = pageSize.coerceAtLeast(1)
+                val from = (safePage.toLong() * safePageSize).coerceAtMost(children.size.toLong()).toInt()
+                val to = (from.toLong() + safePageSize).coerceAtMost(children.size.toLong()).toInt()
                 return Futures.immediateFuture(
                     LibraryResult.ofItemList(ImmutableList.copyOf(children.subList(from, to)), params)
                 )
@@ -294,7 +302,9 @@ object PlayerHub {
                     LIBRARY_FAVORITES_RADIO -> categoryItem(mediaId, "Radyo Favorileri")
                     LIBRARY_FAVORITES_PODCAST -> categoryItem(mediaId, "Podcast Favorileri")
                     LIBRARY_RECENTS -> categoryItem(mediaId, "Son Dinlenenler")
-                    else -> (Prefs.favorites() + Prefs.recents()).firstOrNull { it.key == mediaId }?.let(::itemFor)
+                    LIBRARY_QUEUE -> categoryItem(mediaId, "Çalma Kuyruğu")
+                    LIBRARY_NOW_PLAYING -> categoryItem(mediaId, "Şimdi Çalıyor")
+                    else -> (Prefs.favorites() + Prefs.recents() + libraryQueue()).firstOrNull { it.key == mediaId }?.let(::itemFor)
                 }
                 return if (item != null) Futures.immediateFuture(LibraryResult.ofItem(item, null))
                 else Futures.immediateFuture(LibraryResult.ofError(SessionError(SessionError.ERROR_BAD_VALUE, "Medya öğesi bulunamadı")))
@@ -310,15 +320,17 @@ object PlayerHub {
                 params: MediaLibraryService.LibraryParams?,
             ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
                 val normalized = query.trim().lowercase(java.util.Locale.ROOT)
-                val matches = (Prefs.favorites() + Prefs.recents())
+                val matches = (Prefs.favorites() + Prefs.recents() + libraryQueue())
                     .distinctBy { it.key }
                     .filter { normalized.isNotEmpty() && (
                         it.title.lowercase(java.util.Locale.ROOT).contains(normalized) ||
                         it.group.lowercase(java.util.Locale.ROOT).contains(normalized)
                     ) }
                     .map(::itemFor)
-                val from = (page.toLong().coerceAtLeast(0) * pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
-                val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(matches.size.toLong()).toInt()
+                val safePage = page.coerceAtLeast(0)
+                val safePageSize = pageSize.coerceAtLeast(1)
+                val from = (safePage.toLong() * safePageSize).coerceAtMost(matches.size.toLong()).toInt()
+                val to = (from.toLong() + safePageSize).coerceAtMost(matches.size.toLong()).toInt()
                 return Futures.immediateFuture(
                     LibraryResult.ofItemList(ImmutableList.copyOf(matches.subList(from, to)), params)
                 )
@@ -467,6 +479,8 @@ object PlayerHub {
     private const val LIBRARY_FAVORITES_RADIO = "omnidrive:favorites:radio"
     private const val LIBRARY_FAVORITES_PODCAST = "omnidrive:favorites:podcast"
     private const val LIBRARY_RECENTS = "omnidrive:recents"
+    private const val LIBRARY_QUEUE = "omnidrive:queue"
+    private const val LIBRARY_NOW_PLAYING = "omnidrive:now-playing"
 
     private fun libraryRootItem() = MediaItem.Builder()
         .setMediaId(LIBRARY_ROOT)
@@ -485,11 +499,13 @@ object PlayerHub {
         categoryItem(LIBRARY_FAVORITES_RADIO, "Radyo Favorileri"),
         categoryItem(LIBRARY_FAVORITES_PODCAST, "Podcast Favorileri"),
         categoryItem(LIBRARY_RECENTS, "Son Dinlenenler"),
+        categoryItem(LIBRARY_QUEUE, "Çalma Kuyruğu"),
+        categoryItem(LIBRARY_NOW_PLAYING, "Şimdi Çalıyor"),
     )
 
     private fun itemFor(e: MediaEntry) = MediaItem.Builder()
         .setMediaId(e.key)
-        .setUri(e.url)
+        .apply { if (PlaybackQueueSnapshot.isSafeExternalUrl(e.url)) setUri(e.url) }
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(e.title)
@@ -500,7 +516,7 @@ object PlayerHub {
                     Kind.RADIO -> "OmniDrive Radyo"
                     Kind.PODCAST -> e.group.ifBlank { "OmniDrive Podcast" }
                 })
-                .apply { e.image?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { setArtworkUri(android.net.Uri.parse(it)) } }
+                .apply { e.image?.takeIf { PlaybackQueueSnapshot.isSafeExternalUrl(it) }?.let { setArtworkUri(android.net.Uri.parse(it)) } }
                 .build()
         )
         .apply { if (e.url.contains(".m3u8", ignoreCase = true)) setMimeType(MimeTypes.APPLICATION_M3U8) }
