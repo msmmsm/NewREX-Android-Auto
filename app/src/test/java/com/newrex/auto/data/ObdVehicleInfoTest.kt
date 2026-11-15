@@ -8,7 +8,7 @@ class ObdVehicleInfoTest {
     @Test fun readsOnlyPidsAdvertisedByMode09Bitmap() {
         assertEquals(
             setOf(0x02, 0x04, 0x06, 0x0A),
-            ObdVehicleInfo.parseSupportedPids("7E806490055400000")
+            ObdVehicleInfo.parseSupportedPids("7E806490054400000")
         )
         assertNull(ObdVehicleInfo.parseSupportedPids("NO DATA"))
         assertNull(ObdVehicleInfo.parseSupportedPids("490000"))
