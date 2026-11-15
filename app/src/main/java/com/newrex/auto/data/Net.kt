@@ -8,8 +8,10 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -28,6 +30,34 @@ object Net {
             if (!resp.isSuccessful) throw IOException("HTTP ${resp.code}")
             return resp.body?.string() ?: ""
         }
+    }
+
+    /** RSS gibi dış kaynak yanıtlarını belleğe almadan önce kesin boyut sınırı uygular. */
+    fun getLimited(url: String, maxBytes: Int): String {
+        require(maxBytes > 0) { "Yanıt boyutu sınırı pozitif olmalı" }
+        val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
+        client.newCall(req).execute().use { resp ->
+            if (!resp.isSuccessful) throw IOException("HTTP ${resp.code}")
+            val body = resp.body ?: return ""
+            return readBounded(body.byteStream(), maxBytes, body.contentLength())
+        }
+    }
+
+    internal fun readBounded(input: InputStream, maxBytes: Int, declaredLength: Long = -1L): String {
+        require(maxBytes > 0) { "Yanıt boyutu sınırı pozitif olmalı" }
+        if (declaredLength > maxBytes) throw IOException("Yanıt boyut sınırını aşıyor")
+        val output = ByteArrayOutputStream(minOf(maxBytes, 8192))
+        val buffer = ByteArray(8192)
+        var total = 0
+        while (true) {
+            val count = input.read(buffer, 0, minOf(buffer.size, maxBytes - total + 1))
+            if (count < 0) break
+            if (count == 0) continue
+            total += count
+            if (total > maxBytes) throw IOException("Yanıt boyut sınırını aşıyor")
+            output.write(buffer, 0, count)
+        }
+        return output.toString(Charsets.UTF_8.name())
     }
 }
 
