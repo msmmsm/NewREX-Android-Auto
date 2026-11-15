@@ -1,5 +1,5 @@
 ﻿# OmniDrive - Kurulum aracı
-# Copyright (C) 2026 OmniDrive - GPL-3.0-or-later (bkz. NOTICE.md)
+# Copyright (C) 2026 NewREX - GPL-3.0-or-later (bkz. NOTICE.md)
 # OmniDrive'ı bilgisayardan telefona, Android Auto'nun sürüşte de kabul ettiği kayıtla
 # ("Play Store kurdu") kurar. Hiçbir veri toplamaz; sadece bu bilgisayar ile kabloyla
 # bağlı telefon arasında çalışır. Yaptığı her şeyi ekrana ve sonuc.txt dosyasına yazar.
@@ -8,7 +8,7 @@ try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 try { $Host.UI.RawUI.WindowTitle = 'OmniDrive Kurulum Aracı' } catch {}
 $PKG = 'com.omnidrive.auto'
 $PLAY = 'com.android.vending'
-$REPO = 'OmniDrive1337/OmniDrive-Android-Auto'
+$REPO = 'msmmsm/NewREX-Android-Auto'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $adb = Join-Path $here 'platform-tools\adb.exe'
 $log = Join-Path $here 'sonuc.txt'
