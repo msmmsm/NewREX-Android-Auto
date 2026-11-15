@@ -1,4 +1,4 @@
-// OmniDrive Android Auto — Copyright (C) 2026 OmniDrive — GPL-3.0-or-later (bkz. NOTICE.md)
+// NewREX Android Auto — Copyright (C) 2026 NewREX — GPL-3.0-or-later (bkz. NOTICE.md)
 package com.newrex.auto
 
 import android.app.Activity
