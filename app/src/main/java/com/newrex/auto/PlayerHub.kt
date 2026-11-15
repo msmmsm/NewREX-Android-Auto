@@ -35,6 +35,7 @@ import com.newrex.auto.data.MediaEntry
 import com.newrex.auto.data.Net
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.PlaybackQueueSnapshot
+import com.newrex.auto.data.PodcastDownloads
 import com.newrex.auto.data.RadioApi
 import com.newrex.auto.data.normName
 import kotlinx.coroutines.CoroutineScope
@@ -160,6 +161,7 @@ object PlayerHub {
             .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(6))
         tvSources = sources(STREAM_USER_AGENT)
         audioSources = sources(AUDIO_USER_AGENT)
+        PodcastDownloads.init(context)
         registerNetworkMonitor(context)
         val p = ExoPlayer.Builder(context)
             .setMediaSourceFactory(audioSources)
@@ -609,7 +611,13 @@ object PlayerHub {
         .apply { if (e.url.contains(".m3u8", ignoreCase = true)) setMimeType(MimeTypes.APPLICATION_M3U8) }
         .build()
 
-    private fun sourceFor(e: MediaEntry) = (if (e.kind == Kind.TV) tvSources else audioSources).createMediaSource(itemFor(e))
+    private fun sourceFor(e: MediaEntry): androidx.media3.exoplayer.source.MediaSource {
+        val mediaItem = itemFor(e)
+        val playableItem = if (e.kind == Kind.PODCAST) {
+            PodcastDownloads.localUri(e.url)?.let { mediaItem.buildUpon().setUri(it).build() } ?: mediaItem
+        } else mediaItem
+        return (if (e.kind == Kind.TV) tvSources else audioSources).createMediaSource(playableItem)
+    }
 
     /** Aynı yayını baştan açar (yönlendirmeli adresler yeni sunucuya bağlanır). */
     private fun reload() {
