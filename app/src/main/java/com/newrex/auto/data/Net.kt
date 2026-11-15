@@ -82,44 +82,111 @@ object Playlists {
 
 /** Ücretsiz ve açık Radio Browser servisi (radio-browser.info). */
 object RadioApi {
-    // Sunuculardan biri arada boş yanıt verebiliyor; sırayla denenir
     private val SERVERS = listOf("de1", "de2")
+    private const val PREFS = "omnidrive_radio_cache"
+    private const val CACHE_TTL_MS = 6 * 60 * 60 * 1000L
+    private lateinit var preferences: android.content.SharedPreferences
+
+    /** Son başarılı katalog, uygulama yeniden başlatıldığında da kullanılabilir. */
+    fun init(context: Context) {
+        if (!::preferences.isInitialized) {
+            synchronized(this) {
+                if (!::preferences.isInitialized) {
+                    preferences = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                }
+            }
+        }
+    }
 
     suspend fun popular(countryCode: String = "TR", limit: Int = 300) =
-        query("/search?countrycode=$countryCode&hidebroken=true&order=clickcount&reverse=true&limit=$limit")
+        query(
+            "/search?countrycode=$countryCode&hidebroken=true&order=clickcount&reverse=true&limit=$limit",
+            "popular_$countryCode"
+        )
 
     suspend fun search(name: String, country: String? = null, limit: Int = 150) =
-        query("/search?name=${URLEncoder.encode(name, "UTF-8")}" + (country?.let { "&countrycode=$it" } ?: "") +
-            "&hidebroken=true&order=clickcount&reverse=true&limit=$limit")
+        query(
+            "/search?name=${URLEncoder.encode(name.trim(), "UTF-8")}" +
+                (country?.let { "&countrycode=$it" } ?: "") +
+                "&hidebroken=true&order=clickcount&reverse=true&limit=$limit",
+            "search_${(country ?: "all")}_${name.trim().lowercase()}"
+        )
 
-    private suspend fun query(path: String): List<MediaEntry> = withContext(Dispatchers.IO) {
+    private suspend fun query(path: String, cacheKey: String): List<MediaEntry> = withContext(Dispatchers.IO) {
+        val cached = readCache(cacheKey)
+        if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+            return@withContext cached.second
+        }
+
         var last: Exception? = null
         for (server in SERVERS) {
             try {
-                val list = parse(Net.get("https://$server.api.radio-browser.info/json/stations$path"))
-                if (list.isNotEmpty()) return@withContext list
+                val body = Net.get("https://$server.api.radio-browser.info/json/stations$path")
+                val list = parseStations(body)
+                if (list.isNotEmpty()) {
+                    writeCache(cacheKey, list)
+                    return@withContext list
+                }
+                last = IOException("Radyo sunucusu boş istasyon listesi döndürdü")
             } catch (e: Exception) {
                 last = e
             }
         }
+        // Ağ/sunucu hatasında daha önce alınmış katalogu koru; boş yanıtla önbelleği ezme.
+        if (cached != null && cached.second.isNotEmpty()) return@withContext cached.second
         last?.let { throw it }
         emptyList()
     }
 
-    private fun parse(json: String): List<MediaEntry> {
+    internal fun parseStations(json: String): List<MediaEntry> {
         val arr = JSONArray(json)
-        return (0 until arr.length()).mapNotNull {
-            val o = arr.getJSONObject(it)
-            val stream = o.optString("url_resolved").ifBlank { o.optString("url") }
-            if (stream.isBlank()) return@mapNotNull null
+        return (0 until arr.length()).mapNotNull { index ->
+            val o = arr.optJSONObject(index) ?: return@mapNotNull null
+            val stream = listOf(o.optString("url_resolved"), o.optString("url"))
+                .firstOrNull(::isSafeStreamUrl) ?: return@mapNotNull null
+            val title = o.optString("name").trim().ifBlank { "İsimsiz radyo istasyonu" }
             MediaEntry(
                 kind = Kind.RADIO,
-                title = o.optString("name").trim(),
+                title = title.take(160),
                 url = stream,
-                image = o.optString("favicon").takeIf { it.startsWith("http") },
-                group = o.optString("tags").split(',').firstOrNull()?.trim().orEmpty(),
-                home = o.optString("homepage").takeIf { it.startsWith("http") },
+                image = safeWebUrl(o.optString("favicon")),
+                group = o.optString("tags").split(',').firstOrNull()?.trim()?.take(80).orEmpty(),
+                home = safeWebUrl(o.optString("homepage")),
             )
         }.distinctBy { it.url }
+    }
+
+    internal fun isSafeStreamUrl(value: String): Boolean = safeWebUrl(value) != null
+
+    private fun safeWebUrl(value: String): String? = runCatching {
+        val uri = java.net.URI(value.trim())
+        val scheme = uri.scheme?.lowercase()
+        if (scheme !in setOf("http", "https") || uri.host.isNullOrBlank() ||
+            uri.rawUserInfo != null || uri.host.any { it.isWhitespace() }) null
+        else uri.toASCIIString().takeIf { it.length <= 4096 }
+    }.getOrNull()
+
+    private fun readCache(key: String): Pair<Long, List<MediaEntry>>? {
+        if (!::preferences.isInitialized) return null
+        val raw = preferences.getString(key, null) ?: return null
+        return runCatching {
+            val root = org.json.JSONObject(raw)
+            val savedAt = root.optLong("savedAt")
+            val rows = root.optJSONArray("items") ?: return@runCatching null
+            val items = (0 until rows.length()).mapNotNull { i ->
+                runCatching { MediaEntry.fromJson(rows.getJSONObject(i)) }.getOrNull()
+            }.filter { it.kind == Kind.RADIO && isSafeStreamUrl(it.url) }
+            if (savedAt <= 0 || items.isEmpty()) null else savedAt to items
+        }.getOrNull()
+    }
+
+    private fun writeCache(key: String, items: List<MediaEntry>) {
+        if (!::preferences.isInitialized) return
+        val rows = JSONArray()
+        items.take(300).forEach { rows.put(it.toJson()) }
+        preferences.edit().putString(
+            key,
+            org.json.JSONObject().put("savedAt", System.currentTimeMillis()).put("items", rows).toString()
+        ).apply()
     }
 }
