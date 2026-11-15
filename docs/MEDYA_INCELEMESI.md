@@ -86,7 +86,7 @@ Dal: `master`
 - İndirilen bölümler Podcast ekranındaki ayrı **İndirilenler** sekmesinden, RSS akışına erişim olmasa da listelenir; uyumlu medya kütüphanesinde de ayrı kategori olarak sunulur. İndirme tamamlanma/iptal/progress değişimleri medya kütüphanesine bildirilir.
 - Android 10 ve üzeri sürümlerde dosyalar ortak **İndirilenler** klasörüne `OmniDrive_Podcasts_` önekiyle yazılır; böylece DownloadManager'ın yalnızca uygulamaya özel alandaki görünmeyen dosyaları temizlik sırasında kaldırması riski azaltılır. Android 8/9'da uygulamaya özel Podcast klasörü kullanılır. Android 10+ ortak klasördeki dosyalar uygulama kaldırıldığında kullanıcı tarafından ayrıca silinene kadar kalabilir.
 - İndirme mobil ağda başlatılabilir, dolaşımda indirme kapalıdır.
-- RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okuyor; MIME türü, dosya boyutu, HTTP yanıtı ve URL geçerliliği için açık bir doğrulama görünmüyor.
+- RSS ayrıştırıcısı `item` içindeki `enclosure` URL'sini okur. Feed indirmesinde 4 MiB yanıt sınırı ve HTTP(S)/host/kullanıcı bilgisi doğrulaması uygulanır; enclosure MIME türü ve indirme dosya boyutu doğrulaması hâlâ açık iştir.
 - Tarih ayrıştırma tek RFC 822 biçimine dayanıyor; farklı RSS tarih biçimleri boş tarih üretebilir.
 - **RSS enclosure adresleri düzeltildi.** Göreli bölüm dosyası adresleri feed URL'sine göre çözümleniyor; mutlak adresler korunuyor. Boş veya çözümlenemeyen adresler bölüm oynatılabilir adresi olarak kullanılmıyor.
 - **RSS enclosure URL güvenliği güçlendirildi.** Bölüm adresleri yalnızca HTTP(S), geçerli host ve kimlik bilgisi içermeyen URL'lerden kabul edilir. `file:`, `ftp:`, `content:` gibi şemalar, kullanıcı/parola gömülü adresler, boşluk/kontrol karakterleri ve 4 KiB üzerindeki URL'ler reddedilir. Göreli adresler yalnızca güvenli HTTP(S) feed adresine göre çözümlenir; özel ağ adresleri bu aşamada ayrıca engellenmez.
@@ -98,6 +98,7 @@ Dal: `master`
 - [ ] Enclosure MIME/uzunluk doğrulaması ve kullanıcıya açık hata mesajları.
 - [x] Göreli enclosure URL'leri feed URL'sine göre çözümleniyor; mutlak URL korunuyor.
 - [x] RSS enclosure şeması, kimlik bilgisi ve uzunluk doğrulaması için regresyon testleri eklendi.
+- [x] RSS feed URL doğrulaması ve 4 MiB indirme sınırı eklendi; sınır davranışı için birim testleri eklendi.
 - [ ] Uzun RSS, eksik alan, XML namespace ve bozuk XML testleri.
 - [x] Podcast bölümleri için Android DownloadManager tabanlı indirme, durum/progress, iptal/silme, indirilmiş dosyayı otomatik oynatma ve çevrimdışı indirme listesi eklendi.
 - [ ] Büyük indirmelerde depolama kotası/otomatik temizlik, dosya bütünlüğü ve farklı RSS sunucularıyla çevrimdışı cihaz testi yapılmalı.
@@ -158,7 +159,7 @@ Dal: `master`
 |---|---|---|
 | P0 | HLS M3U8 manifestini kanal listesi gibi ayrıştırma riskini gider | Kod düzeltildi; test sonucu bekliyor |
 | P1 | M3U göreli URL ve EXTINF başlık ayrıştırmasını düzelt/test et | Kod ve regresyon testleri eklendi; test sonucu bekliyor |
-| P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL ve tarih kodu/testleri eklendi; MIME ve XML saha testleri açık |
+| P1 | Podcast RSS URL/tarih/enclosure dayanıklılığını artır | URL/tarih/feed boyut sınırı kodu ve regresyon testleri eklendi; MIME ve XML saha testleri açık |
 | P1 | WebView/YouTube oturum, reklam müdahalesi ve temel TLS/karma içerik güvenliği | Reklam müdahalesi kaldırıldı; TLS ve karma içerik korumaları eklendi; cihaz testi açık |
 | P1 | Player/MediaSession arka plan dayanıklılığı | MediaLibraryService + Türkçe medya kütüphanesi + kalıcı kuyruk + playback resumption eklendi; gerçek cihaz/Android Auto testi açık |
 | P2 | Podcast çevrimdışı indirme özelliğini kapsamlandır (ürün kararı) | Uygulanmamış |
