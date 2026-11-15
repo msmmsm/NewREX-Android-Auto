@@ -66,7 +66,7 @@ object PodcastApi {
                     "image" -> (p.getAttributeValue("http://www.itunes.com/dtds/podcast-1.0.dtd", "href") ?: p.getAttributeValue(null, "href"))?.let { raw -> PodcastRss.resolveEnclosureUrl(feedUrl, raw)?.let { if (inItem) image = it else showImage = showImage ?: it } }
                     "title" -> if (inItem) title = p.nextText().trim()
                     "pubDate" -> if (inItem) date = formatDate(p.nextText().trim())
-                    "itunes:duration" -> if (inItem) duration = formatDuration(p.nextText().trim())
+                    "duration" -> if (inItem) duration = formatDuration(p.nextText().trim())
                 }
                 XmlPullParser.END_TAG -> if (p.name.substringAfter(':') == "item") {
                     inItem = false
