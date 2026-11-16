@@ -304,30 +304,25 @@ object PhoneCockpitHelper {
 
         val currentDiagnosticReadings = TelemetryHub.obdDiagnosticReadings.value.values
             .sortedBy { it.parameterId }
-        cockpitBox.addView(label("OBD ölçüm kökeni ve doğrulama", 13f, Palette.TEXT, bold = true),
+        cockpitBox.addView(label("Canlı OBD ölçümleri", 13f, Palette.TEXT, bold = true),
             lp(MATCH, WRAP).margins(t = dp(7), b = dp(2)))
         if (currentDiagnosticReadings.isEmpty()) {
-            cockpitBox.addView(label("Henüz kaydedilmiş OBD ölçüm kökeni yok.", 10f, Palette.TEXT_FAINT),
+            cockpitBox.addView(label("Henüz ölçüm yok.", 10f, Palette.TEXT_FAINT),
                 lp(MATCH, WRAP).margins(b = dp(4)))
         } else {
+            val nowMs = System.currentTimeMillis()
             currentDiagnosticReadings.forEach { reading ->
-                val qualityLabel = when (reading.quality) {
-                    com.newrex.auto.data.DiagnosticValueQuality.VALID -> "Yanıt/kaynak doğrulandı"
-                    com.newrex.auto.data.DiagnosticValueQuality.STALE -> "Güncelliğini yitirmiş"
+                val qualityLabel = when (reading.displayedQuality(nowMs)) {
+                    com.newrex.auto.data.DiagnosticValueQuality.VALID -> "Güncel"
+                    com.newrex.auto.data.DiagnosticValueQuality.STALE -> "Eski"
                     com.newrex.auto.data.DiagnosticValueQuality.INVALID -> "Geçersiz"
-                    com.newrex.auto.data.DiagnosticValueQuality.UNVERIFIED -> "ECU adresi doğrulanmadı"
+                    com.newrex.auto.data.DiagnosticValueQuality.UNVERIFIED -> "Doğrulanmadı"
                 }
                 val valueText = String.format(Locale.getDefault(), "%.1f %s", reading.value, reading.unit)
-                val timeText = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                    .format(Date(reading.timestampEpochMs))
                 cockpitBox.addView(label(
                     "${reading.parameterId}: $valueText · $qualityLabel",
                     10f, Palette.TEXT, bold = true
-                ), lp(MATCH, WRAP).margins(t = dp(2)))
-                cockpitBox.addView(label(
-                    "${reading.source} · ${reading.ecuId} · $timeText",
-                    9f, Palette.TEXT_FAINT, lines = 2
-                ), lp(MATCH, WRAP).margins(b = dp(3)))
+                ), lp(MATCH, WRAP).margins(t = dp(2), b = dp(3)))
             }
         }
 
