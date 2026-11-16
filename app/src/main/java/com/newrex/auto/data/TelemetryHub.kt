@@ -74,6 +74,21 @@ object TelemetryHub {
     val obdLastUpdatedMs = MutableStateFlow<Long?>(null)
 
     /**
+     * Parametre kimliğiyle indekslenmiş ölçüm kökeni. ECU adresi ayrıştırılmayan
+     * Mode 01 yanıtları UNVERIFIED kalır; bunlar doğrulanmış OEM ECU verisi değildir.
+     */
+    val obdDiagnosticReadings = MutableStateFlow<Map<String, DiagnosticReading>>(emptyMap())
+
+    fun recordObdReading(reading: DiagnosticReading) {
+        obdDiagnosticReadings.value = obdDiagnosticReadings.value + (reading.parameterId to reading)
+        markObdDataUpdated(reading.timestampEpochMs)
+    }
+
+    fun removeObdReading(parameterId: String) {
+        obdDiagnosticReadings.value = obdDiagnosticReadings.value - parameterId
+    }
+
+    /**
      * Tüm katmanları (OBD-II, Android Auto CarHardware, GPS) öncelik sırasına göre
      * tek bir birleşik StateFlow'da birleştiren reaktif telemetri akışı.
      */
@@ -163,6 +178,7 @@ object TelemetryHub {
         obdHybridBatteryRemainingLifePercent.value = null
         obdBoost.value = null
         obdDtcList.value = emptyList()
+        obdDiagnosticReadings.value = emptyMap()
         obdLastUpdatedMs.value = null
     }
 
