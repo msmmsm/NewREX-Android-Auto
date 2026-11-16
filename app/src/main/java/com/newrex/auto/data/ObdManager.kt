@@ -234,7 +234,7 @@ object ObdManager {
                     val speedRaw = sendCommand("010D")
                     val parsed = parseSpeed(speedRaw)
                     TelemetryHub.obdSpeed.value = parsed
-                    publishStandardPidReading("vehicle.speed", parsed?.toDouble(), "km/h", "0D")
+                    publishStandardPidReading("vehicle.speed", parsed?.toDouble(), "km/h", "0D", speedRaw)
                 }
 
                 // Motor Devri (RPM) - PID 010C
@@ -242,7 +242,7 @@ object ObdManager {
                     val rpmRaw = sendCommand("010C")
                     val parsed = parseRpm(rpmRaw)
                     TelemetryHub.obdRpm.value = parsed
-                    publishStandardPidReading("engine.speed", parsed?.toDouble(), "rpm", "0C")
+                    publishStandardPidReading("engine.speed", parsed?.toDouble(), "rpm", "0C", rpmRaw)
                 }
 
                 // Motor yükü - PID 0104
@@ -250,7 +250,7 @@ object ObdManager {
                     val loadRaw = sendCommand("0104")
                     val parsed = parseEngineLoad(loadRaw)
                     TelemetryHub.obdEngineLoad.value = parsed
-                    publishStandardPidReading("engine.load", parsed?.toDouble(), "%", "04")
+                    publishStandardPidReading("engine.load", parsed?.toDouble(), "%", "04", loadRaw)
                 }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
@@ -258,7 +258,7 @@ object ObdManager {
                     val tempRaw = sendCommand("0105")
                     val parsed = parseCoolant(tempRaw)
                     TelemetryHub.obdCoolantTemp.value = parsed
-                    publishStandardPidReading("engine.coolant_temperature", parsed?.toDouble(), "°C", "05")
+                    publishStandardPidReading("engine.coolant_temperature", parsed?.toDouble(), "°C", "05", tempRaw)
                 }
 
                 // Akü Voltajı (V) - "AT RV"
@@ -289,7 +289,7 @@ object ObdManager {
                     val hybridRaw = sendCommand("015B")
                     val parsed = parseHybridBatteryRemainingLife(hybridRaw)
                     TelemetryHub.obdHybridBatteryRemainingLifePercent.value = parsed
-                    publishStandardPidReading("hybrid.battery_remaining_life", parsed?.toDouble(), "%", "5B")
+                    publishStandardPidReading("hybrid.battery_remaining_life", parsed?.toDouble(), "%", "5B", hybridRaw)
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
@@ -297,7 +297,7 @@ object ObdManager {
                     val fuelRaw = sendCommand("012F")
                     val parsed = parseFuel(fuelRaw)
                     TelemetryHub.obdFuelLevel.value = parsed
-                    publishStandardPidReading("fuel.level", parsed?.toDouble(), "%", "2F")
+                    publishStandardPidReading("fuel.level", parsed?.toDouble(), "%", "2F", fuelRaw)
                 }
 
                 loopCount++
@@ -320,21 +320,25 @@ object ObdManager {
         parameterId: String,
         value: Double?,
         unit: String,
-        pidHex: String
+        pidHex: String,
+        rawResponse: String
     ) {
         if (value == null) {
             TelemetryHub.removeObdReading(parameterId)
             return
         }
+        val ecuAddress = parseEcuResponseId(rawResponse, pidHex)
         TelemetryHub.recordObdReading(
             DiagnosticReading(
                 parameterId = parameterId,
                 value = value,
                 unit = unit,
                 source = "SAE J1979 Mode 01 PID $pidHex",
-                ecuId = "OBD yanıtı; CAN ECU adresi ayrıştırılmadı",
+                ecuId = ecuAddress?.let { "CAN $it (ECU rolü tanımlanmadı)" }
+                    ?: "OBD yanıtı; CAN ECU adresi ayrıştırılmadı",
                 timestampEpochMs = System.currentTimeMillis(),
-                quality = DiagnosticValueQuality.UNVERIFIED
+                quality = if (ecuAddress != null) DiagnosticValueQuality.VALID
+                    else DiagnosticValueQuality.UNVERIFIED
             )
         )
     }
@@ -539,6 +543,17 @@ object ObdManager {
     private const val MAX_RESPONSE_BYTES = 4_096
 
     // ---- PID Ayrıştırıcı Fonksiyonlar ----
+
+    /** 11-bit OBD yanıt başlığını bulur; ECU rolünü/işlevini tahmin etmez. */
+    internal fun parseEcuResponseId(raw: String, pidHex: String): String? {
+        if (!pidHex.matches(Regex("^[0-9A-Fa-f]{2}$"))) return null
+        val clean = raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
+        val responseIndex = clean.indexOf("41" + pidHex.uppercase())
+        if (responseIndex < 0) return null
+        return Regex("7E[89A-F]").findAll(clean.substring(0, responseIndex))
+            .lastOrNull { responseIndex - it.range.last in 1..8 }
+            ?.value
+    }
 
     internal fun parseSpeed(raw: String): Float? {
         val clean = cleanHex(raw, "410D") ?: return null
