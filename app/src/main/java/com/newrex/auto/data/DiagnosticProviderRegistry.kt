@@ -135,4 +135,17 @@ data class DiagnosticReading(
             ecuId.isNotBlank() &&
             timestampEpochMs > 0L &&
             quality == DiagnosticValueQuality.VALID
+
+    /** Ekranda yalnızca güncellik durumunu göstermek için saf değerlendirme. */
+    fun displayedQuality(nowEpochMs: Long, maxAgeMs: Long = 15_000L): DiagnosticValueQuality {
+        if (quality != DiagnosticValueQuality.VALID) return quality
+        if (timestampEpochMs <= 0L || maxAgeMs <= 0L || timestampEpochMs > nowEpochMs) {
+            return DiagnosticValueQuality.UNVERIFIED
+        }
+        return if (nowEpochMs - timestampEpochMs > maxAgeMs) {
+            DiagnosticValueQuality.STALE
+        } else {
+            DiagnosticValueQuality.VALID
+        }
+    }
 }
