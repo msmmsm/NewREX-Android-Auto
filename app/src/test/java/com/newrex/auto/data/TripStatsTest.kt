@@ -30,7 +30,8 @@ class TripStatsTest {
         TripStats.onSpeed(5f, 1_000L)
         TripStats.onSpeed(9f, 2_000L)
         assertEquals(1, TripStats.harshAccel.value)
-        TripStats.onSpeed(5f, 2_500L)
+        TripStats.onSpeed(9f, 4_001L)
+        TripStats.onSpeed(5f, 5_001L)
         assertEquals(1, TripStats.harshBrake.value)
         assertEquals(1, TripStats.harshAccel.value)
     }
