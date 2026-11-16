@@ -218,18 +218,32 @@ object TripStats {
         movingMs = 0; lastSpeed = -1f; lastTime = 0; lastHarsh = 0
     }
 
-    /** Hız örneği (m/s). */
+    /** Hız örneği (m/s); bozuk, fiziksel olarak olanaksız veya zaman sırası bozuk örnekler dışlanır. */
     fun onSpeed(mps: Float, time: Long) {
+        val maxPlausibleMps = 260f / 3.6f
+        if (!mps.isFinite() || mps !in 0f..maxPlausibleMps || time <= 0L) {
+            // Geçersiz örnekten sonra eski hızla ivme hesabı yapılmasın.
+            lastSpeed = -1f
+            lastTime = 0L
+            return
+        }
+
         val kmh = mps * 3.6f
-        if (kmh > maxKmh.value && kmh < 260f) maxKmh.value = kmh
-        if (lastTime > 0) {
+        if (kmh > maxKmh.value) maxKmh.value = kmh
+        if (lastTime > 0L) {
+            if (time <= lastTime) {
+                // Saat geriye gittiyse bu örneği yalnızca yeni başlangıç noktası yap.
+                lastSpeed = mps
+                lastTime = time
+                return
+            }
             val dt = (time - lastTime) / 1000f
             if (dt in 0.2f..5f && lastSpeed > 1f) movingMs += (dt * 1000).toLong()
-            // Örnekler arası 0,7–3 sn ise ivme anlamlı; aynı olay iki kez sayılmasın diye 3 sn bekle
-            if (dt in 0.7f..3f && lastSpeed >= 0f && time - lastHarsh > 3000) {
-                val a = (mps - lastSpeed) / dt
-                if (a > HARSH_ACCEL) { harshAccel.value++; lastHarsh = time }
-                if (a < HARSH_BRAKE) { harshBrake.value++; lastHarsh = time }
+            // Örnekler arası 0,7–3 sn ise ivme anlamlı; aynı olay iki kez sayılmasın diye 3 sn bekle.
+            if (dt in 0.7f..3f && lastSpeed >= 0f && time - lastHarsh > 3000L) {
+                val acceleration = (mps - lastSpeed) / dt
+                if (acceleration > HARSH_ACCEL) { harshAccel.value++; lastHarsh = time }
+                if (acceleration < HARSH_BRAKE) { harshBrake.value++; lastHarsh = time }
             }
         }
         lastSpeed = mps
