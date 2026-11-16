@@ -405,3 +405,12 @@ Kaynaklar:
 - Yakıt tüketimi tahmini yalnızca en az iki kilometre bilgili dolum kaydı, 50 km'den uzun mesafe ve 0,5–50 L/100 km makul sonuç aralığında gösterilir. Son dolum kilometresinden daha düşük güncel kilometrede menzil tahmini üretilmez.
 - Sürüş puanı artık ekonomik sürüş/yakıt tasarrufu olarak sunulmaz; yalnızca tespit edilen ani hızlanma ve sert fren sıklığından hesaplanan sürüş davranışı göstergesidir.
 - Saf doğrulama testleri `TripDataValidationTest`, `GpsAndParkPolicyTest` ve `TripStatsTest` içine eklendi. Bu çalışma ortamında Gradle/JUnit çalıştırılmadı; Android derlemesi, GPS saha doğrulaması, park konumu kabul testi ve yakıt kayıtlarının kullanıcı arayüzünden uçtan uca testi beklemektedir.
+
+
+## Yerel bakım ve servis geçmişi — kod kapsamı
+
+- Telefon uygulamasına bakım/onarım kaydı ekleme alanı eklendi: işlem türü, tarih (kayıt anı), isteğe bağlı kilometre, tutar ve not.
+- Kayıtlar cihazdaki `SharedPreferences` içinde tutulur; son 200 kayıt saklanır. Kullanıcı tek tek kayıt silebilir.
+- Araç panelinde son üç servis işlemi özetlenir. Yağ değişimi kategorisi ve kilometresiyle kaydedilen işlem, yağ bakım hatırlatıcısının başlangıç kilometresini günceller.
+- Geçersiz tarih, işlem türü, kilometre, tutar veya aşırı uzun not reddedilir. Bu kayıtlar buluta aktarılmaz ve gerçek servis/ECU verisi olarak sunulmaz.
+- `ServiceRecordTest` geçerli/geçersiz kayıt ve kilometre bilgisi olmayan tarih bazlı bakım senaryolarını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; telefon arayüzü ve kalıcı saklama saha testi beklemektedir.

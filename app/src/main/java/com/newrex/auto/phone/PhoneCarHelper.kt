@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import com.newrex.auto.data.CarLog
 import com.newrex.auto.data.FuelEntry
+import com.newrex.auto.data.ServiceRecord
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Palette
 import com.newrex.auto.ui.WRAP
@@ -100,6 +101,41 @@ object PhoneCarHelper {
             text = "Yakıt aldım (depoyu fulledim)"
             setOnClickListener { showAddFuelDialog(context, onRefreshNeeded) }
         }, lp(MATCH, WRAP).margins(t = context.dp(10)))
+
+        carBox.addView(context.label("Bakım ve servis geçmişi", 15f, bold = true),
+            lp(MATCH, WRAP).margins(t = context.dp(18)))
+        val serviceRecords = CarLog.serviceRecords()
+        if (serviceRecords.isEmpty()) {
+            carBox.addView(context.label("Yağ değişimi, periyodik bakım, fren, lastik ve onarımları burada kaydedebilirsin.",
+                13f, Palette.TEXT_DIM, lines = 2))
+        }
+        val serviceDate = SimpleDateFormat("d MMM yyyy", tr)
+        serviceRecords.take(12).forEach { record ->
+            carBox.addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(context.dp(12), context.dp(8), context.dp(6), context.dp(8))
+                background = rounded(0x14FFFFFF, context.dpf(12))
+                val details = buildString {
+                    append(serviceDate.format(Date(record.time)))
+                    record.odometerKm?.let { append(" • "); append(String.format(tr, "%,.0f km", it)) }
+                    if (record.cost > 0f) append(" • ").append(String.format(tr, "%,.0f ₺", record.cost))
+                    if (record.note.isNotBlank()) append("\n").append(record.note)
+                }
+                addView(context.label(record.category + "\n" + details, 13f, lines = 3), lp(0, WRAP, 1f))
+                addView(Button(context).apply {
+                    text = "Sil"
+                    setOnClickListener {
+                        CarLog.removeServiceRecord(record)
+                        onRefreshNeeded()
+                    }
+                })
+            }, lp(MATCH, WRAP).margins(t = context.dp(6)))
+        }
+        carBox.addView(Button(context).apply {
+            text = "Bakım / servis kaydı ekle"
+            setOnClickListener { showAddServiceDialog(context, onRefreshNeeded) }
+        }, lp(MATCH, WRAP).margins(t = context.dp(8)))
     }
 
     private fun numberRow(context: Context, title: String, value: String, unit: String, onSave: (Float) -> Unit): View {
@@ -125,6 +161,61 @@ object PhoneCarHelper {
                 }
             })
         }
+    }
+
+    fun showAddServiceDialog(context: Context, onSaved: () -> Unit) {
+        fun field(hint: String, value: String = "", multiline: Boolean = false, numeric: Boolean = true) = EditText(context).apply {
+            this.hint = hint
+            setText(value)
+            setSingleLine(!multiline)
+            inputType = when {
+                multiline -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                numeric -> InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                else -> InputType.TYPE_CLASS_TEXT
+            }
+        }
+        val category = field("İşlem türü (ör. Yağ değişimi)", "Periyodik bakım", numeric = false)
+        val odo = field("Kilometre", CarLog.estimatedOdometer()?.let { "%.0f".format(it) } ?: "")
+        val cost = field("Toplam tutar (₺)", "0")
+        val note = field("Not / değişen parçalar", "", multiline = true, numeric = false)
+        val form = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(context.dp(20), context.dp(8), context.dp(20), 0)
+            addView(category)
+            addView(odo)
+            addView(cost)
+            addView(note)
+            addView(context.label("Kayıtlar yalnızca bu cihazda saklanır. Kilometre ve tutar servis faturasıyla karşılaştırılmalıdır.",
+                12f, Palette.TEXT_DIM, lines = 3), lp(MATCH, WRAP).margins(t = context.dp(6)))
+        }
+        AlertDialog.Builder(context)
+            .setTitle("Bakım / servis kaydı")
+            .setView(form)
+            .setPositiveButton("Kaydet") { _, _ ->
+                fun number(e: EditText): Float? = e.text.toString().trim().replace(',', '.').takeIf { it.isNotEmpty() }?.toFloatOrNull()
+                val type = category.text.toString().trim()
+                val kmText = odo.text.toString().trim()
+                val costText = cost.text.toString().trim()
+                val km = number(odo)
+                val amount = number(cost)
+                val mileage = when {
+                    kmText.isEmpty() -> null
+                    km == null -> Float.NaN
+                    km <= 0f -> null
+                    else -> km
+                }
+                val record = ServiceRecord(
+                    time = System.currentTimeMillis(),
+                    category = type,
+                    odometerKm = mileage,
+                    cost = if (costText.isEmpty()) 0f else amount ?: Float.NaN,
+                    note = note.text.toString().trim(),
+                )
+                if (CarLog.addServiceRecord(record)) onSaved()
+                else android.widget.Toast.makeText(context, "Kayıt geçersiz. Bilgileri kontrol et.", android.widget.Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("Vazgeç", null)
+            .show()
     }
 
     fun showAddFuelDialog(context: Context, onSaved: () -> Unit) {

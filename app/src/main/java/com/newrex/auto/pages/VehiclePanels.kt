@@ -176,6 +176,21 @@ object VehiclePanels {
             val text = when { days < 0 -> "${-days} gün gecikti"; days == 0L -> "Bugün!"; else -> "$days gün kaldı" }
             b.addView(row(context, "${m.emoji}  ${m.title}", text, color), lp(MATCH, WRAP).margins(b = dp(6)))
         }
+        val recentServices = CarLog.serviceRecords().take(3)
+        if (recentServices.isNotEmpty()) {
+            b.addView(label("Son servis işlemleri", 13f, Palette.TEXT_DIM, bold = true),
+                lp(MATCH, WRAP).margins(t = dp(8), b = dp(4)))
+            val dateFormat = SimpleDateFormat("d MMM yyyy", tr)
+            recentServices.forEach { service ->
+                val detail = buildString {
+                    append(dateFormat.format(Date(service.time)))
+                    service.odometerKm?.let { append(" • "); append(String.format(tr, "%,.0f km", it)) }
+                    if (service.cost > 0f) append(" • ").append(String.format(tr, "%,.0f ₺", service.cost))
+                }
+                b.addView(row(context, service.category, detail, Palette.TEXT_DIM),
+                    lp(MATCH, WRAP).margins(b = dp(4)))
+            }
+        }
         b
     }
 

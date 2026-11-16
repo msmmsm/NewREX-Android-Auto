@@ -59,13 +59,47 @@ data class FuelEntry(val time: Long, val liters: Float, val price: Float, val km
     }
 }
 
+/** Kullanıcının telefonda tuttuğu bakım/onarım kaydı; kilometre ve tutar kullanıcı girişidir. */
+data class ServiceRecord(
+    val time: Long,
+    val category: String,
+    val odometerKm: Float?,
+    val cost: Float,
+    val note: String,
+) {
+    fun isValid(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        time > 0L && time <= nowMillis + 5 * 60 * 1000L &&
+            category.isNotBlank() && category.length <= 40 &&
+            (odometerKm == null || (odometerKm.isFinite() && odometerKm in 0f..10_000_000f)) &&
+            cost.isFinite() && cost in 0f..20_000_000f &&
+            note.length <= 160
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("t", time)
+        .put("c", category)
+        .put("km", odometerKm?.toDouble() ?: JSONObject.NULL)
+        .put("cost", cost.toDouble())
+        .put("note", note)
+
+    companion object {
+        fun fromJson(o: JSONObject): ServiceRecord = ServiceRecord(
+            time = o.optLong("t"),
+            category = o.optString("c"),
+            odometerKm = if (o.isNull("km")) null else o.optDouble("km").toFloat(),
+            cost = o.optDouble("cost").toFloat(),
+            note = o.optString("note"),
+        )
+    }
+}
+
 /**
- * Cihazsız araç defteri: yolculuklar, yakıt alımları, tahmini kilometre ve yağ bakımı.
+ * Cihazsız araç defteri: yolculuklar, yakıt alımları, tahmini kilometre, bakım ve servis geçmişi.
  * Her şey sadece telefonda saklanır. Kilometre ve menzil GPS'e ve girilen değerlere dayanan tahminlerdir.
  */
 object CarLog {
     /** Saklanan en fazla yolculuk (eskiler silinir). Günde birkaç yolculukla yaklaşık bir yıl. */
     private const val MAX_TRIPS = 500
+    private const val MAX_SERVICE_RECORDS = 200
     private lateinit var sp: SharedPreferences
 
     /** Kayıtlar değişince artar; ekranlar bunu dinleyip yenilenir. */
@@ -212,6 +246,31 @@ object CarLog {
             (left / consumption * 100f).takeIf { it.isFinite() }?.coerceAtLeast(0f)
         } else null
         return FuelStats(consumption, costPerKm, thisMonth, range)
+    }
+
+    // ---- Bakım / servis geçmişi ----
+
+    fun serviceRecords(): List<ServiceRecord> =
+        read("service_records") { ServiceRecord.fromJson(it) }
+            .filter { it.isValid() }
+            .sortedByDescending { it.time }
+
+    /** Yeni bakım kaydını yerel deftere ekler; geçersiz giriş reddedilir. */
+    fun addServiceRecord(record: ServiceRecord): Boolean {
+        if (!record.isValid()) return false
+        val updated = (listOf(record) + serviceRecords()).take(MAX_SERVICE_RECORDS)
+        write("service_records", updated.map { it.toJson() })
+        if (record.category.equals("Yağ değişimi", ignoreCase = true) && record.odometerKm != null) {
+            oilChangeKm = record.odometerKm
+        } else {
+            bump()
+        }
+        return true
+    }
+
+    fun removeServiceRecord(record: ServiceRecord) {
+        write("service_records", serviceRecords().filterNot { it == record }.map { it.toJson() })
+        bump()
     }
 
     /** Yağ değişimine kalan km (kilometre biliniyorsa). */
