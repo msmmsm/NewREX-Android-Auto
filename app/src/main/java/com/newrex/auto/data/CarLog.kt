@@ -334,6 +334,29 @@ data class TripPeriodSummary(
     val harshEvents: Long,
 )
 
+data class TripPeriodComparison(
+    val current: TripPeriodSummary,
+    val previous: TripPeriodSummary,
+) {
+    val distanceDeltaKm: Float get() = current.distanceKm - previous.distanceKm
+    val tripCountDelta: Int get() = current.tripCount - previous.tripCount
+    val scoreDelta: Int get() = current.averageScore - previous.averageScore
+}
+
+/** Aynı uzunluktaki iki dönemi karşılaştırır; aralıklar [başlangıç, bitiş) biçimindedir. */
+object TripPeriodComparator {
+    fun compare(
+        trips: List<TripRecord>,
+        currentFrom: Long,
+        currentUntil: Long,
+        previousFrom: Long,
+        previousUntil: Long,
+    ): TripPeriodComparison = TripPeriodComparison(
+        current = TripAnalytics.summarize(trips, currentFrom, currentUntil),
+        previous = TripAnalytics.summarize(trips, previousFrom, previousUntil),
+    )
+}
+
 /** Yolculuk geçmişi için dönemsel özet; yalnızca doğrulanmış kayıtlar hesaba katılır. */
 object TripAnalytics {
     fun summarize(trips: List<TripRecord>, fromMillis: Long, untilMillis: Long): TripPeriodSummary {
