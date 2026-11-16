@@ -7,6 +7,15 @@ import org.junit.Test
 
 class ObdManagerTest {
     @Test
+    fun extractsCanResponseAddressWithoutGuessingEcuRole() {
+        assertEquals("7E8", ObdManager.parseEcuResponseId("7E804410D1A", "0D"))
+        assertEquals("7E9", ObdManager.parseEcuResponseId("7E804410D1A7E904410D2A", "0D"))
+        assertEquals(null, ObdManager.parseEcuResponseId("410D1A", "0D"))
+        assertEquals(null, ObdManager.parseEcuResponseId("7E804410D1A", "ZZ"))
+        assertEquals(null, ObdManager.parseEcuResponseId("7E804410C1A", "0D"))
+    }
+
+    @Test
     fun parsesStandardPidResponses() {
         assertEquals(26f, ObdManager.parseSpeed("410D1A")!!, 0.001f)
         assertEquals(1726, ObdManager.parseRpm("410C1AF8"))
