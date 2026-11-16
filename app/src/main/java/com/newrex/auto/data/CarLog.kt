@@ -343,7 +343,7 @@ data class TripPeriodComparison(
     val scoreDelta: Int get() = current.averageScore - previous.averageScore
 }
 
-/** Aynı uzunluktaki iki dönemi karşılaştırır; aralıklar [başlangıç, bitiş) biçimindedir. */
+/** İki tarih aralığını karşılaştırır; aralıklar [başlangıç, bitiş) biçimindedir. */
 object TripPeriodComparator {
     fun compare(
         trips: List<TripRecord>,
