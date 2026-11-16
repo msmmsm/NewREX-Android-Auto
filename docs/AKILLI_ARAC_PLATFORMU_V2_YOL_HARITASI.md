@@ -376,3 +376,22 @@ Kaynaklar:
 - Durum etiketleri: **Güncel**, **Eski**, **Doğrulanmadı** veya **Geçersiz**. Kaynak/ECU ayrıntıları bu özet görünümde gösterilmez.
 - Son geçerli ölçüm 15 saniyeyi aşınca ekranda **Eski** olarak değerlendirilir. Gelecek zaman damgası veya geçersiz yaş sınırı **Doğrulanmadı** sonucunu verir.
 - Güncellik değerlendirmesi görüntüleme amaçlıdır; saklanan ölçümün ham kalite alanını değiştirmez ve yeni veri üretmez.
+
+
+## OBD-II yazılım kapsamı — durum ve saha sınırı
+
+**Uygulama kodunda mevcut olanlar**
+- Bluetooth Classic SPP üzerinden ELM327 bağlantısı, bağlantı durumları ve sınırlı otomatik yeniden bağlanma.
+- Mode 01 destek bitmap'i ve desteklenen standart PID'lerin okunması; canlı ölçümlerin sade gösterimi.
+- Mode 02 desteklenen Freeze Frame alanları; Mode 03 DTC taraması; Mode 04 onay yanıtı kontrolü.
+- Mode 09 desteklenen standart kimlik alanları (VIN/CALID/CVN/ECU adı); VIN kalıcı depoya veya loga yazılmaz.
+- DTC geçmişi, bozuk/eksik yanıtların reddi, çoklu ECU DTC yanıt ayrıştırması ve ölçüm güncellik etiketi.
+- Komut/yanıt sıralaması, yanıt sonlandırıcısı, zaman aşımı ve yanıt boyutu sınırı.
+- Toyota OEM sağlayıcısı ayrı ve kapalı durumda tutulur; belgelenmemiş Toyota komutları gönderilmez.
+
+**Bu sürümde uygulanmış sayılmayanlar**
+- Bluetooth LE (BLE) ELM327 taşıması; mevcut bağlantı yalnızca Bluetooth Classic SPP'dir.
+- Toyota Hybrid Control / HV Battery / PCS / BSM özel ECU Data List erişimi.
+- Gerçek araçta denenmemiş PID'ler, ECU rolü tespiti, canlı CAN yayınları ve donanıma bağlı özellikler.
+
+**Kabul durumu:** Yazılım tarafındaki standart OBD-II işlevleri mevcut kod ve birim testleriyle kapsanmıştır; ancak Android derlemesi/JUnit çalıştırılmadı ve fiziksel ELM327 + araç kabul testi yapılmadı. Bu nedenle OBD-II saha doğrulaması **bekliyor**; test edilmemiş donanım uyumluluğu tamamlandı olarak işaretlenmez.
