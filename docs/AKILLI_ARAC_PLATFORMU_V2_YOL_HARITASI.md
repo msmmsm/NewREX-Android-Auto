@@ -368,3 +368,11 @@ Kaynaklar:
 - [Toyota C-HR — CAN iletişim teşhis sistemi](https://www.tochr.net/908/diagnosis_system.html)
 - [Toyota hibrit teşhis Data List örneği](https://toyotaspace.com/wp-content/uploads/2024/07/Hybrid-Battery-Control.pdf)
 
+
+
+### Canlı ölçüm ekranı — sade görünüm ve güncellik
+
+- Telefon kokpitinde canlı OBD ölçümleri yalnızca parametre adı, ölçüm değeri/birimi ve kısa durum etiketiyle gösterilir.
+- Durum etiketleri: **Güncel**, **Eski**, **Doğrulanmadı** veya **Geçersiz**. Kaynak/ECU ayrıntıları bu özet görünümde gösterilmez.
+- Son geçerli ölçüm 15 saniyeyi aşınca ekranda **Eski** olarak değerlendirilir. Gelecek zaman damgası veya geçersiz yaş sınırı **Doğrulanmadı** sonucunu verir.
+- Güncellik değerlendirmesi görüntüleme amaçlıdır; saklanan ölçümün ham kalite alanını değiştirmez ve yeni veri üretmez.
