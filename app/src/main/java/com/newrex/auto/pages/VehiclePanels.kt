@@ -13,6 +13,7 @@ import com.newrex.auto.data.CarLog
 import com.newrex.auto.data.PerformanceTimer
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.TripAnalytics
+import com.newrex.auto.data.TripPeriodComparator
 import com.newrex.auto.data.VehicleExpenseAnalytics
 import com.newrex.auto.data.TripStats
 import com.newrex.auto.ui.MATCH
@@ -211,9 +212,19 @@ object VehiclePanels {
 
     fun tripsPanel(context: Context): View = with(context) {
         val b = box(context, R.drawable.ic_history, "Yolculuk geçmişi")
-        val now = System.currentTimeMillis()
-        val summary = TripAnalytics.summarize(CarLog.trips(), now - 30L * 24 * 60 * 60 * 1000, now + 1L)
-        b.addView(label("Son 30 gün", 13f, Palette.TEXT_DIM, bold = true),
+        val now = java.time.LocalDate.now()
+        val zone = java.time.ZoneId.systemDefault()
+        val thisMonth = now.withDayOfMonth(1)
+        val previousMonth = thisMonth.minusMonths(1)
+        val nextMonth = thisMonth.plusMonths(1)
+        val currentFrom = thisMonth.atStartOfDay(zone).toInstant().toEpochMilli()
+        val currentUntil = nextMonth.atStartOfDay(zone).toInstant().toEpochMilli()
+        val previousFrom = previousMonth.atStartOfDay(zone).toInstant().toEpochMilli()
+        val comparison = TripPeriodComparator.compare(
+            CarLog.trips(), currentFrom, currentUntil, previousFrom, currentFrom
+        )
+        val summary = comparison.current
+        b.addView(label("Bu ay yolculuk özeti", 13f, Palette.TEXT_DIM, bold = true),
             lp(MATCH, WRAP).margins(b = dp(4)))
         val summaryText = if (summary.tripCount == 0) {
             "Henüz kayıtlı yolculuk yok."
@@ -225,6 +236,16 @@ object VehiclePanels {
         }
         b.addView(label(summaryText, 13f, Palette.TEXT, lines = 3),
             lp(MATCH, WRAP).margins(b = dp(8)))
+        val previous = comparison.previous
+        val distanceChange = String.format(tr, "%+.1f km", comparison.distanceDeltaKm)
+        val comparisonText = if (previous.tripCount == 0) {
+            "Geçen ay karşılaştırması için yeterli kayıt yok."
+        } else {
+            "Geçen aya göre: $distanceChange • ${comparison.tripCountDelta} yolculuk • " +
+                "sürüş puanı ${if (comparison.scoreDelta >= 0) "+" else ""}${comparison.scoreDelta} puan"
+        }
+        b.addView(label(comparisonText, 12f, Palette.TEXT_DIM, lines = 2),
+            lp(MATCH, WRAP).margins(b = dp(4)))
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         b.addView(list, lp(MATCH, WRAP))
         fillTrips(context, list)
