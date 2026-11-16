@@ -292,6 +292,34 @@ object CarLog {
     }
 }
 
+/** Seçilen dönemdeki doğrulanmış yolculukların toplu özeti. */
+data class TripPeriodSummary(
+    val tripCount: Int,
+    val distanceKm: Float,
+    val movingMinutes: Long,
+    val averageScore: Int,
+    val maxKmh: Int,
+    val harshEvents: Long,
+)
+
+/** Yolculuk geçmişi için dönemsel özet; yalnızca doğrulanmış kayıtlar hesaba katılır. */
+object TripAnalytics {
+    fun summarize(trips: List<TripRecord>, fromMillis: Long, untilMillis: Long): TripPeriodSummary {
+        if (fromMillis <= 0L || untilMillis <= fromMillis) return TripPeriodSummary(0, 0f, 0L, 0, 0, 0L)
+        val selected = trips.filter { it.isValid() && it.start >= fromMillis && it.start < untilMillis }
+        if (selected.isEmpty()) return TripPeriodSummary(0, 0f, 0L, 0, 0, 0L)
+        val distance = selected.sumOf { it.km.toDouble() }.toFloat()
+        return TripPeriodSummary(
+            tripCount = selected.size,
+            distanceKm = distance.takeIf { it.isFinite() } ?: 0f,
+            movingMinutes = selected.sumOf { it.movingMinutes.toLong() },
+            averageScore = (selected.sumOf { it.score } / selected.size.toFloat()).roundToInt().coerceIn(0, 100),
+            maxKmh = selected.maxOf { it.maxKmh },
+            harshEvents = selected.sumOf { it.harshAccel.toLong() + it.harshBrake.toLong() },
+        )
+    }
+}
+
 /**
  * Süren yolculuğun canlı istatistikleri. Hız örneklerinden en yüksek hız, hareket süresi ve
  * ani hızlanma / sert fren sayısı çıkarılır; bunlardan 100 üzerinden ekonomik sürüş puanı hesaplanır.

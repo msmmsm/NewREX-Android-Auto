@@ -414,3 +414,10 @@ Kaynaklar:
 - Araç panelinde son üç servis işlemi özetlenir. Yağ değişimi kategorisi ve kilometresiyle kaydedilen işlem, yağ bakım hatırlatıcısının başlangıç kilometresini günceller.
 - Geçersiz tarih, işlem türü, kilometre, tutar veya aşırı uzun not reddedilir. Bu kayıtlar buluta aktarılmaz ve gerçek servis/ECU verisi olarak sunulmaz.
 - `ServiceRecordTest` geçerli/geçersiz kayıt ve kilometre bilgisi olmayan tarih bazlı bakım senaryolarını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; telefon arayüzü ve kalıcı saklama saha testi beklemektedir.
+
+
+## Yolculuk analitiği — son 30 gün özeti
+
+- Araç sayfasındaki yolculuk geçmişine son 30 gün için toplu özet eklendi: yolculuk sayısı, GPS mesafesi, hareket süresi, ortalama sürüş davranışı puanı, en yüksek hız ve sert manevra sayısı.
+- Özet `TripAnalytics` üzerinden yalnızca tarih aralığına uyan ve `TripRecord.isValid()` doğrulamasını geçen kayıtlarla hesaplanır. Geçersiz dönem ve boş veri için sıfır değerli sonuç döndürülür.
+- `TripAnalyticsTest` dönem sınırları, geçersiz kayıtların dışlanması ve özet hesaplarını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; gerçek yolculuk verisiyle arayüz kabul testi beklemektedir.

@@ -12,6 +12,7 @@ import com.newrex.auto.SpeedAlert
 import com.newrex.auto.data.CarLog
 import com.newrex.auto.data.PerformanceTimer
 import com.newrex.auto.data.Prefs
+import com.newrex.auto.data.TripAnalytics
 import com.newrex.auto.data.TripStats
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Palette
@@ -196,6 +197,20 @@ object VehiclePanels {
 
     fun tripsPanel(context: Context): View = with(context) {
         val b = box(context, R.drawable.ic_history, "Yolculuk geçmişi")
+        val now = System.currentTimeMillis()
+        val summary = TripAnalytics.summarize(CarLog.trips(), now - 30L * 24 * 60 * 60 * 1000, now + 1L)
+        b.addView(label("Son 30 gün", 13f, Palette.TEXT_DIM, bold = true),
+            lp(MATCH, WRAP).margins(b = dp(4)))
+        val summaryText = if (summary.tripCount == 0) {
+            "Henüz kayıtlı yolculuk yok."
+        } else {
+            "${summary.tripCount} yolculuk • ${String.format(tr, "%.1f km", summary.distanceKm)} • " +
+                "${summary.movingMinutes / 60}s ${summary.movingMinutes % 60}dk hareket • " +
+                "ortalama puan ${summary.averageScore}/100 • en yüksek ${summary.maxKmh} km/s • " +
+                "${summary.harshEvents} sert manevra"
+        }
+        b.addView(label(summaryText, 13f, Palette.TEXT, lines = 3),
+            lp(MATCH, WRAP).margins(b = dp(8)))
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         b.addView(list, lp(MATCH, WRAP))
         fillTrips(context, list)
