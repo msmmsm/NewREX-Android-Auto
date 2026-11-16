@@ -302,6 +302,35 @@ object PhoneCockpitHelper {
                 lp(MATCH, WRAP).margins(t = dp(1), b = dp(4)))
         }
 
+        val currentDiagnosticReadings = TelemetryHub.obdDiagnosticReadings.value.values
+            .sortedBy { it.parameterId }
+        cockpitBox.addView(label("OBD ölçüm kökeni ve doğrulama", 13f, Palette.TEXT, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(7), b = dp(2)))
+        if (currentDiagnosticReadings.isEmpty()) {
+            cockpitBox.addView(label("Henüz kaydedilmiş OBD ölçüm kökeni yok.", 10f, Palette.TEXT_FAINT),
+                lp(MATCH, WRAP).margins(b = dp(4)))
+        } else {
+            currentDiagnosticReadings.forEach { reading ->
+                val qualityLabel = when (reading.quality) {
+                    com.newrex.auto.data.DiagnosticValueQuality.VALID -> "Doğrulanmış"
+                    com.newrex.auto.data.DiagnosticValueQuality.STALE -> "Güncelliğini yitirmiş"
+                    com.newrex.auto.data.DiagnosticValueQuality.INVALID -> "Geçersiz"
+                    com.newrex.auto.data.DiagnosticValueQuality.UNVERIFIED -> "ECU adresi doğrulanmadı"
+                }
+                val valueText = String.format(Locale.getDefault(), "%.1f %s", reading.value, reading.unit)
+                val timeText = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                    .format(Date(reading.timestampEpochMs))
+                cockpitBox.addView(label(
+                    "${reading.parameterId}: $valueText · $qualityLabel",
+                    10f, Palette.TEXT, bold = true
+                ), lp(MATCH, WRAP).margins(t = dp(2)))
+                cockpitBox.addView(label(
+                    "${reading.source} · ${reading.ecuId} · $timeText",
+                    9f, Palette.TEXT_FAINT, lines = 2
+                ), lp(MATCH, WRAP).margins(b = dp(3)))
+            }
+        }
+
         // 2.1 OBD-II arıza kodları ve dondurulmuş kare tanı ekranı
         cockpitBox.addView(label("🩺 Araç arıza tanılama", 15f, bold = true))
         cockpitBox.addView(label(
