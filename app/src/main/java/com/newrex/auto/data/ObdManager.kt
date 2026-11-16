@@ -234,7 +234,7 @@ object ObdManager {
                     val speedRaw = sendCommand("010D")
                     val parsed = parseSpeed(speedRaw)
                     TelemetryHub.obdSpeed.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("vehicle.speed", parsed?.toDouble(), "km/h", "0D")
                 }
 
                 // Motor Devri (RPM) - PID 010C
@@ -242,7 +242,7 @@ object ObdManager {
                     val rpmRaw = sendCommand("010C")
                     val parsed = parseRpm(rpmRaw)
                     TelemetryHub.obdRpm.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("engine.speed", parsed?.toDouble(), "rpm", "0C")
                 }
 
                 // Motor yükü - PID 0104
@@ -250,7 +250,7 @@ object ObdManager {
                     val loadRaw = sendCommand("0104")
                     val parsed = parseEngineLoad(loadRaw)
                     TelemetryHub.obdEngineLoad.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("engine.load", parsed?.toDouble(), "%", "04")
                 }
 
                 // Motor Harareti / Soğutma Suyu (°C) - PID 0105
@@ -258,7 +258,7 @@ object ObdManager {
                     val tempRaw = sendCommand("0105")
                     val parsed = parseCoolant(tempRaw)
                     TelemetryHub.obdCoolantTemp.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("engine.coolant_temperature", parsed?.toDouble(), "°C", "05")
                 }
 
                 // Akü Voltajı (V) - "AT RV"
@@ -266,7 +266,21 @@ object ObdManager {
                     val voltRaw = sendCommand("ATRV")
                     val parsed = parseVoltage(voltRaw)
                     TelemetryHub.obdBatteryVoltage.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    if (parsed == null) {
+                        TelemetryHub.removeObdReading("vehicle.voltage")
+                    } else {
+                        TelemetryHub.recordObdReading(
+                            DiagnosticReading(
+                                parameterId = "vehicle.voltage",
+                                value = parsed.toDouble(),
+                                unit = "V",
+                                source = "ELM327 AT RV adaptör voltaj yanıtı",
+                                ecuId = "ELM327 adapter",
+                                timestampEpochMs = System.currentTimeMillis(),
+                                quality = DiagnosticValueQuality.VALID
+                            )
+                        )
+                    }
                 }
 
                 // Hibrit batarya kalan ömrü (%) - standart Mode 01 PID 5B.
@@ -275,7 +289,7 @@ object ObdManager {
                     val hybridRaw = sendCommand("015B")
                     val parsed = parseHybridBatteryRemainingLife(hybridRaw)
                     TelemetryHub.obdHybridBatteryRemainingLifePercent.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("hybrid.battery_remaining_life", parsed?.toDouble(), "%", "5B")
                 }
 
                 // Yakıt Seviyesi (%) - PID 012F
@@ -283,7 +297,7 @@ object ObdManager {
                     val fuelRaw = sendCommand("012F")
                     val parsed = parseFuel(fuelRaw)
                     TelemetryHub.obdFuelLevel.value = parsed
-                    if (parsed != null) TelemetryHub.markObdDataUpdated()
+                    publishStandardPidReading("fuel.level", parsed?.toDouble(), "%", "2F")
                 }
 
                 loopCount++
@@ -296,6 +310,33 @@ object ObdManager {
                 break
             }
         }
+    }
+
+    /**
+     * ELM327 yanıtında CAN ECU adresi henüz ayrıştırılmadığı için standart PID
+     * ölçümleri kaynak/birim/zaman ile kaydedilir ancak UNVERIFIED olarak işaretlenir.
+     */
+    private fun publishStandardPidReading(
+        parameterId: String,
+        value: Double?,
+        unit: String,
+        pidHex: String
+    ) {
+        if (value == null) {
+            TelemetryHub.removeObdReading(parameterId)
+            return
+        }
+        TelemetryHub.recordObdReading(
+            DiagnosticReading(
+                parameterId = parameterId,
+                value = value,
+                unit = unit,
+                source = "SAE J1979 Mode 01 PID $pidHex",
+                ecuId = "OBD yanıtı; CAN ECU adresi ayrıştırılmadı",
+                timestampEpochMs = System.currentTimeMillis(),
+                quality = DiagnosticValueQuality.UNVERIFIED
+            )
+        )
     }
 
     /**
