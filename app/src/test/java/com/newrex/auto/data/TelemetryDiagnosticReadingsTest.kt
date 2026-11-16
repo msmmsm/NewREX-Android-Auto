@@ -18,7 +18,7 @@ class TelemetryDiagnosticReadingsTest {
         assertEquals(25.0, stored.value, 0.0)
         assertEquals(200L, stored.timestampEpochMs)
         assertEquals(1, TelemetryHub.obdDiagnosticReadings.value.size)
-        assertEquals(200L, TelemetryHub.obdLastUpdatedMs.value)
+        assertTrue(TelemetryHub.obdLastUpdatedMs.value == 200L)
         TelemetryHub.clearObdData()
     }
 
@@ -34,7 +34,7 @@ class TelemetryDiagnosticReadingsTest {
         TelemetryHub.recordObdReading(reading())
         TelemetryHub.clearObdData()
         assertTrue(TelemetryHub.obdDiagnosticReadings.value.isEmpty())
-        assertEquals(null, TelemetryHub.obdLastUpdatedMs.value)
+        assertTrue(TelemetryHub.obdLastUpdatedMs.value == null)
     }
 
     @Test fun unverifiedEcuAddressCannotBecomeTrustworthyByDefault() {
