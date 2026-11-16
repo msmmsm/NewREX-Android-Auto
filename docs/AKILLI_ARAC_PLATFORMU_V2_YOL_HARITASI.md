@@ -429,3 +429,11 @@ Kaynaklar:
 - Hesaplama yalnızca tarih aralığına giren ve mevcut kayıt doğrulamasından geçen yerel FuelEntry / ServiceRecord kayıtlarını toplar. Tarih aralığı ayın ilk günü yerel saat diliminde başlayıp sonraki ayın ilk gününde biter.
 - Eksik fiyat, tahmini tutar veya kayıtsız harcama eklenmez. Bu nedenle rapor, kullanıcının uygulamaya girdiği kayıtların toplamıdır; banka ekstresi veya eksiksiz muhasebe kaydı değildir.
 - VehicleExpenseAnalyticsTest dönem sınırlarını, yakıt/servis ayrımını, geçersiz kayıtların dışlanmasını ve hatalı dönem davranışını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; cihaz arayüzü kabul testi beklemektedir.
+
+
+## Aylık yolculuk karşılaştırması
+
+- Yolculuk geçmişi paneli, bu takvim ayının doğrulanmış yolculuklarını önceki takvim ayıyla karşılaştırır.
+- Mesafe farkı, yolculuk adedi farkı ve ortalama sürüş puanı farkı gösterilir. Her iki dönem de cihazın yerel saat dilimine göre ay başından ay başına hesaplanır.
+- Önceki ayda geçerli yolculuk yoksa sayısal fark üretilmez; karşılaştırma verisinin bulunmadığı açıkça belirtilir.
+- `TripPeriodComparatorTest` dönem seçimini ve farkların hesaplanmasını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; gerçek yolculuk kayıtlarıyla cihaz testi beklemektedir.
