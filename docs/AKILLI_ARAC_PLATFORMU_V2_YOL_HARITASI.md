@@ -341,7 +341,7 @@ Toyota servis dokümanları Data List'in ilgili ECU seçilerek üretici teşhis 
 Standart OBD-II polling döngüsü ayrıştırdığı ölçümleri `TelemetryHub.obdDiagnosticReadings` akışına parametre kimliğiyle kaydeder. Her kayıt; değer, birim, SAE PID veya ELM327 adaptör kaynağı, zaman damgası ve kalite durumunu taşır. Bozuk/başarısız yanıt ilgili eski kaydı kaldırır; bağlantı kesilmesi tüm OBD ölçüm kökeni kayıtlarını temizler.
 
 - Mode 01 PID 0D/0C/04/05/5B/2F ölçümleri ilgili standart PID kaynağıyla kaydedilir.
-- ELM327 yanıtından CAN ECU adresi henüz ayrıştırılmadığından bu PID ölçümleri **UNVERIFIED** işaretlenir. Değerlerin okunmuş olması, yanıtı veren ECU'nun kimliğinin doğrulandığı anlamına gelmez.
+- Yanıtta 11-bit `7E8`–`7EF` CAN yanıt başlığı varsa ölçüm bu yanıt adresiyle ilişkilendirilir; ECU'nun işlevsel adı yine tahmin edilmez. Başlık yoksa kayıt **UNVERIFIED** kalır. CAN yanıt adresi tek başına Toyota ECU Data List erişimini veya ECU rolünü kanıtlamaz.
 - `AT RV` voltajı ECU PID'i değil, ELM327 adaptörünün bildirdiği araç voltajıdır; ayrı kaynak ve adaptör kimliğiyle kaydedilir.
 - Kokpit, ölçüm kökenini, kalite durumunu ve son okuma saatini ayrı gösterir. UNVERIFIED kayıtlar doğrulanmış OEM ECU verisi gibi sunulmaz.
 - Bu akış, mevcut göstergelerin yerini almaz; mevcut telemetri alanlarını değiştirmeden ölçüm kökeni ve kalite bilgisini ekler.
