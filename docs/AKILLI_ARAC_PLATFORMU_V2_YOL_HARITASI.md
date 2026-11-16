@@ -421,3 +421,11 @@ Kaynaklar:
 - Araç sayfasındaki yolculuk geçmişine son 30 gün için toplu özet eklendi: yolculuk sayısı, GPS mesafesi, hareket süresi, ortalama sürüş davranışı puanı, en yüksek hız ve sert manevra sayısı.
 - Özet `TripAnalytics` üzerinden yalnızca tarih aralığına uyan ve `TripRecord.isValid()` doğrulamasını geçen kayıtlarla hesaplanır. Geçersiz dönem ve boş veri için sıfır değerli sonuç döndürülür.
 - `TripAnalyticsTest` dönem sınırları, geçersiz kayıtların dışlanması ve özet hesaplarını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; gerçek yolculuk verisiyle arayüz kabul testi beklemektedir.
+
+
+## Araç gider raporu — aylık yakıt ve bakım toplamı
+
+- Yakıt defteri panelinde içinde bulunulan takvim ayına ait yakıt ve servis/bakım giderleri ayrı ve toplam olarak gösterilir; kayıt adedi de belirtilir.
+- Hesaplama yalnızca tarih aralığına giren ve mevcut kayıt doğrulamasından geçen yerel FuelEntry / ServiceRecord kayıtlarını toplar. Tarih aralığı ayın ilk günü yerel saat diliminde başlayıp sonraki ayın ilk gününde biter.
+- Eksik fiyat, tahmini tutar veya kayıtsız harcama eklenmez. Bu nedenle rapor, kullanıcının uygulamaya girdiği kayıtların toplamıdır; banka ekstresi veya eksiksiz muhasebe kaydı değildir.
+- VehicleExpenseAnalyticsTest dönem sınırlarını, yakıt/servis ayrımını, geçersiz kayıtların dışlanmasını ve hatalı dönem davranışını kapsar. Gradle/JUnit ve Android derlemesi bu ortamda çalıştırılmadı; cihaz arayüzü kabul testi beklemektedir.
