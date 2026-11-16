@@ -141,12 +141,21 @@ class ParkTimerReceiver : android.content.BroadcastReceiver() {
     override fun onReceive(context: Context, intent: android.content.Intent) = ParkTimer.notify(context)
 }
 
+/** Park yeri kaydı için koordinat, doğruluk ve yaş sınırları. */
+internal object ParkLocationPolicy {
+    fun accepts(latitude: Double, longitude: Double, accuracyMeters: Float, ageMs: Long): Boolean =
+        latitude.isFinite() && latitude in -90.0..90.0 &&
+            longitude.isFinite() && longitude in -180.0..180.0 &&
+            accuracyMeters.isFinite() && accuracyMeters in 0.1f..100f &&
+            ageMs in 0L..30L * 60 * 1000
+}
+
 /** Android Auto bağlantısı kesilince (araç kapanınca) son konumu park yeri olarak kaydeder. */
 object ParkSaver {
     fun save(context: Context) {
         val loc = DriveState.bestLocation(context) ?: return
-        // Çok eski konum yanlış yeri gösterir
-        if (System.currentTimeMillis() - loc.time > 30 * 60_000) return
+        val ageMs = System.currentTimeMillis() - loc.time
+        if (!ParkLocationPolicy.accepts(loc.latitude, loc.longitude, loc.accuracy, ageMs)) return
         Prefs.parkedSpot = ParkedSpot(loc.latitude, loc.longitude, System.currentTimeMillis(), loc.accuracy)
     }
 }

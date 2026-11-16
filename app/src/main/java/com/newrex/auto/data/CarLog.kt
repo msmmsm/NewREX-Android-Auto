@@ -21,6 +21,18 @@ data class TripRecord(
 ) {
     val avgKmh: Int get() = if (movingMinutes > 0) (km / movingMinutes * 60).roundToInt() else 0
 
+    /** Bozuk, gerçek dışı veya geleceğe tarihli yolculukları geçmişe alma. */
+    fun isValid(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        val durationMs = end - start
+        return start > 0L && end >= start &&
+            durationMs <= 72L * 60 * 60 * 1000 &&
+            end <= nowMillis + 5 * 60 * 1000L &&
+            km.isFinite() && km in 0f..3_000f &&
+            movingMinutes >= 0 && movingMinutes.toLong() <= durationMs / 60_000L + 1L &&
+            maxKmh in 0..260 && harshAccel in 0..5_000 && harshBrake in 0..5_000 &&
+            score in 0..100
+    }
+
     fun toJson(): JSONObject = JSONObject().put("s", start).put("e", end).put("km", km.toDouble()).put("mm", movingMinutes)
         .put("max", maxKmh).put("ha", harshAccel).put("hb", harshBrake).put("sc", score)
 
@@ -32,6 +44,13 @@ data class TripRecord(
 
 /** Yakıt alımı. Depo her seferinde fullenmiş kabul edilir (tüketim hesabı böyle doğru çıkar). */
 data class FuelEntry(val time: Long, val liters: Float, val price: Float, val km: Float) {
+    /** Girdi ve saklanan yakıt kaydını makul araç sınırları içinde tut. */
+    fun isValid(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        time > 0L && time <= nowMillis + 5 * 60 * 1000L &&
+            liters.isFinite() && liters in 0.1f..200f &&
+            price.isFinite() && price in 0f..20_000_000f &&
+            km.isFinite() && km in 0f..10_000_000f
+
     fun toJson(): JSONObject = JSONObject().put("t", time).put("l", liters.toDouble()).put("p", price.toDouble()).put("km", km.toDouble())
 
     companion object {
@@ -83,26 +102,27 @@ object CarLog {
 
     /** Depo hacmi (litre); menzil tahmini için. Toyota C-HR hibrit ~43 L. */
     var tankLiters: Float
-        get() = sp.getFloat("tank", 43f)
-        set(v) { sp.edit().putFloat("tank", v).apply(); bump() }
+        get() = sp.getFloat("tank", 43f).takeIf { it.isFinite() && it in 5f..200f } ?: 43f
+        set(v) { if (v.isFinite() && v in 5f..200f) { sp.edit().putFloat("tank", v).apply(); bump() } }
 
     var oilChangeKm: Float
-        get() = sp.getFloat("oilKm", 0f)
-        set(v) { sp.edit().putFloat("oilKm", v).apply(); bump() }
+        get() = sp.getFloat("oilKm", 0f).takeIf { it.isFinite() && it in 0f..10_000_000f } ?: 0f
+        set(v) { if (v.isFinite() && v in 0f..10_000_000f) { sp.edit().putFloat("oilKm", v).apply(); bump() } }
 
     var oilIntervalKm: Float
-        get() = sp.getFloat("oilInterval", 10_000f)
-        set(v) { sp.edit().putFloat("oilInterval", v).apply(); bump() }
+        get() = sp.getFloat("oilInterval", 10_000f).takeIf { it.isFinite() && it in 1_000f..50_000f } ?: 10_000f
+        set(v) { if (v.isFinite() && v in 1_000f..50_000f) { sp.edit().putFloat("oilInterval", v).apply(); bump() } }
 
     // ---- Kilometre tahmini ----
 
     /** Bütün yolculuklarda GPS ile ölçülen toplam mesafe. */
     private var gpsTotalKm: Float
-        get() = sp.getFloat("gpsTotal", 0f)
-        set(v) = sp.edit().putFloat("gpsTotal", v).apply()
+        get() = sp.getFloat("gpsTotal", 0f).takeIf { it.isFinite() && it in 0f..10_000_000f } ?: 0f
+        set(v) { if (v.isFinite() && v in 0f..10_000_000f) sp.edit().putFloat("gpsTotal", v).apply() }
 
     /** Kullanıcının girdiği kilometre ve o andaki GPS toplamı. */
     fun setOdometer(km: Float) {
+        if (!km.isFinite() || km !in 0f..10_000_000f) return
         sp.edit().putFloat("odoBase", km).putFloat("odoGpsAtBase", gpsTotalKm).apply()
         bump()
     }
@@ -110,29 +130,38 @@ object CarLog {
     /** Tahmini kilometre: girilen değer + o zamandan beri GPS ile gidilen yol. Girilmediyse null. */
     fun estimatedOdometer(liveTripKm: Float = 0f): Float? {
         val base = sp.getFloat("odoBase", 0f)
-        if (base <= 0f) return null
-        return base + (gpsTotalKm - sp.getFloat("odoGpsAtBase", 0f)) + liveTripKm
+        if (!base.isFinite() || base <= 0f || base > 10_000_000f ||
+            !liveTripKm.isFinite() || liveTripKm < 0f) return null
+        val gpsAtBase = sp.getFloat("odoGpsAtBase", 0f).takeIf { it.isFinite() && it >= 0f } ?: return null
+        return (base + (gpsTotalKm - gpsAtBase) + liveTripKm).takeIf { it.isFinite() && it in 0f..10_000_000f }
     }
 
     // ---- Yolculuklar ----
 
-    fun trips(): List<TripRecord> = read("trips") { TripRecord.fromJson(it) }
+    fun trips(): List<TripRecord> = read("trips") { TripRecord.fromJson(it) }.filter { it.isValid() }
 
-    fun addTrip(t: TripRecord) {
-        gpsTotalKm += t.km
-        // Çok kısa bağlantılar (garajda açıp kapama) geçmişi doldurmasın
+    /** Geçersiz kayıt kilometre toplamına eklenmez; başarılı eklemede true döner. */
+    fun addTrip(t: TripRecord): Boolean {
+        if (!t.isValid()) return false
+        gpsTotalKm = (gpsTotalKm + t.km).coerceAtMost(10_000_000f)
+        // Çok kısa bağlantılar (garajda açıp kapama) geçmişi doldurmasın.
         if (t.km >= 0.3f) write("trips", (listOf(t) + trips()).take(MAX_TRIPS).map { it.toJson() })
         bump()
+        return true
     }
 
     // ---- Yakıt ----
 
-    fun fuel(): List<FuelEntry> = read("fuel") { FuelEntry.fromJson(it) }.sortedBy { it.km }
+    fun fuel(): List<FuelEntry> = read("fuel") { FuelEntry.fromJson(it) }
+        .filter { it.isValid() }.sortedBy { it.km }
 
-    fun addFuel(e: FuelEntry) {
+    /** Geçersiz yakıt kaydı tüketim ve maliyet hesaplarına alınmaz. */
+    fun addFuel(e: FuelEntry): Boolean {
+        if (!e.isValid()) return false
         write("fuel", (fuel() + e).map { it.toJson() })
-        // Yakıt alırken girilen kilometre, tahmini kilometreyi de düzeltir
+        // Yakıt alırken girilen kilometre, tahmini kilometreyi de düzeltir.
         if (e.km > 0f) setOdometer(e.km) else bump()
+        return true
     }
 
     fun removeFuel(e: FuelEntry) {
@@ -159,28 +188,37 @@ object CarLog {
         }.sumOf { it.price.toDouble() }.toFloat()
         // İlk dolumdan sonraki dolumlar, aradaki yolda harcanan yakıttır
         val withKm = list.filter { it.km > 0f }
+        val safeCurrentKm = currentKm?.takeIf { it.isFinite() && it >= 0f }
         var consumption: Float? = null
         var costPerKm: Float? = null
         if (withKm.size >= 2) {
             val dist = withKm.last().km - withKm.first().km
             if (dist > 50f) {
                 val used = withKm.drop(1)
-                consumption = used.sumOf { it.liters.toDouble() }.toFloat() / dist * 100f
-                costPerKm = used.sumOf { it.price.toDouble() }.toFloat() / dist
+                val litersUsed = used.sumOf { it.liters.toDouble() }.toFloat()
+                val candidate = litersUsed / dist * 100f
+                if (litersUsed.isFinite() && candidate.isFinite() && candidate in 0.5f..50f) {
+                    consumption = candidate
+                    val cost = used.sumOf { it.price.toDouble() }.toFloat() / dist
+                    costPerKm = cost.takeIf { it.isFinite() && it >= 0f }
+                }
             }
         }
         val last = withKm.lastOrNull()
-        val range = if (consumption != null && consumption > 0f && last != null && currentKm != null) {
-            val left = tankLiters - (currentKm - last.km).coerceAtLeast(0f) * consumption / 100f
-            (left / consumption * 100f).coerceAtLeast(0f)
+        // Son yakıt alımından daha düşük bir kilometre verilmişse kalan menzil tahmini üretme.
+        val range = if (consumption != null && last != null && safeCurrentKm != null && safeCurrentKm >= last.km) {
+            val driven = safeCurrentKm - last.km
+            val left = tankLiters - driven * consumption / 100f
+            (left / consumption * 100f).takeIf { it.isFinite() }?.coerceAtLeast(0f)
         } else null
         return FuelStats(consumption, costPerKm, thisMonth, range)
     }
 
     /** Yağ değişimine kalan km (kilometre biliniyorsa). */
     fun oilKmLeft(currentKm: Float?): Float? {
-        if (currentKm == null || oilChangeKm <= 0f) return null
-        return oilChangeKm + oilIntervalKm - currentKm
+        val km = currentKm?.takeIf { it.isFinite() && it >= 0f } ?: return null
+        if (oilChangeKm <= 0f) return null
+        return (oilChangeKm + oilIntervalKm - km).takeIf { it.isFinite() }
     }
 
     private fun <T> read(key: String, parse: (JSONObject) -> T): List<T> {
@@ -254,7 +292,8 @@ object TripStats {
     fun score(km: Float): Int {
         val events = harshAccel.value + harshBrake.value
         if (events == 0) return 100
-        val per10 = events / (km / 10f).coerceAtLeast(1f)
+        val safeKm = km.takeIf { it.isFinite() && it >= 0f } ?: 0f
+        val per10 = events / (safeKm / 10f).coerceAtLeast(1f)
         return (100 - per10 * 8).roundToInt().coerceIn(0, 100)
     }
 }

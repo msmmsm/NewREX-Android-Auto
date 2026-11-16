@@ -21,6 +21,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Araç hareket ediyor mu? Önce aracın kendi hız bilgisi, yoksa telefonun GPS hızı kullanılır.
  * Hareket halinde video ve web görüntüsü gizlenir, ses devam eder.
  */
+/** GPS konumları arasındaki mesafe, ölçüm aralığı ve makul azami hızla doğrulanır. */
+internal object GpsTripDistancePolicy {
+    fun accepts(distanceMeters: Float, elapsedMs: Long): Boolean {
+        if (!distanceMeters.isFinite() || distanceMeters < 3f || elapsedMs !in 500L..120_000L) return false
+        val speedMps = distanceMeters / (elapsedMs / 1000f)
+        return speedMps.isFinite() && speedMps <= 80f
+    }
+}
+
 object DriveState {
     private const val DRIVING_ABOVE_MS = 2.5f   // ~9 km/s
     private const val PARKED_BELOW_MS = 0.6f    // ~2 km/s
@@ -121,12 +130,16 @@ object DriveState {
                 // Yön sadece hareket halindeyken anlamlı
                 if (location.hasBearing() && (gpsSpeed ?: 0f) > 1.5f) bearing.value = location.bearing
                 val prev = lastLocation
-                // Duruyorken GPS sapmaları mesafeye eklenmesin
-                if (prev != null && location.accuracy < 30f && (gpsSpeed ?: 0f) > PARKED_BELOW_MS) {
+                // Mesafe yalnızca yeterli hassasiyetteki, sıralı ve fiziksel olarak makul GPS örneklerinden eklenir.
+                if (prev != null && location.accuracy.isFinite() && location.accuracy in 0.1f..30f &&
+                    prev.accuracy.isFinite() && prev.accuracy in 0.1f..50f &&
+                    (gpsSpeed ?: 0f) > PARKED_BELOW_MS) {
+                    val elapsedMs = (location.elapsedRealtimeNanos - prev.elapsedRealtimeNanos) / 1_000_000L
                     val d = prev.distanceTo(location)
-                    if (d in 3f..500f) tripMeters.value += d
+                    if (GpsTripDistancePolicy.accepts(d, elapsedMs)) tripMeters.value += d
                 }
-                if (prev == null || location.accuracy < 50f || location.accuracy <= prev.accuracy) lastLocation = location
+                if (prev == null || (location.time > prev.time &&
+                    (location.accuracy < 50f || location.accuracy <= prev.accuracy))) lastLocation = location
                 update()
             }
             @Deprecated("Deprecated in Java")

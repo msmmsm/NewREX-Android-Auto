@@ -93,7 +93,7 @@ object VehiclePanels {
     }
 
     fun drivingPanel(context: Context): View = with(context) {
-        val b = box(context, R.drawable.ic_car, "Sürüş puanı (bu yolculuk)")
+        val b = box(context, R.drawable.ic_car, "Sürüş davranışı puanı (bu yolculuk)")
         val km = DriveState.tripMeters.value / 1000f
         val score = TripStats.score(km)
         val movingMin = TripStats.movingMs / 60_000f
@@ -101,14 +101,14 @@ object VehiclePanels {
         val color = when { score >= 85 -> Palette.GREEN; score >= 60 -> Palette.ORANGE; else -> Palette.RED }
 
         b.addView(stats(context,
-            "$score / 100" to "Ekonomik sürüş",
+            "$score / 100" to "Sürüş davranışı",
             "${TripStats.harshAccel.value}" to "Ani hızlanma",
             "${TripStats.harshBrake.value}" to "Sert fren",
             "%.0f".format(TripStats.maxKmh.value) to "En yüksek km/s",
             (avg?.let { "%.0f".format(it) } ?: "—") to "Ortalama km/s",
             firstColor = color,
         ))
-        b.addView(label("Ani hızlanma ve sert frenler puanı düşürür; yumuşak sürüş yakıt tasarrufu sağlar.",
+        b.addView(label("Puan, ölçülen ani hızlanma ve sert fren sıklığına dayanır; yakıt tüketimini ölçmez.",
             12f, Palette.TEXT_FAINT, lines = 2), lp(MATCH, WRAP).margins(t = dp(8)))
         b
     }

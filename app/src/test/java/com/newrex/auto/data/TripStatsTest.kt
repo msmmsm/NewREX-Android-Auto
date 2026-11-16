@@ -43,4 +43,21 @@ class TripStatsTest {
         TripStats.onSpeed(90f, 3_000L)
         assertEquals(108f, TripStats.maxKmh.value, 0.01f)
     }
+
+    @Test fun scoreReflectsHarshEventsPerTenKilometres() {
+        TripStats.reset()
+        assertEquals(100, TripStats.score(10f))
+        TripStats.harshAccel.value = 1
+        assertEquals(92, TripStats.score(10f))
+        assertEquals(96, TripStats.score(20f))
+        TripStats.harshBrake.value = 20
+        assertEquals(0, TripStats.score(10f))
+    }
+
+    @Test fun invalidDistanceDoesNotProduceNonFiniteScore() {
+        TripStats.reset()
+        TripStats.harshBrake.value = 2
+        assertEquals(84, TripStats.score(Float.NaN))
+        assertEquals(84, TripStats.score(Float.POSITIVE_INFINITY))
+    }
 }

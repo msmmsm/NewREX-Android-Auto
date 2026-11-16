@@ -395,3 +395,13 @@ Kaynaklar:
 - Gerçek araçta denenmemiş PID'ler, ECU rolü tespiti, canlı CAN yayınları ve donanıma bağlı özellikler.
 
 **Kabul durumu:** Yazılım tarafındaki standart OBD-II işlevleri mevcut kod ve birim testleriyle kapsanmıştır; ancak Android derlemesi/JUnit çalıştırılmadı ve fiziksel ELM327 + araç kabul testi yapılmadı. Bu nedenle OBD-II saha doğrulaması **bekliyor**; test edilmemiş donanım uyumluluğu tamamlandı olarak işaretlenmez.
+
+
+## Yolculuk kaydı, GPS mesafesi ve sürüş puanı — kod kapsamı
+
+- GPS yolculuk mesafesi yalnızca iki konum arasındaki monotonik ölçüm süresi biliniyorsa; en az 3 m mesafe, 0,5–120 saniye örnek aralığı ve en çok 80 m/s örnek hız sınırları içinde artırılır. Sırasız, çok seyrek, çok hızlı veya bozuk örnekler mesafeye eklenmez.
+- Park konumu kaydında koordinat aralığı, konum doğruluğu (en çok 100 m) ve konum yaşının 0–30 dakika olması zorunludur; geleceğe tarihli konum reddedilir.
+- Yolculuk ve yakıt kayıtları saklanmadan/hesaplara katılmadan önce zaman, sayıların sonluluğu ve makul araç sınırları açısından doğrulanır. Geçersiz kayıt kilometre toplamını, yakıt tüketimini veya menzil tahminini değiştirmez.
+- Yakıt tüketimi tahmini yalnızca en az iki kilometre bilgili dolum kaydı, 50 km'den uzun mesafe ve 0,5–50 L/100 km makul sonuç aralığında gösterilir. Son dolum kilometresinden daha düşük güncel kilometrede menzil tahmini üretilmez.
+- Sürüş puanı artık ekonomik sürüş/yakıt tasarrufu olarak sunulmaz; yalnızca tespit edilen ani hızlanma ve sert fren sıklığından hesaplanan sürüş davranışı göstergesidir.
+- Saf doğrulama testleri `TripDataValidationTest`, `GpsAndParkPolicyTest` ve `TripStatsTest` içine eklendi. Bu çalışma ortamında Gradle/JUnit çalıştırılmadı; Android derlemesi, GPS saha doğrulaması, park konumu kabul testi ve yakıt kayıtlarının kullanıcı arayüzünden uçtan uca testi beklemektedir.
