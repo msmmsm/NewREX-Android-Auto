@@ -312,7 +312,7 @@ object PhoneCockpitHelper {
         } else {
             currentDiagnosticReadings.forEach { reading ->
                 val qualityLabel = when (reading.quality) {
-                    com.newrex.auto.data.DiagnosticValueQuality.VALID -> "Doğrulanmış"
+                    com.newrex.auto.data.DiagnosticValueQuality.VALID -> "Yanıt/kaynak doğrulandı"
                     com.newrex.auto.data.DiagnosticValueQuality.STALE -> "Güncelliğini yitirmiş"
                     com.newrex.auto.data.DiagnosticValueQuality.INVALID -> "Geçersiz"
                     com.newrex.auto.data.DiagnosticValueQuality.UNVERIFIED -> "ECU adresi doğrulanmadı"
