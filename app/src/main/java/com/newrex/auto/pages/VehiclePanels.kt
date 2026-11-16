@@ -13,6 +13,7 @@ import com.newrex.auto.data.CarLog
 import com.newrex.auto.data.PerformanceTimer
 import com.newrex.auto.data.Prefs
 import com.newrex.auto.data.TripAnalytics
+import com.newrex.auto.data.VehicleExpenseAnalytics
 import com.newrex.auto.data.TripStats
 import com.newrex.auto.ui.MATCH
 import com.newrex.auto.ui.Palette
@@ -143,6 +144,19 @@ object VehiclePanels {
     fun fuelPanel(context: Context, currentKm: Float?): View = with(context) {
         val b = box(context, R.drawable.ic_gas, "Yakıt defteri")
         val s = CarLog.fuelStats(currentKm)
+        val now = java.time.LocalDate.now()
+        val zone = java.time.ZoneId.systemDefault()
+        val monthStart = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val monthEnd = now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val expenses = VehicleExpenseAnalytics.summarize(CarLog.fuel(), CarLog.serviceRecords(), monthStart, monthEnd)
+        b.addView(label("Bu ay araç giderleri", 13f, Palette.TEXT_DIM, bold = true),
+            lp(MATCH, WRAP).margins(t = dp(8), b = dp(4)))
+        b.addView(stats(context,
+            String.format(tr, "%,.0f ₺", expenses.total) to "Toplam",
+            String.format(tr, "%,.0f ₺", expenses.fuelTotal) to "Yakıt",
+            String.format(tr, "%,.0f ₺", expenses.serviceTotal) to "Bakım / servis",
+            "${expenses.fuelEntries + expenses.serviceEntries}" to "İşlem sayısı",
+        ))
         if (CarLog.fuel().isEmpty()) {
             b.addView(label("Depoyu fullediğinde telefondaki NewREX uygulamasında \"Yakıt ve kilometre\" bölümüne " +
                 "litre, tutar ve kilometreyi gir. Ortalama tüketim, km başı maliyet ve tahmini menzil burada çıkar.",
