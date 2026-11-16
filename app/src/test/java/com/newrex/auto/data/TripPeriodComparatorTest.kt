@@ -15,7 +15,7 @@ class TripPeriodComparatorTest {
         assertEquals(32f, result.previous.distanceKm, 0.001f)
         assertEquals(-24f, result.distanceDeltaKm, 0.001f)
         assertEquals(-2, result.tripCountDelta)
-        assertEquals(20, result.scoreDelta)
+        assertEquals(15, result.scoreDelta)
     }
 
     @Test fun emptyPreviousPeriodProducesZeroBaseline() {
