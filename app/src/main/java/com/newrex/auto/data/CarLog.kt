@@ -292,6 +292,38 @@ object CarLog {
     }
 }
 
+/** Seçilen dönemdeki yakıt ve servis giderlerinin kullanıcı kayıtlarına dayalı özeti. */
+data class VehicleExpenseSummary(
+    val fuelTotal: Float,
+    val serviceTotal: Float,
+    val fuelEntries: Int,
+    val serviceEntries: Int,
+) {
+    val total: Float get() = fuelTotal + serviceTotal
+}
+
+/** Gider raporu yalnızca geçerli, yerel kullanıcı kayıtlarını toplar; tahmini/eksik tutar üretmez. */
+object VehicleExpenseAnalytics {
+    fun summarize(
+        fuel: List<FuelEntry>,
+        services: List<ServiceRecord>,
+        fromMillis: Long,
+        untilMillis: Long,
+    ): VehicleExpenseSummary {
+        if (fromMillis <= 0L || untilMillis <= fromMillis) return VehicleExpenseSummary(0f, 0f, 0, 0)
+        val selectedFuel = fuel.filter { it.isValid() && it.time >= fromMillis && it.time < untilMillis }
+        val selectedServices = services.filter { it.isValid() && it.time >= fromMillis && it.time < untilMillis }
+        val fuelTotal = selectedFuel.sumOf { it.price.toDouble() }.toFloat()
+        val serviceTotal = selectedServices.sumOf { it.cost.toDouble() }.toFloat()
+        return VehicleExpenseSummary(
+            fuelTotal = fuelTotal.takeIf { it.isFinite() && it >= 0f } ?: 0f,
+            serviceTotal = serviceTotal.takeIf { it.isFinite() && it >= 0f } ?: 0f,
+            fuelEntries = selectedFuel.size,
+            serviceEntries = selectedServices.size,
+        )
+    }
+}
+
 /** Seçilen dönemdeki doğrulanmış yolculukların toplu özeti. */
 data class TripPeriodSummary(
     val tripCount: Int,
