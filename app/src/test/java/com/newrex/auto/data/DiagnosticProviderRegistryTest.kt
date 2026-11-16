@@ -96,6 +96,34 @@ class DiagnosticProviderRegistryTest {
         assertFalse(valid.copy(value = Double.NaN).isTrustworthy())
     }
 
+    @Test fun displayedQualityMarksFreshAndOldReadingsWithoutChangingStoredQuality() {
+        val reading = DiagnosticReading(
+            "vehicle.speed", 42.0, "km/h", "OBD", "7E8", 10_000L, DiagnosticValueQuality.VALID
+        )
+        assertEquals(DiagnosticValueQuality.VALID, reading.displayedQuality(20_000L))
+        assertEquals(DiagnosticValueQuality.STALE, reading.displayedQuality(25_001L))
+        assertEquals(DiagnosticValueQuality.VALID, reading.quality)
+    }
+
+    @Test fun displayedQualityRejectsFutureTimestampAndInvalidAgeLimit() {
+        val reading = DiagnosticReading(
+            "vehicle.speed", 42.0, "km/h", "OBD", "7E8", 20_000L, DiagnosticValueQuality.VALID
+        )
+        assertEquals(DiagnosticValueQuality.UNVERIFIED, reading.displayedQuality(19_999L))
+        assertEquals(DiagnosticValueQuality.UNVERIFIED, reading.displayedQuality(20_000L, 0L))
+    }
+
+    @Test fun displayedQualityPreservesUnverifiedAndInvalidStates() {
+        val reading = DiagnosticReading(
+            "vehicle.speed", 42.0, "km/h", "OBD", "unknown", 1L, DiagnosticValueQuality.UNVERIFIED
+        )
+        assertEquals(DiagnosticValueQuality.UNVERIFIED, reading.displayedQuality(100_000L))
+        assertEquals(
+            DiagnosticValueQuality.INVALID,
+            reading.copy(quality = DiagnosticValueQuality.INVALID).displayedQuality(100_000L)
+        )
+    }
+
     @Test fun nonFiniteMeasurementsAreNeverTrusted() {
         val base = DiagnosticReading(
             "battery.voltage", 12.4, "V", "OBD", "ecu", 1L, DiagnosticValueQuality.VALID
